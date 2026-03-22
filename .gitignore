@@ -1,0 +1,21 @@
+node_modules/
+dist/
+coverage/
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.temp
+.env
+.env.*
+.vscode/
+.idea/
+*.code-workspace
+*.tsbuildinfo
+
+# Source asset work files
+assets/**/*.aseprite-data.json
+assets/**/*.psd
+assets/**/*.kra
+assets/**/*.xcf
+assets/**/*.bak
