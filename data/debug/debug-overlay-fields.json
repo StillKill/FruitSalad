@@ -1,0 +1,17 @@
+{
+  "fields": [
+    "state",
+    "turnNumber",
+    "activePlayer",
+    "viewedPlayer",
+    "pendingSelection",
+    "deckCounts",
+    "marketCards",
+    "currentPlayerFruitCounts",
+    "currentPlayerSaladCount",
+    "liveScoring",
+    "lastAction",
+    "lastScorePreview",
+    "emptyDeckRecovery"
+  ]
+}

@@ -1,15 +1,16 @@
 {
   "name": "phaser-test",
   "version": "1.0.0",
-  "description": "",
+  "description": "Fruit Salad prototype on Phaser 3",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "python -m http.server 8080",
+    "test": "node --test"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "phaser": "^3.90.0"
   }

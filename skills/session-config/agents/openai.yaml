@@ -1,0 +1,3 @@
+interface:
+  display_name: "Session Config"
+  short_description: "Configure Fruit Salad setup rules and defaults"

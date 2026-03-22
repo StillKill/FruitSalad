@@ -1,0 +1,17 @@
+{
+  "deckCount": 3,
+  "marketSlotsPerDeck": 2,
+  "cardsPerPlayer": 18,
+  "playerCardPoolByCount": {
+    "2": { "selectedCards": 36, "notes": "Prototype default pool" },
+    "3": { "selectedCards": 54, "notes": "Prototype default pool" },
+    "4": { "selectedCards": 72, "notes": "Prototype default pool" },
+    "5": { "selectedCards": 90, "notes": "Prototype default pool" },
+    "6": { "selectedCards": 108, "notes": "Full deck" }
+  },
+  "turnRules": {
+    "marketPickLimit": 2,
+    "deckPickLimit": 1,
+    "confirmState": "end_turn"
+  }
+}

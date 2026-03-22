@@ -1,0 +1,3 @@
+interface:
+  display_name: "Gameplay States"
+  short_description: "Maintain Fruit Salad turn flow and state transitions"

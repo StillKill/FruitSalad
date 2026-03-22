@@ -1,0 +1,3 @@
+interface:
+  display_name: "UI Shell"
+  short_description: "Build the non-card UI for Fruit Salad scenes"
