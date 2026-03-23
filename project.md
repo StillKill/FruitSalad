@@ -56,7 +56,7 @@ project-root/
 - Сессия поддерживает 2-6 игроков.
 - Количество карт для партии пока считается как `18 * количество игроков`.
 - Настройки партии и лимиты setup лежат в `data/sessions/session-rules.json`.
-- До получения полного списка карт используется prototype pool, который временно разворачивается из seed-карт.
+- Полный каталог scoring-карт уже загружен в `data/cards/scoring-cards.json`.
 
 ### 3. Gameplay States
 - `settings`: ввод количества и имен игроков.
@@ -80,8 +80,7 @@ project-root/
 - Источник правды для карточки: `id`, `ruleType`, `backFruit`, `saladFruits`, `scoring`.
 - `name`, `templateId`, `family` не используются.
 - В `scoring` хранится только структура очков, без дублирования типов фруктов, если их можно вывести из `ruleType` и `saladFruits`.
-- В `data/cards/scoring-cards.json` сейчас хранится seed-каталог примеров, а не полный список 108 карт.
-- После получения полного перечня карт seed-каталог заменить на полный deck c ID `000-108`.
+- Полный импорт из CSV выполнен: 108 карт, ID `000`-`107`.
 
 ## Названия типов scoring-карт
 - `compare-majority`: больше всех фруктов указанного вида.
@@ -97,15 +96,16 @@ project-root/
 - `per-fruit-multi`: очки за несколько фруктов, перечисленных в `saladFruits`; порядок очков совпадает с порядком фруктов.
 
 ## Правила интерпретации scoring
-- Для `compare-majority`, `compare-minority` и `parity-fruit` целевой фрукт определяется по первому элементу `saladFruits`.
+- Для `compare-majority`, `compare-minority`, `parity-fruit` и `per-fruit-flat` целевой фрукт определяется по `saladFruits`.
 - Для `compare-wealth` и `compare-poverty` всегда считается общая сумма фруктов игрока.
 - Для `threshold-per-kind` и `missing-kind` правило всегда применяется ко всем 6 видам фруктов.
 - Для `per-fruit-flat` в `saladFruits` должен быть ровно один фрукт.
 - Для `per-fruit-multi` длина `scoring.points` должна совпадать с длиной `saladFruits`.
 - Для `set-distinct-kind` количество разных фруктов в наборе всегда равно `setSize`, отдельное поле не нужно.
+- Для `parity-fruit` используется `zeroScores = false`.
 
 ## Базовая сцена
-- `preload`: грузит JSON-конфиги, seed-каталог карт и reference layout image.
+- `preload`: грузит JSON-конфиги, полный каталог карт и reference layout image.
 - `create`: создает prototype session на 2 игроков, строит shell интерфейса.
 - `setup`: сейчас встроен в `buildSession()` и подготавливает колоды, рынок, игроков и state machine.
 
@@ -126,7 +126,7 @@ project-root/
 
 ## План на end_game и scoring
 ### Этап 1. Нормализация данных
-- Зафиксировать полный список всех карт.
+- Полный список карт уже загружен.
 - Для каждой карты хранить: `id`, `ruleType`, `saladFruits`, `backFruit`, `scoring`.
 - Определить, какие правила считаются по игроку локально, а какие требуют сравнения всех игроков.
 - Зафиксировать tie rules для compare-механик.
@@ -156,12 +156,6 @@ project-root/
   - per-fruit-multi с отрицательными очками;
   - tie cases.
 
-## Запрос на следующую итерацию
-Нужен полный список карт. Для каждой карты желательно передать:
-- `id`
-- `ruleType`
-- описание scoring-условия
-- список фруктов на салате
-- фрукт на обратной стороне
-
-Если удобно, можно прислать это таблицей или списком JSON-объектов.
+## Следующий шаг
+- Реализовать scoring engine и unit-тесты.
+- Потом перейти к `settings`, `turn/end_turn`, `refresh`, `end_game`.

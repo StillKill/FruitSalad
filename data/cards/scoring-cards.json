@@ -1,52 +1,1057 @@
 {
-  "fruits": ["kiwi", "orange", "apple", "banana", "lime", "mango"],
+  "fruits": [
+    "kiwi",
+    "orange",
+    "apple",
+    "banana",
+    "lime",
+    "mango"
+  ],
   "ruleTypes": {
-    "compare-majority": "Most of one named fruit among all players. The fruit is defined by the first salad fruit.",
-    "compare-minority": "Least of one named fruit among all players. The fruit is defined by the first salad fruit.",
+    "compare-majority": "Most of one named fruit among all players. The target fruit is inferred from saladFruits.",
+    "compare-minority": "Least of one named fruit among all players. The target fruit is inferred from saladFruits.",
     "compare-wealth": "Most total fruits among all players, regardless of kind.",
     "compare-poverty": "Least total fruits among all players, regardless of kind.",
-    "parity-fruit": "Even or odd count of one fruit, but zero never scores. The fruit is defined by the first salad fruit.",
+    "parity-fruit": "Even or odd count of one fruit, but zero never scores. The target fruit is inferred from saladFruits.",
     "threshold-per-kind": "Score for each fruit kind meeting a minimum threshold.",
     "missing-kind": "Score for each missing fruit kind.",
     "set-same-kind": "Score completed sets of the same fruit.",
-    "set-distinct-kind": "Score completed sets of distinct fruits. The required distinct count equals setSize.",
-    "per-fruit-flat": "Flat points per fruit of one type. The fruit is defined by the single salad fruit.",
-    "per-fruit-multi": "Points per fruit for multiple salad fruits on the same card. Fruit order matches saladFruits."
+    "set-distinct-kind": "Score completed sets of distinct fruits. Required unique kinds equal setSize.",
+    "per-fruit-flat": "Flat points per fruit of one type. The target fruit is inferred from saladFruits.",
+    "per-fruit-multi": "Points per fruit for multiple salad fruits on the same card. Point order matches saladFruits."
   },
   "cards": [
     {
       "id": "000",
-      "ruleType": "compare-majority",
-      "backFruit": "kiwi",
-      "saladFruits": ["kiwi", "kiwi", "lime"],
-      "scoring": { "points": 10 }
+      "ruleType": "per-fruit-multi",
+      "backFruit": "lime",
+      "saladFruits": [
+        "apple",
+        "banana"
+      ],
+      "scoring": {
+        "points": [
+          3,
+          -2
+        ]
+      }
     },
     {
       "id": "001",
-      "ruleType": "compare-minority",
-      "backFruit": "banana",
-      "saladFruits": ["banana", "lime"],
-      "scoring": { "points": 7 }
+      "ruleType": "per-fruit-multi",
+      "backFruit": "lime",
+      "saladFruits": [
+        "kiwi",
+        "apple",
+        "mango"
+      ],
+      "scoring": {
+        "points": [
+          -2,
+          4,
+          -2
+        ]
+      }
     },
     {
       "id": "002",
-      "ruleType": "compare-wealth",
-      "backFruit": "mango",
-      "saladFruits": ["mango", "orange", "apple"],
-      "scoring": { "points": 10 }
+      "ruleType": "per-fruit-multi",
+      "backFruit": "lime",
+      "saladFruits": [
+        "orange",
+        "apple",
+        "lime"
+      ],
+      "scoring": {
+        "points": [
+          -1,
+          3,
+          -1
+        ]
+      }
     },
     {
       "id": "003",
-      "ruleType": "compare-poverty",
-      "backFruit": "apple",
-      "saladFruits": ["apple", "lime"],
-      "scoring": { "points": 7 }
+      "ruleType": "per-fruit-multi",
+      "backFruit": "lime",
+      "saladFruits": [
+        "orange",
+        "apple",
+        "banana"
+      ],
+      "scoring": {
+        "points": [
+          -4,
+          2,
+          2
+        ]
+      }
     },
     {
       "id": "004",
-      "ruleType": "parity-fruit",
+      "ruleType": "per-fruit-multi",
       "backFruit": "lime",
-      "saladFruits": ["lime", "lime"],
+      "saladFruits": [
+        "orange",
+        "apple",
+        "lime"
+      ],
+      "scoring": {
+        "points": [
+          1,
+          2,
+          -2
+        ]
+      }
+    },
+    {
+      "id": "005",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "kiwi",
+      "saladFruits": [
+        "orange",
+        "banana"
+      ],
+      "scoring": {
+        "points": [
+          -2,
+          3
+        ]
+      }
+    },
+    {
+      "id": "006",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "kiwi",
+      "saladFruits": [
+        "apple",
+        "banana",
+        "mango"
+      ],
+      "scoring": {
+        "points": [
+          -2,
+          4,
+          -2
+        ]
+      }
+    },
+    {
+      "id": "007",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "kiwi",
+      "saladFruits": [
+        "kiwi",
+        "banana",
+        "lime"
+      ],
+      "scoring": {
+        "points": [
+          -1,
+          3,
+          -1
+        ]
+      }
+    },
+    {
+      "id": "008",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "kiwi",
+      "saladFruits": [
+        "orange",
+        "banana",
+        "lime"
+      ],
+      "scoring": {
+        "points": [
+          2,
+          2,
+          -4
+        ]
+      }
+    },
+    {
+      "id": "009",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "kiwi",
+      "saladFruits": [
+        "kiwi",
+        "banana",
+        "lime"
+      ],
+      "scoring": {
+        "points": [
+          -2,
+          2,
+          1
+        ]
+      }
+    },
+    {
+      "id": "010",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "banana",
+      "saladFruits": [
+        "kiwi",
+        "mango"
+      ],
+      "scoring": {
+        "points": [
+          3,
+          -2
+        ]
+      }
+    },
+    {
+      "id": "011",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "banana",
+      "saladFruits": [
+        "kiwi",
+        "orange",
+        "lime"
+      ],
+      "scoring": {
+        "points": [
+          4,
+          -2,
+          -2
+        ]
+      }
+    },
+    {
+      "id": "012",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "banana",
+      "saladFruits": [
+        "kiwi",
+        "apple",
+        "banana"
+      ],
+      "scoring": {
+        "points": [
+          3,
+          -1,
+          -1
+        ]
+      }
+    },
+    {
+      "id": "013",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "banana",
+      "saladFruits": [
+        "kiwi",
+        "apple",
+        "mango"
+      ],
+      "scoring": {
+        "points": [
+          2,
+          -4,
+          2
+        ]
+      }
+    },
+    {
+      "id": "014",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "banana",
+      "saladFruits": [
+        "kiwi",
+        "apple",
+        "banana"
+      ],
+      "scoring": {
+        "points": [
+          2,
+          1,
+          -2
+        ]
+      }
+    },
+    {
+      "id": "015",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "apple",
+      "saladFruits": [
+        "kiwi",
+        "lime"
+      ],
+      "scoring": {
+        "points": [
+          -2,
+          3
+        ]
+      }
+    },
+    {
+      "id": "016",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "apple",
+      "saladFruits": [
+        "orange",
+        "banana",
+        "lime"
+      ],
+      "scoring": {
+        "points": [
+          -2,
+          -2,
+          4
+        ]
+      }
+    },
+    {
+      "id": "017",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "apple",
+      "saladFruits": [
+        "apple",
+        "lime",
+        "mango"
+      ],
+      "scoring": {
+        "points": [
+          -1,
+          3,
+          -1
+        ]
+      }
+    },
+    {
+      "id": "018",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "apple",
+      "saladFruits": [
+        "kiwi",
+        "lime",
+        "mango"
+      ],
+      "scoring": {
+        "points": [
+          2,
+          2,
+          -4
+        ]
+      }
+    },
+    {
+      "id": "019",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "apple",
+      "saladFruits": [
+        "apple",
+        "lime",
+        "mango"
+      ],
+      "scoring": {
+        "points": [
+          -2,
+          2,
+          1
+        ]
+      }
+    },
+    {
+      "id": "020",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "orange",
+      "saladFruits": [
+        "apple",
+        "mango"
+      ],
+      "scoring": {
+        "points": [
+          -2,
+          3
+        ]
+      }
+    },
+    {
+      "id": "021",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "orange",
+      "saladFruits": [
+        "kiwi",
+        "lime",
+        "mango"
+      ],
+      "scoring": {
+        "points": [
+          -2,
+          -2,
+          4
+        ]
+      }
+    },
+    {
+      "id": "022",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "orange",
+      "saladFruits": [
+        "orange",
+        "banana",
+        "mango"
+      ],
+      "scoring": {
+        "points": [
+          -1,
+          -1,
+          3
+        ]
+      }
+    },
+    {
+      "id": "023",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "orange",
+      "saladFruits": [
+        "apple",
+        "banana",
+        "mango"
+      ],
+      "scoring": {
+        "points": [
+          2,
+          -4,
+          2
+        ]
+      }
+    },
+    {
+      "id": "024",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "orange",
+      "saladFruits": [
+        "orange",
+        "banana",
+        "mango"
+      ],
+      "scoring": {
+        "points": [
+          -2,
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "id": "025",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "mango",
+      "saladFruits": [
+        "orange",
+        "lime"
+      ],
+      "scoring": {
+        "points": [
+          3,
+          -2
+        ]
+      }
+    },
+    {
+      "id": "026",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "mango",
+      "saladFruits": [
+        "orange",
+        "apple",
+        "banana"
+      ],
+      "scoring": {
+        "points": [
+          4,
+          -2,
+          -2
+        ]
+      }
+    },
+    {
+      "id": "027",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "mango",
+      "saladFruits": [
+        "kiwi",
+        "orange",
+        "mango"
+      ],
+      "scoring": {
+        "points": [
+          -1,
+          3,
+          -1
+        ]
+      }
+    },
+    {
+      "id": "028",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "mango",
+      "saladFruits": [
+        "kiwi",
+        "orange",
+        "lime"
+      ],
+      "scoring": {
+        "points": [
+          -4,
+          2,
+          2
+        ]
+      }
+    },
+    {
+      "id": "029",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "mango",
+      "saladFruits": [
+        "kiwi",
+        "orange",
+        "mango"
+      ],
+      "scoring": {
+        "points": [
+          1,
+          2,
+          -2
+        ]
+      }
+    },
+    {
+      "id": "030",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "apple",
+      "saladFruits": [
+        "kiwi",
+        "orange",
+        "lime"
+      ],
+      "scoring": {
+        "setSize": 3,
+        "pointsPerSet": 8
+      }
+    },
+    {
+      "id": "031",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "apple",
+      "saladFruits": [
+        "apple",
+        "banana",
+        "lime"
+      ],
+      "scoring": {
+        "setSize": 3,
+        "pointsPerSet": 8
+      }
+    },
+    {
+      "id": "032",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "banana",
+      "saladFruits": [
+        "kiwi",
+        "lime",
+        "mango"
+      ],
+      "scoring": {
+        "setSize": 3,
+        "pointsPerSet": 8
+      }
+    },
+    {
+      "id": "033",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "banana",
+      "saladFruits": [
+        "kiwi",
+        "orange",
+        "banana"
+      ],
+      "scoring": {
+        "setSize": 3,
+        "pointsPerSet": 8
+      }
+    },
+    {
+      "id": "034",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "orange",
+      "saladFruits": [
+        "kiwi",
+        "apple",
+        "mango"
+      ],
+      "scoring": {
+        "setSize": 3,
+        "pointsPerSet": 8
+      }
+    },
+    {
+      "id": "035",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "orange",
+      "saladFruits": [
+        "orange",
+        "lime",
+        "mango"
+      ],
+      "scoring": {
+        "setSize": 3,
+        "pointsPerSet": 8
+      }
+    },
+    {
+      "id": "036",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "mango",
+      "saladFruits": [
+        "orange",
+        "banana",
+        "lime"
+      ],
+      "scoring": {
+        "setSize": 3,
+        "pointsPerSet": 8
+      }
+    },
+    {
+      "id": "037",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "mango",
+      "saladFruits": [
+        "orange",
+        "apple",
+        "mango"
+      ],
+      "scoring": {
+        "setSize": 3,
+        "pointsPerSet": 8
+      }
+    },
+    {
+      "id": "038",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "kiwi",
+      "saladFruits": [
+        "kiwi",
+        "banana",
+        "mango"
+      ],
+      "scoring": {
+        "setSize": 3,
+        "pointsPerSet": 8
+      }
+    },
+    {
+      "id": "039",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "kiwi",
+      "saladFruits": [
+        "orange",
+        "apple",
+        "banana"
+      ],
+      "scoring": {
+        "setSize": 3,
+        "pointsPerSet": 8
+      }
+    },
+    {
+      "id": "040",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "lime",
+      "saladFruits": [
+        "apple",
+        "banana",
+        "mango"
+      ],
+      "scoring": {
+        "setSize": 3,
+        "pointsPerSet": 8
+      }
+    },
+    {
+      "id": "041",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "lime",
+      "saladFruits": [
+        "kiwi",
+        "apple",
+        "lime"
+      ],
+      "scoring": {
+        "setSize": 3,
+        "pointsPerSet": 8
+      }
+    },
+    {
+      "id": "042",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "apple",
+      "saladFruits": [
+        "lime",
+        "mango"
+      ],
+      "scoring": {
+        "points": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "043",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "apple",
+      "saladFruits": [
+        "orange",
+        "lime"
+      ],
+      "scoring": {
+        "points": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "044",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "banana",
+      "saladFruits": [
+        "kiwi",
+        "apple"
+      ],
+      "scoring": {
+        "points": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "045",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "banana",
+      "saladFruits": [
+        "kiwi",
+        "lime"
+      ],
+      "scoring": {
+        "points": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "046",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "orange",
+      "saladFruits": [
+        "kiwi",
+        "mango"
+      ],
+      "scoring": {
+        "points": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "047",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "orange",
+      "saladFruits": [
+        "banana",
+        "mango"
+      ],
+      "scoring": {
+        "points": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "048",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "mango",
+      "saladFruits": [
+        "orange",
+        "banana"
+      ],
+      "scoring": {
+        "points": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "049",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "mango",
+      "saladFruits": [
+        "kiwi",
+        "orange"
+      ],
+      "scoring": {
+        "points": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "050",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "kiwi",
+      "saladFruits": [
+        "banana",
+        "lime"
+      ],
+      "scoring": {
+        "points": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "051",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "kiwi",
+      "saladFruits": [
+        "apple",
+        "banana"
+      ],
+      "scoring": {
+        "points": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "052",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "lime",
+      "saladFruits": [
+        "apple",
+        "mango"
+      ],
+      "scoring": {
+        "points": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "053",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "lime",
+      "saladFruits": [
+        "orange",
+        "apple"
+      ],
+      "scoring": {
+        "points": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "054",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "apple",
+      "saladFruits": [
+        "kiwi",
+        "mango"
+      ],
+      "scoring": {
+        "setSize": 2,
+        "pointsPerSet": 5
+      }
+    },
+    {
+      "id": "055",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "apple",
+      "saladFruits": [
+        "orange",
+        "banana"
+      ],
+      "scoring": {
+        "setSize": 2,
+        "pointsPerSet": 5
+      }
+    },
+    {
+      "id": "056",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "banana",
+      "saladFruits": [
+        "lime",
+        "mango"
+      ],
+      "scoring": {
+        "setSize": 2,
+        "pointsPerSet": 5
+      }
+    },
+    {
+      "id": "057",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "banana",
+      "saladFruits": [
+        "orange",
+        "apple"
+      ],
+      "scoring": {
+        "setSize": 2,
+        "pointsPerSet": 5
+      }
+    },
+    {
+      "id": "058",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "orange",
+      "saladFruits": [
+        "kiwi",
+        "lime"
+      ],
+      "scoring": {
+        "setSize": 2,
+        "pointsPerSet": 5
+      }
+    },
+    {
+      "id": "059",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "orange",
+      "saladFruits": [
+        "apple",
+        "banana"
+      ],
+      "scoring": {
+        "setSize": 2,
+        "pointsPerSet": 5
+      }
+    },
+    {
+      "id": "060",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "mango",
+      "saladFruits": [
+        "banana",
+        "lime"
+      ],
+      "scoring": {
+        "setSize": 2,
+        "pointsPerSet": 5
+      }
+    },
+    {
+      "id": "061",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "mango",
+      "saladFruits": [
+        "kiwi",
+        "apple"
+      ],
+      "scoring": {
+        "setSize": 2,
+        "pointsPerSet": 5
+      }
+    },
+    {
+      "id": "062",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "kiwi",
+      "saladFruits": [
+        "orange",
+        "lime"
+      ],
+      "scoring": {
+        "setSize": 2,
+        "pointsPerSet": 5
+      }
+    },
+    {
+      "id": "063",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "kiwi",
+      "saladFruits": [
+        "apple",
+        "mango"
+      ],
+      "scoring": {
+        "setSize": 2,
+        "pointsPerSet": 5
+      }
+    },
+    {
+      "id": "064",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "lime",
+      "saladFruits": [
+        "banana",
+        "mango"
+      ],
+      "scoring": {
+        "setSize": 2,
+        "pointsPerSet": 5
+      }
+    },
+    {
+      "id": "065",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "lime",
+      "saladFruits": [
+        "kiwi",
+        "orange"
+      ],
+      "scoring": {
+        "setSize": 2,
+        "pointsPerSet": 5
+      }
+    },
+    {
+      "id": "066",
+      "ruleType": "compare-majority",
+      "backFruit": "orange",
+      "saladFruits": [
+        "mango"
+      ],
+      "scoring": {
+        "points": 10
+      }
+    },
+    {
+      "id": "067",
+      "ruleType": "compare-minority",
+      "backFruit": "orange",
+      "saladFruits": [
+        "mango"
+      ],
+      "scoring": {
+        "points": 7
+      }
+    },
+    {
+      "id": "068",
+      "ruleType": "parity-fruit",
+      "backFruit": "orange",
+      "saladFruits": [
+        "mango"
+      ],
       "scoring": {
         "evenPoints": 7,
         "oddPoints": 3,
@@ -54,109 +1059,488 @@
       }
     },
     {
-      "id": "005",
-      "ruleType": "threshold-per-kind",
+      "id": "069",
+      "ruleType": "set-same-kind",
       "backFruit": "orange",
-      "saladFruits": ["orange", "orange", "banana"],
-      "scoring": { "threshold": 2, "pointsPerQualifiedKind": 3 }
+      "saladFruits": [
+        "mango"
+      ],
+      "scoring": {
+        "setSize": 2,
+        "pointsPerSet": 5
+      }
     },
     {
-      "id": "006",
-      "ruleType": "threshold-per-kind",
+      "id": "070",
+      "ruleType": "set-same-kind",
+      "backFruit": "orange",
+      "saladFruits": [
+        "mango"
+      ],
+      "scoring": {
+        "setSize": 3,
+        "pointsPerSet": 8
+      }
+    },
+    {
+      "id": "071",
+      "ruleType": "per-fruit-flat",
+      "backFruit": "orange",
+      "saladFruits": [
+        "mango"
+      ],
+      "scoring": {
+        "pointsPerFruit": 2
+      }
+    },
+    {
+      "id": "072",
+      "ruleType": "compare-majority",
       "backFruit": "mango",
-      "saladFruits": ["mango", "mango", "kiwi"],
-      "scoring": { "threshold": 3, "pointsPerQualifiedKind": 5 }
+      "saladFruits": [
+        "orange"
+      ],
+      "scoring": {
+        "points": 10
+      }
     },
     {
-      "id": "007",
-      "ruleType": "missing-kind",
+      "id": "073",
+      "ruleType": "compare-minority",
+      "backFruit": "mango",
+      "saladFruits": [
+        "orange"
+      ],
+      "scoring": {
+        "points": 7
+      }
+    },
+    {
+      "id": "074",
+      "ruleType": "parity-fruit",
+      "backFruit": "mango",
+      "saladFruits": [
+        "orange"
+      ],
+      "scoring": {
+        "evenPoints": 7,
+        "oddPoints": 3,
+        "zeroScores": false
+      }
+    },
+    {
+      "id": "075",
+      "ruleType": "set-same-kind",
+      "backFruit": "mango",
+      "saladFruits": [
+        "orange"
+      ],
+      "scoring": {
+        "setSize": 2,
+        "pointsPerSet": 5
+      }
+    },
+    {
+      "id": "076",
+      "ruleType": "set-same-kind",
+      "backFruit": "mango",
+      "saladFruits": [
+        "orange"
+      ],
+      "scoring": {
+        "setSize": 3,
+        "pointsPerSet": 8
+      }
+    },
+    {
+      "id": "077",
+      "ruleType": "per-fruit-flat",
+      "backFruit": "mango",
+      "saladFruits": [
+        "orange"
+      ],
+      "scoring": {
+        "pointsPerFruit": 2
+      }
+    },
+    {
+      "id": "078",
+      "ruleType": "compare-majority",
       "backFruit": "lime",
-      "saladFruits": ["apple", "banana"],
-      "scoring": { "pointsPerMissingKind": 5 }
+      "saladFruits": [
+        "apple"
+      ],
+      "scoring": {
+        "points": 10
+      }
     },
     {
-      "id": "008",
+      "id": "079",
+      "ruleType": "compare-minority",
+      "backFruit": "lime",
+      "saladFruits": [
+        "apple"
+      ],
+      "scoring": {
+        "points": 7
+      }
+    },
+    {
+      "id": "080",
+      "ruleType": "parity-fruit",
+      "backFruit": "lime",
+      "saladFruits": [
+        "apple"
+      ],
+      "scoring": {
+        "evenPoints": 7,
+        "oddPoints": 3,
+        "zeroScores": false
+      }
+    },
+    {
+      "id": "081",
+      "ruleType": "set-same-kind",
+      "backFruit": "lime",
+      "saladFruits": [
+        "apple"
+      ],
+      "scoring": {
+        "setSize": 2,
+        "pointsPerSet": 5
+      }
+    },
+    {
+      "id": "082",
+      "ruleType": "set-same-kind",
+      "backFruit": "lime",
+      "saladFruits": [
+        "apple"
+      ],
+      "scoring": {
+        "setSize": 3,
+        "pointsPerSet": 8
+      }
+    },
+    {
+      "id": "083",
+      "ruleType": "per-fruit-flat",
+      "backFruit": "lime",
+      "saladFruits": [
+        "apple"
+      ],
+      "scoring": {
+        "pointsPerFruit": 2
+      }
+    },
+    {
+      "id": "084",
+      "ruleType": "compare-majority",
+      "backFruit": "kiwi",
+      "saladFruits": [
+        "banana"
+      ],
+      "scoring": {
+        "points": 10
+      }
+    },
+    {
+      "id": "085",
+      "ruleType": "compare-minority",
+      "backFruit": "kiwi",
+      "saladFruits": [
+        "banana"
+      ],
+      "scoring": {
+        "points": 7
+      }
+    },
+    {
+      "id": "086",
+      "ruleType": "parity-fruit",
+      "backFruit": "kiwi",
+      "saladFruits": [
+        "banana"
+      ],
+      "scoring": {
+        "evenPoints": 7,
+        "oddPoints": 3,
+        "zeroScores": false
+      }
+    },
+    {
+      "id": "087",
       "ruleType": "set-same-kind",
       "backFruit": "kiwi",
-      "saladFruits": ["kiwi", "kiwi"],
-      "scoring": { "setSize": 2, "pointsPerSet": 5 }
+      "saladFruits": [
+        "banana"
+      ],
+      "scoring": {
+        "setSize": 2,
+        "pointsPerSet": 5
+      }
     },
     {
-      "id": "009",
+      "id": "088",
       "ruleType": "set-same-kind",
-      "backFruit": "apple",
-      "saladFruits": ["apple", "apple", "apple"],
-      "scoring": { "setSize": 3, "pointsPerSet": 8 }
+      "backFruit": "kiwi",
+      "saladFruits": [
+        "banana"
+      ],
+      "scoring": {
+        "setSize": 3,
+        "pointsPerSet": 8
+      }
     },
     {
-      "id": "010",
-      "ruleType": "set-distinct-kind",
-      "backFruit": "orange",
-      "saladFruits": ["orange", "lime"],
-      "scoring": { "setSize": 2, "pointsPerSet": 5 }
-    },
-    {
-      "id": "011",
-      "ruleType": "set-distinct-kind",
-      "backFruit": "banana",
-      "saladFruits": ["banana", "mango", "kiwi"],
-      "scoring": { "setSize": 3, "pointsPerSet": 8 }
-    },
-    {
-      "id": "012",
-      "ruleType": "set-distinct-kind",
-      "backFruit": "mango",
-      "saladFruits": ["kiwi", "orange", "apple", "banana", "lime", "mango"],
-      "scoring": { "setSize": 6, "pointsPerSet": 12 }
-    },
-    {
-      "id": "013",
+      "id": "089",
       "ruleType": "per-fruit-flat",
       "backFruit": "kiwi",
-      "saladFruits": ["kiwi"],
-      "scoring": { "pointsPerFruit": 2 }
+      "saladFruits": [
+        "banana"
+      ],
+      "scoring": {
+        "pointsPerFruit": 2
+      }
     },
     {
-      "id": "014",
-      "ruleType": "per-fruit-multi",
-      "backFruit": "orange",
-      "saladFruits": ["orange", "banana"],
-      "scoring": { "points": [1, 1] }
-    },
-    {
-      "id": "015",
-      "ruleType": "per-fruit-multi",
-      "backFruit": "mango",
-      "saladFruits": ["mango", "lime"],
-      "scoring": { "points": [3, -2] }
-    },
-    {
-      "id": "016",
-      "ruleType": "per-fruit-multi",
+      "id": "090",
+      "ruleType": "compare-majority",
       "backFruit": "apple",
-      "saladFruits": ["apple", "lime", "banana"],
-      "scoring": { "points": [3, -1, -1] }
+      "saladFruits": [
+        "lime"
+      ],
+      "scoring": {
+        "points": 10
+      }
     },
     {
-      "id": "017",
-      "ruleType": "per-fruit-multi",
-      "backFruit": "orange",
-      "saladFruits": ["kiwi", "orange", "banana"],
-      "scoring": { "points": [2, 1, -2] }
+      "id": "091",
+      "ruleType": "compare-minority",
+      "backFruit": "apple",
+      "saladFruits": [
+        "lime"
+      ],
+      "scoring": {
+        "points": 7
+      }
     },
     {
-      "id": "018",
-      "ruleType": "per-fruit-multi",
+      "id": "092",
+      "ruleType": "parity-fruit",
+      "backFruit": "apple",
+      "saladFruits": [
+        "lime"
+      ],
+      "scoring": {
+        "evenPoints": 7,
+        "oddPoints": 3,
+        "zeroScores": false
+      }
+    },
+    {
+      "id": "093",
+      "ruleType": "set-same-kind",
+      "backFruit": "apple",
+      "saladFruits": [
+        "lime"
+      ],
+      "scoring": {
+        "setSize": 2,
+        "pointsPerSet": 5
+      }
+    },
+    {
+      "id": "094",
+      "ruleType": "set-same-kind",
+      "backFruit": "apple",
+      "saladFruits": [
+        "lime"
+      ],
+      "scoring": {
+        "setSize": 3,
+        "pointsPerSet": 8
+      }
+    },
+    {
+      "id": "095",
+      "ruleType": "per-fruit-flat",
+      "backFruit": "apple",
+      "saladFruits": [
+        "lime"
+      ],
+      "scoring": {
+        "pointsPerFruit": 2
+      }
+    },
+    {
+      "id": "096",
+      "ruleType": "compare-majority",
       "backFruit": "banana",
-      "saladFruits": ["mango", "apple", "banana"],
-      "scoring": { "points": [4, -2, -2] }
+      "saladFruits": [
+        "kiwi"
+      ],
+      "scoring": {
+        "points": 10
+      }
     },
     {
-      "id": "019",
-      "ruleType": "per-fruit-multi",
+      "id": "097",
+      "ruleType": "compare-minority",
+      "backFruit": "banana",
+      "saladFruits": [
+        "kiwi"
+      ],
+      "scoring": {
+        "points": 7
+      }
+    },
+    {
+      "id": "098",
+      "ruleType": "parity-fruit",
+      "backFruit": "banana",
+      "saladFruits": [
+        "kiwi"
+      ],
+      "scoring": {
+        "evenPoints": 7,
+        "oddPoints": 3,
+        "zeroScores": false
+      }
+    },
+    {
+      "id": "099",
+      "ruleType": "set-same-kind",
+      "backFruit": "banana",
+      "saladFruits": [
+        "kiwi"
+      ],
+      "scoring": {
+        "setSize": 2,
+        "pointsPerSet": 5
+      }
+    },
+    {
+      "id": "100",
+      "ruleType": "set-same-kind",
+      "backFruit": "banana",
+      "saladFruits": [
+        "kiwi"
+      ],
+      "scoring": {
+        "setSize": 3,
+        "pointsPerSet": 8
+      }
+    },
+    {
+      "id": "101",
+      "ruleType": "per-fruit-flat",
+      "backFruit": "banana",
+      "saladFruits": [
+        "kiwi"
+      ],
+      "scoring": {
+        "pointsPerFruit": 2
+      }
+    },
+    {
+      "id": "102",
+      "ruleType": "compare-wealth",
+      "backFruit": "orange",
+      "saladFruits": [
+        "kiwi",
+        "orange",
+        "apple",
+        "banana",
+        "lime",
+        "mango"
+      ],
+      "scoring": {
+        "points": 10
+      }
+    },
+    {
+      "id": "103",
+      "ruleType": "compare-poverty",
+      "backFruit": "mango",
+      "saladFruits": [
+        "kiwi",
+        "orange",
+        "apple",
+        "banana",
+        "lime",
+        "mango"
+      ],
+      "scoring": {
+        "points": 7
+      }
+    },
+    {
+      "id": "104",
+      "ruleType": "threshold-per-kind",
+      "backFruit": "banana",
+      "saladFruits": [
+        "kiwi",
+        "orange",
+        "apple",
+        "banana",
+        "lime",
+        "mango"
+      ],
+      "scoring": {
+        "threshold": 2,
+        "pointsPerQualifiedKind": 3
+      }
+    },
+    {
+      "id": "105",
+      "ruleType": "threshold-per-kind",
+      "backFruit": "apple",
+      "saladFruits": [
+        "kiwi",
+        "orange",
+        "apple",
+        "banana",
+        "lime",
+        "mango"
+      ],
+      "scoring": {
+        "threshold": 3,
+        "pointsPerQualifiedKind": 5
+      }
+    },
+    {
+      "id": "106",
+      "ruleType": "missing-kind",
       "backFruit": "lime",
-      "saladFruits": ["orange", "lime", "kiwi"],
-      "scoring": { "points": [2, 2, -4] }
+      "saladFruits": [
+        "kiwi",
+        "orange",
+        "apple",
+        "banana",
+        "lime",
+        "mango"
+      ],
+      "scoring": {
+        "pointsPerMissingKind": 5
+      }
+    },
+    {
+      "id": "107",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "kiwi",
+      "saladFruits": [
+        "kiwi",
+        "orange",
+        "apple",
+        "banana",
+        "lime",
+        "mango"
+      ],
+      "scoring": {
+        "setSize": 6,
+        "pointsPerSet": 12
+      }
     }
   ]
 }
