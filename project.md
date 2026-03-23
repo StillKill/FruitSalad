@@ -45,6 +45,13 @@ project-root/
     └── ui/
 ```
 
+## Модель карты
+- Каждая физическая карта двусторонняя.
+- `backFruit` — фруктовая сторона карты, то есть какая фруктовая карта достается игроку, если он берет эту сторону.
+- `ruleType + saladFruits + scoring` — салатная сторона карты, которая остается у игрока как scoring card.
+- `backFruit` не обязан совпадать ни с одним элементом `saladFruits`.
+- В конце игры игрок оценивает все свои салатные карты по множеству собранных фруктовых карт.
+
 ## Модули проекта
 ### 1. Board Layout
 - Левая часть экрана: 3 колоды и рынок по 2 карты под каждой.
@@ -74,9 +81,6 @@ project-root/
 - Позже можно добавить постоянную нижнюю панель со сводкой по всем игрокам.
 
 ### 5. Card & Scoring Data
-- Карта рассматривается как двухсторонняя сущность:
-  - лицевая сторона: scoring-правило;
-  - обратная сторона: один фрукт.
 - Источник правды для карточки: `id`, `ruleType`, `backFruit`, `saladFruits`, `scoring`.
 - `name`, `templateId`, `family` не используются.
 - В `scoring` хранится только структура очков, без дублирования типов фруктов, если их можно вывести из `ruleType` и `saladFruits`.
@@ -96,13 +100,23 @@ project-root/
 - `per-fruit-multi`: очки за несколько фруктов, перечисленных в `saladFruits`; порядок очков совпадает с порядком фруктов.
 
 ## Правила интерпретации scoring
-- Для `compare-majority`, `compare-minority`, `parity-fruit` и `per-fruit-flat` целевой фрукт определяется по `saladFruits`.
+- Для `compare-majority`, `compare-minority`, `parity-fruit` и `per-fruit-flat` целевой фрукт определяется по `saladFruits`, а не по `backFruit`.
 - Для `compare-wealth` и `compare-poverty` всегда считается общая сумма фруктов игрока.
 - Для `threshold-per-kind` и `missing-kind` правило всегда применяется ко всем 6 видам фруктов.
 - Для `per-fruit-flat` в `saladFruits` должен быть ровно один фрукт.
 - Для `per-fruit-multi` длина `scoring.points` должна совпадать с длиной `saladFruits`.
 - Для `set-distinct-kind` количество разных фруктов в наборе всегда равно `setSize`, отдельное поле не нужно.
 - Для `parity-fruit` используется `zeroScores = false`.
+
+## End Game модель
+- У игрока есть две отдельные коллекции:
+  - фруктовые карты;
+  - салатные scoring-карты.
+- Подсчет в `end_game` идет по каждой салатной карте отдельно.
+- Вход для scoring engine:
+  - список салатов игрока;
+  - агрегированные количества фруктов игрока;
+  - при compare-правилах также snapshot всех игроков.
 
 ## Базовая сцена
 - `preload`: грузит JSON-конфиги, полный каталог карт и reference layout image.
@@ -132,15 +146,15 @@ project-root/
 - Зафиксировать tie rules для compare-механик.
 
 ### Этап 2. Scoring engine
-- Сделать `scorePlayerCard(card, playerSnapshot, tableSnapshot)`.
-- Сделать `scorePlayerTotal(playerSnapshot, ownedCards, tableSnapshot)`.
+- Сделать `scoreSaladCard(card, fruitCounts, tableSnapshot)`.
+- Сделать `scorePlayerTotal(saladCards, fruitCounts, tableSnapshot)`.
 - Для `parity-fruit` учесть правило `zeroScores = false`.
 - Для `per-fruit-multi` считать очки по фруктам из `saladFruits`, а не хранить дублирующий список фруктов в `scoring`.
 
 ### Этап 3. End game state
 - После истощения всех колод переходить в `refresh -> end_game`.
 - Замораживать финальный snapshot стола.
-- Считать очки по всем картам каждого игрока.
+- Считать очки по всем салатным картам каждого игрока.
 - Собирать breakdown: карта -> формула -> очки.
 - Показывать popup с местами, общими очками и детализацией.
 
