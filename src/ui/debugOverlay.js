@@ -4,6 +4,7 @@ export function buildDebugSnapshot(session) {
   const deckSummary = session.decks
     .map((deck) => `${deck.id}:${deck.cards.length}/${deck.market.length}`)
     .join(' | ');
+  const previewLeader = session.scorePreview?.[0] ?? null;
 
   return [
     `state=${session.stateMachine.state}`,
@@ -12,6 +13,9 @@ export function buildDebugSnapshot(session) {
     `view=${viewedPlayer.name}`,
     `selected=${session.pendingSelection.length}`,
     `decks=${deckSummary}`,
-    `liveScoring=${session.options.liveScoring}`
+    `liveScoring=${session.options.liveScoring}`,
+    `activeScore=${activePlayer.score}`,
+    `salads=${activePlayer.salads.length}`,
+    `leader=${previewLeader ? `${previewLeader.playerName}:${previewLeader.totalPoints}` : 'n/a'}`
   ];
 }

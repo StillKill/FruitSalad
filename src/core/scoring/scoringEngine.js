@@ -243,3 +243,18 @@ export function buildTableSnapshot(players) {
     fruitCounts: player.fruitCounts
   }));
 }
+
+export function scoreTable(players, fruits = DEFAULT_FRUITS) {
+  const tableSnapshot = buildTableSnapshot(players);
+
+  return players.map((player) => {
+    const result = scorePlayerTotal(player.salads, player.fruitCounts, tableSnapshot, fruits);
+
+    return {
+      playerId: player.id,
+      playerName: player.name,
+      totalPoints: result.totalPoints,
+      cardScores: result.cardScores
+    };
+  });
+}

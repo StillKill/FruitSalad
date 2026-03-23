@@ -1,9 +1,10 @@
-import Phaser from '../../node_modules/phaser/dist/phaser.esm.js';
+import * as Phaser from '../../node_modules/phaser/dist/phaser.esm.js';
 import { layoutConfig } from '../config/layoutConfig.js';
 import { defaultSessionOptions } from '../config/sessionDefaults.js';
 import { buildSession } from '../core/sessionSetup.js';
 import { drawPanel, drawCardPlaceholder } from '../ui/boardLayout.js';
 import { buildDebugSnapshot } from '../ui/debugOverlay.js';
+import { scoreTable } from '../core/scoring/scoringEngine.js';
 
 export class GameScene extends Phaser.Scene {
   constructor() {
@@ -23,6 +24,7 @@ export class GameScene extends Phaser.Scene {
     const scoringCards = this.cache.json.get('scoringCards');
 
     this.session = buildSession(defaultSessionOptions, sessionRules, scoringCards);
+    this.applyScoringPreview();
 
     this.drawBackground();
     this.drawShell();
@@ -31,6 +33,20 @@ export class GameScene extends Phaser.Scene {
     this.drawPlayerArea();
     this.drawScoreTabs();
     this.drawDebugPanel();
+  }
+
+  applyScoringPreview() {
+    const preview = scoreTable(this.session.players, this.session.scoringCatalog.fruits)
+      .sort((left, right) => right.totalPoints - left.totalPoints);
+
+    this.session.scorePreview = preview;
+
+    preview.forEach((entry) => {
+      const player = this.session.players.find((candidate) => candidate.id === entry.playerId);
+      if (player) {
+        player.score = entry.totalPoints;
+      }
+    });
   }
 
   drawBackground() {
@@ -62,6 +78,7 @@ export class GameScene extends Phaser.Scene {
   drawControls() {
     const { palette, regions } = layoutConfig;
     const buttonY = regions.controls.y + 18;
+    const leader = this.session.scorePreview?.[0];
 
     this.add.text(regions.controls.x + 24, buttonY, 'Session setup complete', {
       fontFamily: '"Trebuchet MS", sans-serif',
@@ -73,11 +90,16 @@ export class GameScene extends Phaser.Scene {
     this.drawButton(regions.controls.x + 458, buttonY - 4, 136, 44, palette.accent, 'Confirm');
     this.drawButton(regions.controls.x + 620, buttonY - 4, 136, 44, palette.warning, 'Reset');
 
-    this.add.text(regions.controls.x + 24, regions.controls.y + 74, 'Tip: choose 2 market cards or 1 deck card, then confirm the turn.', {
-      fontFamily: '"Trebuchet MS", sans-serif',
-      fontSize: '18px',
-      color: palette.textMuted
-    });
+    this.add.text(
+      regions.controls.x + 24,
+      regions.controls.y + 74,
+      `Tip: prototype preview loaded. Current scoring leader: ${leader.playerName} (${leader.totalPoints})`,
+      {
+        fontFamily: '"Trebuchet MS", sans-serif',
+        fontSize: '18px',
+        color: palette.textMuted
+      }
+    );
   }
 
   drawButton(x, y, width, height, fillColor, label) {
@@ -172,8 +194,7 @@ export class GameScene extends Phaser.Scene {
       color: palette.textMuted
     });
 
-    const sampleCards = this.session.decks.flatMap((deck) => deck.market).slice(0, 4);
-    sampleCards.forEach((cardData, index) => {
+    activePlayer.salads.slice(0, 4).forEach((cardData, index) => {
       drawCardPlaceholder(
         this,
         regions.player.x + 24 + index * 150,
@@ -206,7 +227,7 @@ export class GameScene extends Phaser.Scene {
         fontStyle: 'bold'
       });
 
-      this.add.text(x + 12, y + 52, `Score: ${player.score}`, {
+      this.add.text(x + 12, y + 52, `Preview: ${player.score}`, {
         fontFamily: '"Trebuchet MS", sans-serif',
         fontSize: '14px',
         color: palette.textMuted

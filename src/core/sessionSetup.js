@@ -33,6 +33,42 @@ function createPlayers(options, fruits) {
   });
 }
 
+function findCardsByIds(scoringCatalog, ids) {
+  const index = new Map(scoringCatalog.cards.map((card) => [card.id, card]));
+  return ids.map((id) => index.get(id)).filter(Boolean);
+}
+
+function seedPrototypeProgress(session) {
+  if (session.players.length < 2) {
+    return;
+  }
+
+  const [playerOne, playerTwo] = session.players;
+
+  playerOne.fruitCounts = {
+    kiwi: 1,
+    orange: 2,
+    apple: 0,
+    banana: 2,
+    lime: 1,
+    mango: 4
+  };
+
+  playerTwo.fruitCounts = {
+    kiwi: 5,
+    orange: 1,
+    apple: 1,
+    banana: 0,
+    lime: 0,
+    mango: 2
+  };
+
+  playerOne.salads = findCardsByIds(session.scoringCatalog, ['102', '071', '104', '054']);
+  playerTwo.salads = findCardsByIds(session.scoringCatalog, ['096', '106', '000', '080']);
+
+  session.logs.push('Prototype scoring preview seeded');
+}
+
 export function buildSession(options, sessionRules, scoringCatalog) {
   const selectedCardCount =
     sessionRules.playerCardPoolByCount[String(options.playerCount)]?.selectedCards ??
@@ -57,6 +93,7 @@ export function buildSession(options, sessionRules, scoringCatalog) {
     logs: ['Session created', `Selected cards: ${selectedCardCount}`]
   };
 
+  seedPrototypeProgress(session);
   stateMachine.transition('turn');
   session.logs.push('State changed to turn');
 

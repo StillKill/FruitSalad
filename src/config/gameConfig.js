@@ -1,4 +1,4 @@
-import Phaser from '../../node_modules/phaser/dist/phaser.esm.js';
+import * as Phaser from '../../node_modules/phaser/dist/phaser.esm.js';
 import { GameScene } from '../scenes/GameScene.js';
 
 export const gameConfig = {
