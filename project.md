@@ -107,6 +107,7 @@ project-root/
 - Для `per-fruit-multi` длина `scoring.points` должна совпадать с длиной `saladFruits`.
 - Для `set-distinct-kind` количество разных фруктов в наборе всегда равно `setSize`, отдельное поле не нужно.
 - Для `parity-fruit` используется `zeroScores = false`.
+- Текущее допущение по compare-картам: если экстремум делят несколько игроков, карта дает `0`.
 
 ## End Game модель
 - У игрока есть две отдельные коллекции:
@@ -146,10 +147,10 @@ project-root/
 - Зафиксировать tie rules для compare-механик.
 
 ### Этап 2. Scoring engine
-- Сделать `scoreSaladCard(card, fruitCounts, tableSnapshot)`.
-- Сделать `scorePlayerTotal(saladCards, fruitCounts, tableSnapshot)`.
-- Для `parity-fruit` учесть правило `zeroScores = false`.
-- Для `per-fruit-multi` считать очки по фруктам из `saladFruits`, а не хранить дублирующий список фруктов в `scoring`.
+- Реализованы `scoreSaladCard(card, fruitCounts, tableSnapshot)`, `scorePlayerTotal(saladCards, fruitCounts, tableSnapshot)` и `buildTableSnapshot(players)`.
+- Для `parity-fruit` учтено правило `zeroScores = false`.
+- Для `per-fruit-multi` очки считаются по фруктам из `saladFruits`.
+- Для compare-карт при ничьей по экстремуму начисляется `0`.
 
 ### Этап 3. End game state
 - После истощения всех колод переходить в `refresh -> end_game`.
@@ -159,17 +160,10 @@ project-root/
 - Показывать popup с местами, общими очками и детализацией.
 
 ### Этап 4. Unit tests
-- После реализации scoring engine добавить unit-тесты.
-- Предпочтительная цель: Jest, если решим подключать отдельный тестовый стек.
-- Практичный fallback без внешних зависимостей: `node:test`.
-- Минимальный набор тестов:
-  - parity с нулем и без нуля;
-  - threshold / missing;
-  - same-kind / distinct-kind / set of 6;
-  - compare-majority / compare-minority / wealth / poverty;
-  - per-fruit-multi с отрицательными очками;
-  - tie cases.
+- Базовые unit-тесты на scoring engine добавлены на `node:test`.
+- Покрыты parity / threshold / missing / sets / compare / per-fruit-multi / total aggregation.
+- Отдельно проверена tie-механика compare-карт.
 
 ## Следующий шаг
-- Реализовать scoring engine и unit-тесты.
+- Интегрировать scoring engine в `end_game` и debug preview.
 - Потом перейти к `settings`, `turn/end_turn`, `refresh`, `end_game`.
