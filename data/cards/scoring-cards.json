@@ -1,199 +1,162 @@
 {
   "fruits": ["kiwi", "orange", "apple", "banana", "lime", "mango"],
   "ruleTypes": {
-    "compare-majority": "Most of a named fruit among all players.",
-    "compare-minority": "Least of a named fruit among all players.",
-    "compare-wealth": "Most total fruit cards among all players.",
-    "compare-poverty": "Least total fruit cards among all players.",
-    "parity-fruit": "Even or odd count of one fruit.",
-    "threshold-per-kind": "Score for each fruit type meeting a minimum threshold.",
-    "missing-kind": "Score for each fruit type with zero count.",
+    "compare-majority": "Most of one named fruit among all players. The fruit is defined by the first salad fruit.",
+    "compare-minority": "Least of one named fruit among all players. The fruit is defined by the first salad fruit.",
+    "compare-wealth": "Most total fruits among all players, regardless of kind.",
+    "compare-poverty": "Least total fruits among all players, regardless of kind.",
+    "parity-fruit": "Even or odd count of one fruit, but zero never scores. The fruit is defined by the first salad fruit.",
+    "threshold-per-kind": "Score for each fruit kind meeting a minimum threshold.",
+    "missing-kind": "Score for each missing fruit kind.",
     "set-same-kind": "Score completed sets of the same fruit.",
-    "set-distinct-kind": "Score completed sets of distinct fruits.",
-    "set-rainbow-six": "Score full rainbow set of six fruits.",
-    "per-fruit-flat": "Flat points per fruit of one type.",
-    "per-fruit-ranking": "Points by first, second, third fruit positions inside a card."
+    "set-distinct-kind": "Score completed sets of distinct fruits. The required distinct count equals setSize.",
+    "per-fruit-flat": "Flat points per fruit of one type. The fruit is defined by the single salad fruit.",
+    "per-fruit-multi": "Points per fruit for multiple salad fruits on the same card. Fruit order matches saladFruits."
   },
-  "templates": [
+  "cards": [
     {
-      "templateId": "cmp-majority-kiwi",
-      "name": "Kiwi Crown",
-      "family": "compare",
+      "id": "000",
       "ruleType": "compare-majority",
-      "saladFruits": ["kiwi", "kiwi", "lime"],
       "backFruit": "kiwi",
-      "scoring": { "fruit": "kiwi", "points": 10 }
+      "saladFruits": ["kiwi", "kiwi", "lime"],
+      "scoring": { "points": 10 }
     },
     {
-      "templateId": "cmp-minority-banana",
-      "name": "Banana Diet",
-      "family": "compare",
+      "id": "001",
       "ruleType": "compare-minority",
-      "saladFruits": ["banana", "lime"],
       "backFruit": "banana",
-      "scoring": { "fruit": "banana", "points": 7 }
+      "saladFruits": ["banana", "lime"],
+      "scoring": { "points": 7 }
     },
     {
-      "templateId": "cmp-wealth-total",
-      "name": "Golden Basket",
-      "family": "compare",
+      "id": "002",
       "ruleType": "compare-wealth",
-      "saladFruits": ["mango", "orange", "apple"],
       "backFruit": "mango",
-      "scoring": { "metric": "totalFruits", "points": 10 }
+      "saladFruits": ["mango", "orange", "apple"],
+      "scoring": { "points": 10 }
     },
     {
-      "templateId": "cmp-poverty-total",
-      "name": "Small Picnic",
-      "family": "compare",
+      "id": "003",
       "ruleType": "compare-poverty",
-      "saladFruits": ["apple", "lime"],
       "backFruit": "apple",
-      "scoring": { "metric": "totalFruits", "points": 7 }
+      "saladFruits": ["apple", "lime"],
+      "scoring": { "points": 7 }
     },
     {
-      "templateId": "parity-lime-even",
-      "name": "Lime Rhythm",
-      "family": "personal",
+      "id": "004",
       "ruleType": "parity-fruit",
-      "saladFruits": ["lime", "lime"],
       "backFruit": "lime",
-      "scoring": { "fruit": "lime", "evenPoints": 7, "oddPoints": 3 }
+      "saladFruits": ["lime", "lime"],
+      "scoring": {
+        "evenPoints": 7,
+        "oddPoints": 3,
+        "zeroScores": false
+      }
     },
     {
-      "templateId": "threshold-two-plus-orange",
-      "name": "Orange Friends",
-      "family": "personal",
+      "id": "005",
       "ruleType": "threshold-per-kind",
-      "saladFruits": ["orange", "orange", "banana"],
       "backFruit": "orange",
+      "saladFruits": ["orange", "orange", "banana"],
       "scoring": { "threshold": 2, "pointsPerQualifiedKind": 3 }
     },
     {
-      "templateId": "threshold-three-plus-mango",
-      "name": "Mango Stack",
-      "family": "personal",
+      "id": "006",
       "ruleType": "threshold-per-kind",
-      "saladFruits": ["mango", "mango", "kiwi"],
       "backFruit": "mango",
+      "saladFruits": ["mango", "mango", "kiwi"],
       "scoring": { "threshold": 3, "pointsPerQualifiedKind": 5 }
     },
     {
-      "templateId": "missing-kind-garden-gap",
-      "name": "Missing Bowl",
-      "family": "personal",
+      "id": "007",
       "ruleType": "missing-kind",
-      "saladFruits": ["apple", "banana"],
       "backFruit": "lime",
+      "saladFruits": ["apple", "banana"],
       "scoring": { "pointsPerMissingKind": 5 }
     },
     {
-      "templateId": "set-same-two-kiwi",
-      "name": "Twin Kiwi",
-      "family": "set",
+      "id": "008",
       "ruleType": "set-same-kind",
-      "saladFruits": ["kiwi", "kiwi"],
       "backFruit": "kiwi",
+      "saladFruits": ["kiwi", "kiwi"],
       "scoring": { "setSize": 2, "pointsPerSet": 5 }
     },
     {
-      "templateId": "set-same-three-apple",
-      "name": "Apple Trio",
-      "family": "set",
+      "id": "009",
       "ruleType": "set-same-kind",
-      "saladFruits": ["apple", "apple", "apple"],
       "backFruit": "apple",
+      "saladFruits": ["apple", "apple", "apple"],
       "scoring": { "setSize": 3, "pointsPerSet": 8 }
     },
     {
-      "templateId": "set-distinct-pair",
-      "name": "Fruit Duo",
-      "family": "set",
+      "id": "010",
       "ruleType": "set-distinct-kind",
+      "backFruit": "orange",
       "saladFruits": ["orange", "lime"],
-      "backFruit": "orange",
-      "scoring": { "setSize": 2, "uniqueKindsRequired": 2, "pointsPerSet": 5 }
+      "scoring": { "setSize": 2, "pointsPerSet": 5 }
     },
     {
-      "templateId": "set-distinct-trio",
-      "name": "Color Trio",
-      "family": "set",
+      "id": "011",
       "ruleType": "set-distinct-kind",
+      "backFruit": "banana",
       "saladFruits": ["banana", "mango", "kiwi"],
-      "backFruit": "banana",
-      "scoring": { "setSize": 3, "uniqueKindsRequired": 3, "pointsPerSet": 8 }
+      "scoring": { "setSize": 3, "pointsPerSet": 8 }
     },
     {
-      "templateId": "set-rainbow-six",
-      "name": "Rainbow Salad",
-      "family": "set",
-      "ruleType": "set-rainbow-six",
+      "id": "012",
+      "ruleType": "set-distinct-kind",
+      "backFruit": "mango",
       "saladFruits": ["kiwi", "orange", "apple", "banana", "lime", "mango"],
-      "backFruit": "mango",
-      "scoring": { "setSize": 6, "uniqueKindsRequired": 6, "pointsPerSet": 12 }
+      "scoring": { "setSize": 6, "pointsPerSet": 12 }
     },
     {
-      "templateId": "per-flat-kiwi",
-      "name": "Kiwi Collector",
-      "family": "per-fruit",
+      "id": "013",
       "ruleType": "per-fruit-flat",
-      "saladFruits": ["kiwi", "lime", "apple"],
       "backFruit": "kiwi",
-      "scoring": { "fruit": "kiwi", "pointsPerFruit": 2 }
+      "saladFruits": ["kiwi"],
+      "scoring": { "pointsPerFruit": 2 }
     },
     {
-      "templateId": "rank-1-1",
-      "name": "Fresh Pair",
-      "family": "per-fruit",
-      "ruleType": "per-fruit-ranking",
+      "id": "014",
+      "ruleType": "per-fruit-multi",
+      "backFruit": "orange",
       "saladFruits": ["orange", "banana"],
-      "backFruit": "orange",
-      "scoring": { "fruits": ["orange", "banana"], "pointsByFruit": [1, 1] }
+      "scoring": { "points": [1, 1] }
     },
     {
-      "templateId": "rank-3-neg2",
-      "name": "Sweet and Sour",
-      "family": "per-fruit",
-      "ruleType": "per-fruit-ranking",
-      "saladFruits": ["mango", "lime"],
+      "id": "015",
+      "ruleType": "per-fruit-multi",
       "backFruit": "mango",
-      "scoring": { "fruits": ["mango", "lime"], "pointsByFruit": [3, -2] }
+      "saladFruits": ["mango", "lime"],
+      "scoring": { "points": [3, -2] }
     },
     {
-      "templateId": "rank-3-neg1-neg1",
-      "name": "Sharp Mix",
-      "family": "per-fruit",
-      "ruleType": "per-fruit-ranking",
-      "saladFruits": ["apple", "lime", "banana"],
+      "id": "016",
+      "ruleType": "per-fruit-multi",
       "backFruit": "apple",
-      "scoring": { "fruits": ["apple", "lime", "banana"], "pointsByFruit": [3, -1, -1] }
+      "saladFruits": ["apple", "lime", "banana"],
+      "scoring": { "points": [3, -1, -1] }
     },
     {
-      "templateId": "rank-2-1-neg2",
-      "name": "Balanced Cut",
-      "family": "per-fruit",
-      "ruleType": "per-fruit-ranking",
-      "saladFruits": ["kiwi", "orange", "banana"],
+      "id": "017",
+      "ruleType": "per-fruit-multi",
       "backFruit": "orange",
-      "scoring": { "fruits": ["kiwi", "orange", "banana"], "pointsByFruit": [2, 1, -2] }
+      "saladFruits": ["kiwi", "orange", "banana"],
+      "scoring": { "points": [2, 1, -2] }
     },
     {
-      "templateId": "rank-4-neg2-neg2",
-      "name": "Royal Slice",
-      "family": "per-fruit",
-      "ruleType": "per-fruit-ranking",
-      "saladFruits": ["mango", "apple", "banana"],
+      "id": "018",
+      "ruleType": "per-fruit-multi",
       "backFruit": "banana",
-      "scoring": { "fruits": ["mango", "apple", "banana"], "pointsByFruit": [4, -2, -2] }
+      "saladFruits": ["mango", "apple", "banana"],
+      "scoring": { "points": [4, -2, -2] }
     },
     {
-      "templateId": "rank-2-2-neg4",
-      "name": "Double Burst",
-      "family": "per-fruit",
-      "ruleType": "per-fruit-ranking",
-      "saladFruits": ["orange", "lime", "kiwi"],
+      "id": "019",
+      "ruleType": "per-fruit-multi",
       "backFruit": "lime",
-      "scoring": { "fruits": ["orange", "lime", "kiwi"], "pointsByFruit": [2, 2, -4] }
+      "saladFruits": ["orange", "lime", "kiwi"],
+      "scoring": { "points": [2, 2, -4] }
     }
   ]
 }

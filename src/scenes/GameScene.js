@@ -126,7 +126,7 @@ export class GameScene extends Phaser.Scene {
           card.width,
           card.height,
           palette.marketCard,
-          `${marketCard.name}\nback: ${marketCard.backFruit}`
+          `#${marketCard.id} ${marketCard.ruleType}\nback: ${marketCard.backFruit}`
         );
       });
     });
@@ -181,7 +181,7 @@ export class GameScene extends Phaser.Scene {
         132,
         182,
         palette.saladCard,
-        `${cardData.ruleType}\n${cardData.name}`
+        `#${cardData.id}\n${cardData.ruleType}`
       );
     });
   }

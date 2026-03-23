@@ -1,16 +1,16 @@
-function resolveBackFruit(template, copyIndex, fruits) {
-  if (template.backFruit) {
-    return template.backFruit;
+function resolveBackFruit(card, copyIndex, fruits) {
+  if (card.backFruit) {
+    return card.backFruit;
   }
 
   return fruits[copyIndex % fruits.length];
 }
 
 export function expandCardTemplates(catalog, requiredCards) {
-  const templates = catalog.templates ?? [];
+  const cards = catalog.cards ?? [];
   const fruits = catalog.fruits ?? [];
 
-  if (!templates.length) {
+  if (!cards.length) {
     return [];
   }
 
@@ -18,12 +18,12 @@ export function expandCardTemplates(catalog, requiredCards) {
   let copyIndex = 0;
 
   while (expanded.length < requiredCards) {
-    const template = templates[expanded.length % templates.length];
-    const instance = structuredClone(template);
+    const card = cards[expanded.length % cards.length];
+    const instance = structuredClone(card);
 
-    instance.id = `${template.templateId}__${copyIndex + 1}`;
-    instance.templateRef = template.templateId;
-    instance.backFruit = resolveBackFruit(template, copyIndex, fruits);
+    instance.runtimeId = `${card.id}__${copyIndex + 1}`;
+    instance.sourceId = card.id;
+    instance.backFruit = resolveBackFruit(card, copyIndex, fruits);
 
     expanded.push(instance);
     copyIndex += 1;
