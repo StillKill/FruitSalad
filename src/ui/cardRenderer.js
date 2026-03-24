@@ -92,9 +92,12 @@ function getSaladDescriptor(card) {
       };
     case 'per-fruit-flat':
       return {
-        title: 'Per fruit',
-        subtitle: `${scoreLabel(card.scoring.pointsPerFruit)} each`,
-        icons: distinctFruits.map((fruit) => ({ fruit, label: scoreLabel(card.scoring.pointsPerFruit) }))
+        title: '',
+        subtitle: '',
+        hideTitle: true,
+        hideSubtitle: true,
+        layout: 'vertical-list',
+        icons: distinctFruits.map((fruit) => ({ fruit, label: `/ ${scoreLabel(card.scoring.pointsPerFruit)}` }))
       };
     case 'per-fruit-multi':
       return {
@@ -126,12 +129,14 @@ function getDescriptorIconTexture(iconData) {
 }
 
 function addVerticalList(scene, container, descriptor, width, height) {
+  const iconCount = descriptor.icons.length;
   const iconSize = Math.max(22, Math.floor(width * 0.16));
-  const rowHeight = iconSize + 6;
-  const totalHeight = descriptor.icons.length * rowHeight;
-  const startY = height * 0.36 - totalHeight / 2 + rowHeight / 2;
-  const iconX = width * 0.38;
-  const labelX = width * 0.64;
+  const rowHeight = iconSize + 8;
+  const totalHeight = iconCount * rowHeight;
+  const centerY = iconCount <= 3 ? height * 0.5 : height * 0.42;
+  const startY = centerY - totalHeight / 2 + rowHeight / 2;
+  const iconX = width * 0.36;
+  const labelX = width * 0.56;
 
   descriptor.icons.forEach((iconData, index) => {
     const y = startY + index * rowHeight;
@@ -141,7 +146,7 @@ function addVerticalList(scene, container, descriptor, width, height) {
 
     const label = scene.add.text(labelX, y, iconData.label ?? '', {
       fontFamily: '"Trebuchet MS", sans-serif',
-      fontSize: `${Math.max(14, Math.round(width * 0.09))}px`,
+      fontSize: `${Math.max(13, Math.round(width * 0.085))}px`,
       color: '#111315',
       fontStyle: 'bold'
     }).setOrigin(0, 0.5);

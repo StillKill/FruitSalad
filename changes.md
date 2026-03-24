@@ -19,3 +19,5 @@
 - Verification: `node tests/run-tests.js`; `node --check src/scenes/GameScene.js`; `node --check src/ui/cardRenderer.js`.
 - Tuned panel spacing and typography so the title, player tabs, market header, and control hints stay inside their frames; updated prototype seeding so Player 2 now shows one sample of each salad rule type for visual QA.
 - Verification: `node tests/run-tests.js`; `node --check src/scenes/GameScene.js`; `node --check src/core/sessionSetup.js`; `node --check src/ui/cardRenderer.js`.
+- Lowered short vertical icon lists on salad cards and changed `per-fruit-flat` to an `icon / points` presentation.
+- Verification: `node tests/run-tests.js`; `node --check src/ui/cardRenderer.js`.
