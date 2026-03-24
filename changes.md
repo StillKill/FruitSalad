@@ -17,3 +17,5 @@
 - Verification: `node tests/run-tests.js`; `node --check src/scenes/GameScene.js`; `node --check src/ui/debugOverlay.js`.
 - Added a generated fruit-basket icon, switched all-6-fruit scoring cards to use it, made salad cards larger again, added wheel-scrollable salad/debug panels, and changed `per-fruit-multi` cards to a vertical icon-plus-points layout.
 - Verification: `node tests/run-tests.js`; `node --check src/scenes/GameScene.js`; `node --check src/ui/cardRenderer.js`.
+- Tuned panel spacing and typography so the title, player tabs, market header, and control hints stay inside their frames; updated prototype seeding so Player 2 now shows one sample of each salad rule type for visual QA.
+- Verification: `node tests/run-tests.js`; `node --check src/scenes/GameScene.js`; `node --check src/core/sessionSetup.js`; `node --check src/ui/cardRenderer.js`.

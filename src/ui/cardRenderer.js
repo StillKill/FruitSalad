@@ -68,13 +68,13 @@ function getSaladDescriptor(card) {
       };
     case 'threshold-per-kind':
       return {
-        title: `${card.scoring.threshold}+ each kind`,
+        title: allKinds ? `${card.scoring.threshold}+ kinds` : `${card.scoring.threshold}+ each kind`,
         subtitle: `${scoreLabel(card.scoring.pointsPerQualifiedKind)} each`,
         icons: allKinds ? makeBasketIcon() : distinctFruits.map((fruit) => ({ fruit }))
       };
     case 'missing-kind':
       return {
-        title: 'Missing kind',
+        title: allKinds ? 'Missing kinds' : 'Missing kind',
         subtitle: `${scoreLabel(card.scoring.pointsPerMissingKind)} each`,
         icons: allKinds ? makeBasketIcon() : distinctFruits.map((fruit) => ({ fruit }))
       };
@@ -161,8 +161,8 @@ function addDescriptorIcons(scene, container, descriptor, width, height) {
 
   const hasSingleBasket = descriptor.icons.length === 1 && descriptor.icons[0].special === 'basket';
   if (hasSingleBasket) {
-    const basket = scene.add.image(width / 2, height * 0.57, getDescriptorIconTexture(descriptor.icons[0]));
-    const basketSize = Math.max(36, Math.floor(width * 0.3));
+    const basket = scene.add.image(width / 2, height * 0.58, getDescriptorIconTexture(descriptor.icons[0]));
+    const basketSize = Math.max(36, Math.floor(width * 0.26));
     basket.setDisplaySize(basketSize, basketSize);
     container.add(basket);
     return;
@@ -228,26 +228,26 @@ export function drawSaladCard(scene, x, y, width, height, card) {
   addCardFrame(scene, container, width, height);
 
   if (!descriptor.hideTitle) {
-    const title = scene.add.text(width / 2, height * 0.33, descriptor.title, {
+    const title = scene.add.text(width / 2, height * 0.325, descriptor.title, {
       fontFamily: '"Trebuchet MS", sans-serif',
-      fontSize: `${Math.max(13, Math.round(width * 0.095))}px`,
+      fontSize: `${Math.max(13, Math.round(width * 0.094))}px`,
       color: '#111315',
       fontStyle: 'bold',
       align: 'center',
-      wordWrap: { width: width * 0.54 }
+      wordWrap: { width: width * 0.56 }
     }).setOrigin(0.5);
     container.add(title);
   }
 
   if (!descriptor.hideSubtitle) {
-    const subtitleY = descriptor.hideTitle ? height * 0.38 : height * 0.43;
+    const subtitleY = descriptor.hideTitle ? height * 0.38 : height * 0.425;
     const subtitle = scene.add.text(width / 2, subtitleY, descriptor.subtitle, {
       fontFamily: '"Trebuchet MS", sans-serif',
-      fontSize: `${Math.max(11, Math.round(width * 0.082))}px`,
+      fontSize: `${Math.max(11, Math.round(width * 0.08))}px`,
       color: '#2a3038',
       fontStyle: 'bold',
       align: 'center',
-      wordWrap: { width: width * 0.56 }
+      wordWrap: { width: width * 0.58 }
     }).setOrigin(0.5);
     container.add(subtitle);
   }

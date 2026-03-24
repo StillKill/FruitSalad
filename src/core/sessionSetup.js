@@ -65,6 +65,11 @@ function findCardsByIds(scoringCatalog, ids) {
   return ids.map((id) => index.get(id)).filter(Boolean);
 }
 
+function findPrototypeShowcaseCards(scoringCatalog) {
+  const preferredIds = ['000', '030', '066', '067', '068', '069', '071', '102', '103', '104', '106'];
+  return findCardsByIds(scoringCatalog, preferredIds);
+}
+
 function seedPrototypeProgress(session) {
   if (session.players.length < 2) {
     return;
@@ -82,16 +87,16 @@ function seedPrototypeProgress(session) {
   };
 
   playerTwo.fruitCounts = {
-    kiwi: 5,
-    orange: 1,
+    kiwi: 3,
+    orange: 2,
     apple: 1,
-    banana: 0,
-    lime: 0,
-    mango: 2
+    banana: 4,
+    lime: 2,
+    mango: 5
   };
 
   playerOne.salads = findCardsByIds(session.scoringCatalog, ['102', '071', '104', '054']);
-  playerTwo.salads = findCardsByIds(session.scoringCatalog, ['096', '106', '000', '080']);
+  playerTwo.salads = findPrototypeShowcaseCards(session.scoringCatalog);
 
   session.logs.push('Prototype scoring preview seeded');
 }

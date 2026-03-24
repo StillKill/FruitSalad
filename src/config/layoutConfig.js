@@ -15,7 +15,7 @@ export const layoutConfig = {
     saladCard: 0x5f6ccf
   },
   regions: {
-    market: { x: 36, y: 36, width: 700, height: 828 },
+    market: { x: 36, y: 54, width: 700, height: 810 },
     player: { x: 760, y: 168, width: 804, height: 520 },
     controls: { x: 760, y: 36, width: 804, height: 112 },
     scoreTabs: { x: 760, y: 694, width: 804, height: 72 },

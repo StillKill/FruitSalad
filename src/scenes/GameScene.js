@@ -135,9 +135,9 @@ export class GameScene extends Phaser.Scene {
     drawPanel(this, regions.scoreTabs, palette.panelAlt);
     drawPanel(this, regions.debug, palette.panelAlt);
 
-    this.add.text(48, 18, 'Fruit Salad Prototype', {
+    this.add.text(30, 10, 'Fruit Salad Prototype', {
       fontFamily: '"Trebuchet MS", sans-serif',
-      fontSize: '26px',
+      fontSize: '22px',
       color: palette.textPrimary,
       fontStyle: 'bold'
     });
@@ -145,7 +145,7 @@ export class GameScene extends Phaser.Scene {
 
   drawControls() {
     const { palette, regions } = layoutConfig;
-    const buttonY = regions.controls.y + 18;
+    const buttonY = regions.controls.y + 14;
     const activePlayer = this.session.players[this.session.activePlayerIndex];
     const leader = this.session.scorePreview?.[0] ?? null;
     const title = this.session.stateMachine.state === 'end_game'
@@ -155,16 +155,16 @@ export class GameScene extends Phaser.Scene {
 
     this.track(this.add.text(regions.controls.x + 24, buttonY, title, {
       fontFamily: '"Trebuchet MS", sans-serif',
-      fontSize: '24px',
+      fontSize: '22px',
       color: palette.textPrimary,
       fontStyle: 'bold'
     }));
 
     this.drawActionButton(
       regions.controls.x + 458,
-      buttonY - 4,
+      buttonY - 2,
       136,
-      44,
+      42,
       palette.accent,
       'Confirm',
       canConfirmSelection(this.session),
@@ -177,9 +177,9 @@ export class GameScene extends Phaser.Scene {
 
     this.drawActionButton(
       regions.controls.x + 620,
-      buttonY - 4,
+      buttonY - 2,
       136,
-      44,
+      42,
       palette.warning,
       'Reset',
       this.session.pendingSelection.length > 0 && this.session.stateMachine.state !== 'end_game',
@@ -191,13 +191,25 @@ export class GameScene extends Phaser.Scene {
 
     this.track(this.add.text(
       regions.controls.x + 24,
-      regions.controls.y + 74,
-      `${getTurnHint(this.session)} Leader: ${leaderText}`,
+      regions.controls.y + 58,
+      getTurnHint(this.session),
       {
         fontFamily: '"Trebuchet MS", sans-serif',
-        fontSize: '17px',
+        fontSize: '14px',
         color: palette.textMuted,
         wordWrap: { width: 720 }
+      }
+    ));
+
+    this.track(this.add.text(
+      regions.controls.x + 24,
+      regions.controls.y + 86,
+      `Leader: ${leaderText}`,
+      {
+        fontFamily: '"Trebuchet MS", sans-serif',
+        fontSize: '14px',
+        color: palette.textMuted,
+        fontStyle: 'bold'
       }
     ));
   }
@@ -231,31 +243,31 @@ export class GameScene extends Phaser.Scene {
   drawMarket() {
     const { card, palette, regions } = layoutConfig;
     const deckX = regions.market.x + 24;
-    const deckY = regions.market.y + 30;
+    const deckY = regions.market.y + 26;
 
-    this.track(this.add.text(deckX, deckY - 8, 'Decks & Market', {
+    this.track(this.add.text(deckX, deckY - 6, 'Decks & Market', {
       fontFamily: '"Trebuchet MS", sans-serif',
-      fontSize: '24px',
+      fontSize: '22px',
       color: palette.textPrimary,
       fontStyle: 'bold'
     }));
 
     this.session.decks.forEach((deck, index) => {
       const columnX = deckX + index * 220;
-      const titleY = deckY + 32;
+      const titleY = deckY + 30;
       const topSalad = deck.cards[0] ?? null;
       const deckSelected = topSalad ? this.isDeckSelected(deck.id, topSalad.runtimeId) : false;
       const deckEnabled = topSalad && this.canInteractWithDeck(deck.id);
 
       this.track(this.add.text(columnX, titleY, `${deck.id} (${deck.cards.length} salads left)`, {
         fontFamily: '"Trebuchet MS", sans-serif',
-        fontSize: '18px',
+        fontSize: '17px',
         color: palette.textMuted
       }));
 
       const deckVisual = topSalad
-        ? drawSaladCard(this, columnX, titleY + 26, card.width, card.height, topSalad)
-        : drawCardPlaceholder(this, columnX, titleY + 26, card.width, card.height, palette.deckBack, 'Deck empty');
+        ? drawSaladCard(this, columnX, titleY + 24, card.width, card.height, topSalad)
+        : drawCardPlaceholder(this, columnX, titleY + 24, card.width, card.height, palette.deckBack, 'Deck empty');
       this.track(deckVisual);
 
       if (!deckEnabled && topSalad) {
@@ -263,11 +275,11 @@ export class GameScene extends Phaser.Scene {
       }
 
       if (deckSelected) {
-        this.drawSelectionOutline(columnX, titleY + 26, card.width, card.height, 0x7ed957);
+        this.drawSelectionOutline(columnX, titleY + 24, card.width, card.height, 0x7ed957);
       }
 
       if (deckEnabled) {
-        this.addClickZone(columnX, titleY + 26, card.width, card.height, () => {
+        this.addClickZone(columnX, titleY + 24, card.width, card.height, () => {
           if (selectDeckCard(this.session, deck.id)) {
             this.renderDynamicUi();
           }
@@ -275,7 +287,7 @@ export class GameScene extends Phaser.Scene {
       }
 
       deck.market.forEach((marketCard, marketIndex) => {
-        const slotY = titleY + 226 + marketIndex * (card.height + 16);
+        const slotY = titleY + 220 + marketIndex * (card.height + 16);
         const selected = this.isMarketSelected(deck.id, marketCard.id);
         const marketEnabled = this.canInteractWithMarketCard(deck.id, marketCard.id);
         const fruitCard = drawFruitCard(this, columnX, slotY, card.width, card.height, marketCard.fruit);
@@ -359,24 +371,24 @@ export class GameScene extends Phaser.Scene {
 
     this.session.players.forEach((player, index) => {
       const x = regions.scoreTabs.x + 18 + index * 132;
-      const y = regions.scoreTabs.y + 12;
+      const y = regions.scoreTabs.y + 10;
       const isActive = index === this.session.activePlayerIndex;
       const fill = isActive ? palette.accent : 0x343a44;
       const pill = this.track(this.add.graphics());
 
       pill.fillStyle(fill, 1);
-      pill.fillRoundedRect(x, y, 118, 44, 12);
+      pill.fillRoundedRect(x, y, 118, 38, 12);
 
-      this.track(this.add.text(x + 12, y + 8, player.name, {
+      this.track(this.add.text(x + 12, y + 7, player.name, {
         fontFamily: '"Trebuchet MS", sans-serif',
         fontSize: '16px',
         color: isActive ? '#111315' : palette.textPrimary,
         fontStyle: 'bold'
       }));
 
-      this.track(this.add.text(x + 12, y + 52, `Preview: ${player.score}`, {
+      this.track(this.add.text(x + 12, y + 44, `Preview: ${player.score}`, {
         fontFamily: '"Trebuchet MS", sans-serif',
-        fontSize: '13px',
+        fontSize: '12px',
         color: palette.textMuted
       }));
     });
