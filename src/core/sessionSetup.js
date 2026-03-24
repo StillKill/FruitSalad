@@ -1,6 +1,37 @@
 import { TurnStateMachine } from './stateMachine.js';
 import { expandCardTemplates } from '../data/cardCatalog.js';
 
+function createMarketFruitCard(card) {
+  return {
+    id: `${card.runtimeId ?? card.id}::fruit`,
+    kind: 'fruit',
+    fruit: card.backFruit,
+    sourceCardId: card.id,
+    sourceRuntimeId: card.runtimeId ?? card.id,
+    sourceCard: card
+  };
+}
+
+export function refillDeckMarket(deck, slotsPerDeck, logs = []) {
+  const filledSlots = [];
+
+  while (deck.market.length < slotsPerDeck && deck.cards.length > 0) {
+    const drawnCard = deck.cards.shift();
+    const fruitCard = createMarketFruitCard(drawnCard);
+
+    deck.market.push(fruitCard);
+    filledSlots.push(fruitCard.fruit);
+  }
+
+  if (filledSlots.length > 0) {
+    logs.push(`${deck.id} refilled market with ${filledSlots.join(', ')}`);
+  }
+
+  if (deck.market.length < slotsPerDeck && deck.cards.length === 0) {
+    logs.push(`${deck.id} cannot fully refill market`);
+  }
+}
+
 function splitIntoDecks(cards, count) {
   const decks = Array.from({ length: count }, (_, index) => ({
     id: `deck-${index + 1}`,
@@ -10,10 +41,6 @@ function splitIntoDecks(cards, count) {
 
   cards.forEach((card, index) => {
     decks[index % count].cards.push(card);
-  });
-
-  decks.forEach((deck) => {
-    deck.market = deck.cards.splice(0, 2);
   });
 
   return decks;
@@ -78,6 +105,7 @@ export function buildSession(options, sessionRules, scoringCatalog) {
   const decks = splitIntoDecks(playableDeck, sessionRules.deckCount);
   const players = createPlayers(options, scoringCatalog.fruits);
   const stateMachine = new TurnStateMachine('setup');
+  const logs = ['Session created', `Selected cards: ${selectedCardCount}`];
 
   const session = {
     options,
@@ -90,8 +118,12 @@ export function buildSession(options, sessionRules, scoringCatalog) {
     activePlayerIndex: 0,
     viewedPlayerIndex: 0,
     pendingSelection: [],
-    logs: ['Session created', `Selected cards: ${selectedCardCount}`]
+    logs
   };
+
+  decks.forEach((deck) => {
+    refillDeckMarket(deck, sessionRules.marketSlotsPerDeck, logs);
+  });
 
   seedPrototypeProgress(session);
   stateMachine.transition('turn');

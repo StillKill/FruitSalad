@@ -6,3 +6,7 @@
 - Verification: re-read the updated markdown structure and checked that the new workflow rules are consistent with the current project layout.
 - Refined the persistent rules in `project.md`: removed mandatory approval for `project.md` and `skills` edits, and compressed the wording without losing the workflow intent.
 - Verification: reviewed the final rules block and confirmed that commit, validation, language, and planning requirements are still explicit.
+- Added a PowerShell fallback rule to `project.md` for creating new files when `apply_patch` rejects them.
+- Implemented fruit-card rendering and salad-card overlays with fruit icons, and changed deck setup so market slots are filled by flipping the top salad cards into their `backFruit` side.
+- Added session tests for market refill and a shared test runner in `package.json`.
+- Verification: `node tests/run-tests.js`; `node --check src/scenes/GameScene.js`; `node --check src/ui/cardRenderer.js`; `node --check src/core/sessionSetup.js`.

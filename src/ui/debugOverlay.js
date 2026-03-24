@@ -2,7 +2,10 @@ export function buildDebugSnapshot(session) {
   const activePlayer = session.players[session.activePlayerIndex];
   const viewedPlayer = session.players[session.viewedPlayerIndex];
   const deckSummary = session.decks
-    .map((deck) => `${deck.id}:${deck.cards.length}/${deck.market.length}`)
+    .map((deck) => {
+      const marketFruits = deck.market.map((card) => card.fruit).join(',');
+      return `${deck.id}:${deck.cards.length}/${deck.market.length}[${marketFruits}]`;
+    })
     .join(' | ');
   const previewLeader = session.scorePreview?.[0] ?? null;
 

@@ -3,6 +3,7 @@ import { layoutConfig } from '../config/layoutConfig.js';
 import { defaultSessionOptions } from '../config/sessionDefaults.js';
 import { buildSession } from '../core/sessionSetup.js';
 import { drawPanel, drawCardPlaceholder } from '../ui/boardLayout.js';
+import { preloadCardTextures, drawFruitCard, drawFruitCounter, drawSaladCard } from '../ui/cardRenderer.js';
 import { buildDebugSnapshot } from '../ui/debugOverlay.js';
 import { scoreTable } from '../core/scoring/scoringEngine.js';
 
@@ -17,6 +18,7 @@ export class GameScene extends Phaser.Scene {
     this.load.json('scoringCards', 'data/cards/scoring-cards.json');
     this.load.json('debugFields', 'data/debug/debug-overlay-fields.json');
     this.load.image('layoutReference', 'assets/layout/fruit-salad-layout.png');
+    preloadCardTextures(this);
   }
 
   create() {
@@ -93,7 +95,7 @@ export class GameScene extends Phaser.Scene {
     this.add.text(
       regions.controls.x + 24,
       regions.controls.y + 74,
-      `Tip: prototype preview loaded. Current scoring leader: ${leader.playerName} (${leader.totalPoints})`,
+      `Tip: market refills by flipping the next salad into a fruit card. Leader: ${leader.playerName} (${leader.totalPoints})`,
       {
         fontFamily: '"Trebuchet MS", sans-serif',
         fontSize: '18px',
@@ -130,26 +132,23 @@ export class GameScene extends Phaser.Scene {
     this.session.decks.forEach((deck, index) => {
       const columnX = deckX + index * 220;
       const titleY = deckY + 32;
+      const topSalad = deck.cards[0] ?? null;
 
-      this.add.text(columnX, titleY, `${deck.id} (${deck.cards.length} left)`, {
+      this.add.text(columnX, titleY, `${deck.id} (${deck.cards.length} salads left)`, {
         fontFamily: '"Trebuchet MS", sans-serif',
         fontSize: '18px',
         color: palette.textMuted
       });
 
-      drawCardPlaceholder(this, columnX, titleY + 26, card.width, card.height, palette.deckBack, 'Scoring deck');
+      if (topSalad) {
+        drawSaladCard(this, columnX, titleY + 26, card.width, card.height, topSalad);
+      } else {
+        drawCardPlaceholder(this, columnX, titleY + 26, card.width, card.height, palette.deckBack, 'Deck empty');
+      }
 
       deck.market.forEach((marketCard, marketIndex) => {
         const slotY = titleY + 226 + marketIndex * (card.height + 16);
-        drawCardPlaceholder(
-          this,
-          columnX,
-          slotY,
-          card.width,
-          card.height,
-          palette.marketCard,
-          `#${marketCard.id} ${marketCard.ruleType}\nback: ${marketCard.backFruit}`
-        );
+        drawFruitCard(this, columnX, slotY, card.width, card.height, marketCard.fruit);
       });
     });
   }
@@ -169,23 +168,7 @@ export class GameScene extends Phaser.Scene {
     fruits.forEach(([fruit, count], index) => {
       const x = regions.player.x + 24 + index * 124;
       const y = regions.player.y + 72;
-      const icon = this.add.graphics();
-
-      icon.fillStyle(0x2a3038, 1);
-      icon.fillCircle(x + 30, y + 30, 28);
-
-      this.add.text(x, y + 70, fruit.toUpperCase(), {
-        fontFamily: '"Trebuchet MS", sans-serif',
-        fontSize: '14px',
-        color: palette.textMuted
-      });
-
-      this.add.text(x + 28, y + 30, String(count), {
-        fontFamily: '"Trebuchet MS", sans-serif',
-        fontSize: '22px',
-        color: palette.textPrimary,
-        fontStyle: 'bold'
-      }).setOrigin(0.5);
+      drawFruitCounter(this, x, y, fruit, count);
     });
 
     this.add.text(regions.player.x + 24, regions.player.y + 196, 'Salad cards', {
@@ -195,14 +178,13 @@ export class GameScene extends Phaser.Scene {
     });
 
     activePlayer.salads.slice(0, 4).forEach((cardData, index) => {
-      drawCardPlaceholder(
+      drawSaladCard(
         this,
         regions.player.x + 24 + index * 150,
         regions.player.y + 226,
         132,
         182,
-        palette.saladCard,
-        `#${cardData.id}\n${cardData.ruleType}`
+        cardData
       );
     });
   }
