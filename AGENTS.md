@@ -8,6 +8,7 @@
 - After each completed logical task, run appropriate verification: tests, targeted checks, or manual validation if automated coverage is insufficient.
 - Record each completed logical task in `changes.md` with a short note about what changed and how it was verified.
 - Commit each completed logical task as a separate git commit.
+- If a task changes architecture, system behavior, workflow, project structure, or other long-lived project assumptions, update `project.md` to keep the project description in sync.
 - Add useful deferred follow-up work to the `План` section at the end of `project.md`.
 
 ## Project Files

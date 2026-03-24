@@ -1,6 +1,8 @@
 ﻿# Changes Log
 
 ## 2026-03-24
+- Updated `AGENTS.md` to require syncing `project.md` whenever a task changes architecture, long-lived behavior, workflow, or project structure.
+- Verification: reviewed `AGENTS.md` and confirmed the new rule is explicit and consistent with the repository workflow section.
 - Fixed session setup shuffling: the selected card pool is now shuffled by seed before being split into decks, so the initial market no longer mirrors the catalog order.
 - Stored the runtime seed in session options/logs and covered the setup with deterministic seed-based tests on both fixture decks and the full scoring catalog.
 - Verification: `node tests/run-tests.js`; `node --check src/data/cardCatalog.js`; `node --check src/core/sessionSetup.js`; `node --check src/config/sessionDefaults.js`; `node --check src/scenes/GameScene.js`.
