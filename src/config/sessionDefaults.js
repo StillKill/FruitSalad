@@ -19,7 +19,8 @@ export function normalizeSessionOptions(options = {}) {
     playerCount,
     playerNames,
     liveScoring: options.liveScoring === true,
-    seedDemoProgress: options.seedDemoProgress === true
+    seedDemoProgress: options.seedDemoProgress === true,
+    randomSeed: Number.isInteger(options.randomSeed) ? options.randomSeed : null
   };
 }
 
@@ -27,5 +28,6 @@ export const defaultSessionOptions = normalizeSessionOptions({
   playerCount: MIN_PLAYER_COUNT,
   playerNames: buildDefaultPlayerNames(MIN_PLAYER_COUNT),
   liveScoring: false,
-  seedDemoProgress: false
+  seedDemoProgress: false,
+  randomSeed: null
 });

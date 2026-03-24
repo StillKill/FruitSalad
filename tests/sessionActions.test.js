@@ -58,7 +58,8 @@ function makeSession() {
   const options = {
     playerCount: 2,
     playerNames: ['A', 'B'],
-    liveScoring: false
+    liveScoring: false,
+    randomSeed: 11
   };
 
   const session = buildSession(options, sessionRules, scoringCatalog);
@@ -83,19 +84,21 @@ test('market selection requires exactly two fruit cards before confirm', () => {
 
   assert.equal(selectMarketCard(session, 'deck-2', secondCard.id), true);
   assert.equal(canConfirmSelection(session), true);
-  assert.equal(getPendingSelectionSummary(session), 'deck-1:kiwi, deck-2:orange');
+  assert.equal(getPendingSelectionSummary(session), `deck-1:${firstCard.fruit}, deck-2:${secondCard.fruit}`);
 });
 
 test('confirmSelection applies market fruits, refills slots, and advances the active player', () => {
   const session = makeSession();
   const [firstDeck, secondDeck] = session.decks;
+  const firstFruit = firstDeck.market[0].fruit;
+  const secondFruit = secondDeck.market[0].fruit;
 
   selectMarketCard(session, firstDeck.id, firstDeck.market[0].id);
   selectMarketCard(session, secondDeck.id, secondDeck.market[0].id);
 
   assert.equal(confirmSelection(session), true);
-  assert.equal(session.players[0].fruitCounts.kiwi, 1);
-  assert.equal(session.players[0].fruitCounts.orange, 1);
+  assert.equal(session.players[0].fruitCounts[firstFruit], 1);
+  assert.equal(session.players[0].fruitCounts[secondFruit], 1);
   assert.equal(session.activePlayerIndex, 1);
   assert.equal(session.turnNumber, 2);
   assert.equal(session.stateMachine.state, 'turn');

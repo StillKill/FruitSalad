@@ -14,47 +14,18 @@ const scoringCatalog = JSON.parse(readFileSync(new URL('../data/cards/scoring-ca
 const sessionRules = JSON.parse(readFileSync(new URL('../data/sessions/session-rules.json', import.meta.url), 'utf8'));
 const seeds = [1, 7, 19, 42, 99];
 
-function mulberry32(seed) {
-  let state = seed >>> 0;
-  return () => {
-    state += 0x6D2B79F5;
-    let value = state;
-    value = Math.imul(value ^ (value >>> 15), value | 1);
-    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
-    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function shuffleCards(cards, seed) {
-  const random = mulberry32(seed);
-  const shuffled = [...cards];
-
-  for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(random() * (index + 1));
-    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
-  }
-
-  return shuffled;
-}
-
-function makeCatalog(seed) {
-  return {
-    ...scoringCatalog,
-    cards: shuffleCards(scoringCatalog.cards, seed)
-  };
-}
-
 function totalFruitCount(player) {
   return Object.values(player.fruitCounts).reduce((sum, count) => sum + count, 0);
 }
 
-test('buildSession stays valid across full-catalog shuffled seeds', () => {
+test('buildSession stays valid across full-catalog runtime seeds', () => {
   for (const seed of seeds) {
     for (const playerCount of [2, 4, 6]) {
       const session = buildSession({
         playerCount,
-        playerNames: Array.from({ length: playerCount }, (_, index) => `P${index + 1}`)
-      }, sessionRules, makeCatalog(seed));
+        playerNames: Array.from({ length: playerCount }, (_, index) => `P${index + 1}`),
+        randomSeed: seed
+      }, sessionRules, scoringCatalog);
 
       const selectedCardCount = sessionRules.playerCardPoolByCount[String(playerCount)].selectedCards;
       const allRuntimeIds = session.decks.flatMap((deck) => [
@@ -69,16 +40,28 @@ test('buildSession stays valid across full-catalog shuffled seeds', () => {
       assert.ok(session.decks.every((deck) => deck.market.length <= sessionRules.marketSlotsPerDeck), `seed ${seed} market slots limited`);
       assert.ok(session.players.every((player) => totalFruitCount(player) === 0 && player.salads.length === 0), `seed ${seed} starts clean`);
       assert.equal(session.stateMachine.state, 'turn', `seed ${seed} turn state`);
+      assert.equal(session.options.randomSeed, seed, `seed ${seed} stored`);
     }
   }
 });
 
-test('market confirmations stay consistent across full-catalog shuffled seeds', () => {
+test('runtime seed changes the initial market composition for the full catalog', () => {
+  const sessionA = buildSession({ playerCount: 2, playerNames: ['A', 'B'], randomSeed: 1 }, sessionRules, scoringCatalog);
+  const sessionB = buildSession({ playerCount: 2, playerNames: ['A', 'B'], randomSeed: 99 }, sessionRules, scoringCatalog);
+
+  const marketA = sessionA.decks.flatMap((deck) => deck.market.map((card) => card.fruit));
+  const marketB = sessionB.decks.flatMap((deck) => deck.market.map((card) => card.fruit));
+
+  assert.notDeepEqual(marketA, marketB);
+});
+
+test('market confirmations stay consistent across full-catalog runtime seeds', () => {
   for (const seed of seeds) {
     const session = buildSession({
       playerCount: 2,
-      playerNames: ['A', 'B']
-    }, sessionRules, makeCatalog(seed));
+      playerNames: ['A', 'B'],
+      randomSeed: seed
+    }, sessionRules, scoringCatalog);
 
     const player = session.players[0];
     const firstDeck = session.decks.find((deck) => deck.market.length > 0);
@@ -97,12 +80,13 @@ test('market confirmations stay consistent across full-catalog shuffled seeds', 
   }
 });
 
-test('deck confirmations stay consistent across full-catalog shuffled seeds', () => {
+test('deck confirmations stay consistent across full-catalog runtime seeds', () => {
   for (const seed of seeds) {
     const session = buildSession({
       playerCount: 2,
-      playerNames: ['A', 'B']
-    }, sessionRules, makeCatalog(seed));
+      playerNames: ['A', 'B'],
+      randomSeed: seed
+    }, sessionRules, scoringCatalog);
 
     const player = session.players[0];
     const targetDeck = session.decks.find((deck) => deck.cards.length > 0);

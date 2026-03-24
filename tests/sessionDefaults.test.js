@@ -18,13 +18,15 @@ test('normalizeSessionOptions clamps player count and fills missing names', () =
     playerCount: 9,
     playerNames: ['Ana', '  ', null, 'Drew'],
     liveScoring: true,
-    seedDemoProgress: false
+    seedDemoProgress: false,
+    randomSeed: 77
   });
 
   assert.equal(result.playerCount, MAX_PLAYER_COUNT);
   assert.deepEqual(result.playerNames, ['Ana', 'Player 2', 'Player 3', 'Drew', 'Player 5', 'Player 6']);
   assert.equal(result.liveScoring, true);
   assert.equal(result.seedDemoProgress, false);
+  assert.equal(result.randomSeed, 77);
 });
 
 test('normalizeSessionOptions enforces minimum player count and default options', () => {
@@ -34,10 +36,12 @@ test('normalizeSessionOptions enforces minimum player count and default options'
   assert.deepEqual(result.playerNames, ['Solo', 'Player 2']);
   assert.equal(result.liveScoring, false);
   assert.equal(result.seedDemoProgress, false);
+  assert.equal(result.randomSeed, null);
 });
 
 test('defaultSessionOptions starts with a clean two-player setup', () => {
   assert.equal(defaultSessionOptions.playerCount, 2);
   assert.deepEqual(defaultSessionOptions.playerNames, ['Player 1', 'Player 2']);
   assert.equal(defaultSessionOptions.seedDemoProgress, false);
+  assert.equal(defaultSessionOptions.randomSeed, null);
 });

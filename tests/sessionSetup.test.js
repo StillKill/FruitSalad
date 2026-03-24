@@ -23,7 +23,7 @@ function makeSeededCatalog() {
   };
 }
 
-test('buildSession fills market by flipping the top salad cards into fruit cards', () => {
+test('buildSession fills market by flipping top salad cards after seeded shuffle', () => {
   const scoringCatalog = {
     fruits,
     cards: [
@@ -46,20 +46,17 @@ test('buildSession fills market by flipping the top salad cards into fruit cards
       '2': { selectedCards: 9 }
     }
   };
-  const options = {
-    playerCount: 2,
-    playerNames: ['A', 'B'],
-    liveScoring: false
-  };
 
-  const session = buildSession(options, sessionRules, scoringCatalog);
+  const firstSession = buildSession({ playerCount: 2, playerNames: ['A', 'B'], randomSeed: 17 }, sessionRules, scoringCatalog);
+  const secondSession = buildSession({ playerCount: 2, playerNames: ['A', 'B'], randomSeed: 17 }, sessionRules, scoringCatalog);
 
-  assert.deepEqual(session.decks[0].market.map((card) => card.fruit), ['kiwi', 'banana']);
-  assert.deepEqual(session.decks[1].market.map((card) => card.fruit), ['orange', 'lime']);
-  assert.deepEqual(session.decks[2].market.map((card) => card.fruit), ['apple', 'mango']);
-  assert.equal(session.decks[0].cards[0].backFruit, 'kiwi');
-  assert.equal(session.decks[1].cards[0].backFruit, 'orange');
-  assert.equal(session.decks[2].cards[0].backFruit, 'apple');
+  assert.deepEqual(
+    firstSession.decks.map((deck) => deck.market.map((card) => card.fruit)),
+    secondSession.decks.map((deck) => deck.market.map((card) => card.fruit))
+  );
+  assert.equal(firstSession.decks.reduce((sum, deck) => sum + deck.market.length + deck.cards.length, 0), 9);
+  assert.ok(firstSession.decks.every((deck) => deck.market.length === 2));
+  assert.ok(new Set(firstSession.decks.flatMap((deck) => deck.market.map((card) => card.sourceRuntimeId))).size === 6);
 });
 
 test('buildSession starts with empty player progress unless demo seeding is enabled', () => {
@@ -73,7 +70,7 @@ test('buildSession starts with empty player progress unless demo seeding is enab
     }
   };
 
-  const cleanSession = buildSession({ playerCount: 2, playerNames: ['A', 'B'] }, sessionRules, scoringCatalog);
+  const cleanSession = buildSession({ playerCount: 2, playerNames: ['A', 'B'], randomSeed: 22 }, sessionRules, scoringCatalog);
 
   assert.deepEqual(cleanSession.players[0].fruitCounts, {
     kiwi: 0,
@@ -86,7 +83,7 @@ test('buildSession starts with empty player progress unless demo seeding is enab
   assert.equal(cleanSession.players[0].salads.length, 0);
   assert.equal(cleanSession.players[1].salads.length, 0);
 
-  const seededSession = buildSession({ playerCount: 2, playerNames: ['A', 'B'], seedDemoProgress: true }, sessionRules, scoringCatalog);
+  const seededSession = buildSession({ playerCount: 2, playerNames: ['A', 'B'], seedDemoProgress: true, randomSeed: 22 }, sessionRules, scoringCatalog);
 
   assert.notDeepEqual(seededSession.players[0].fruitCounts, cleanSession.players[0].fruitCounts);
   assert.ok(seededSession.players[0].salads.length > 0);
