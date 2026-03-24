@@ -15,3 +15,5 @@
 - Verification: `node tests/run-tests.js`; `node --check src/scenes/GameScene.js`; `node --check src/core/sessionActions.js`; `node --check src/ui/debugOverlay.js`; `node --check src/ui/boardLayout.js`.
 - Removed the reference layout image from the scene, compacted debug overlay lines to stay inside the frame, and changed the player salad area to render all current salads in a compact grid.
 - Verification: `node tests/run-tests.js`; `node --check src/scenes/GameScene.js`; `node --check src/ui/debugOverlay.js`.
+- Added a generated fruit-basket icon, switched all-6-fruit scoring cards to use it, made salad cards larger again, added wheel-scrollable salad/debug panels, and changed `per-fruit-multi` cards to a vertical icon-plus-points layout.
+- Verification: `node tests/run-tests.js`; `node --check src/scenes/GameScene.js`; `node --check src/ui/cardRenderer.js`.

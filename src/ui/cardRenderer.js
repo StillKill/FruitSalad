@@ -23,8 +23,17 @@ function scoreLabel(value) {
   return value >= 0 ? `+${value}` : `${value}`;
 }
 
+function usesAllFruitKinds(distinctFruits) {
+  return distinctFruits.length === FRUIT_TYPES.length;
+}
+
+function makeBasketIcon() {
+  return [{ special: 'basket' }];
+}
+
 function getSaladDescriptor(card) {
   const distinctFruits = [...new Set(card.saladFruits ?? [])];
+  const allKinds = usesAllFruitKinds(distinctFruits);
 
   switch (card.ruleType) {
     case 'compare-majority':
@@ -43,13 +52,13 @@ function getSaladDescriptor(card) {
       return {
         title: 'Most fruit',
         subtitle: `${scoreLabel(card.scoring.points)}`,
-        icons: []
+        icons: makeBasketIcon()
       };
     case 'compare-poverty':
       return {
         title: 'Least fruit',
         subtitle: `${scoreLabel(card.scoring.points)}`,
-        icons: []
+        icons: makeBasketIcon()
       };
     case 'parity-fruit':
       return {
@@ -61,13 +70,13 @@ function getSaladDescriptor(card) {
       return {
         title: `${card.scoring.threshold}+ each kind`,
         subtitle: `${scoreLabel(card.scoring.pointsPerQualifiedKind)} each`,
-        icons: FRUIT_TYPES.map((fruit) => ({ fruit }))
+        icons: allKinds ? makeBasketIcon() : distinctFruits.map((fruit) => ({ fruit }))
       };
     case 'missing-kind':
       return {
         title: 'Missing kind',
         subtitle: `${scoreLabel(card.scoring.pointsPerMissingKind)} each`,
-        icons: FRUIT_TYPES.map((fruit) => ({ fruit }))
+        icons: allKinds ? makeBasketIcon() : distinctFruits.map((fruit) => ({ fruit }))
       };
     case 'set-same-kind':
       return {
@@ -79,7 +88,7 @@ function getSaladDescriptor(card) {
       return {
         title: `${card.scoring.setSize} kinds`,
         subtitle: `${scoreLabel(card.scoring.pointsPerSet)}`,
-        icons: distinctFruits.slice(0, card.scoring.setSize).map((fruit) => ({ fruit }))
+        icons: allKinds ? makeBasketIcon() : distinctFruits.slice(0, card.scoring.setSize).map((fruit) => ({ fruit }))
       };
     case 'per-fruit-flat':
       return {
@@ -89,8 +98,11 @@ function getSaladDescriptor(card) {
       };
     case 'per-fruit-multi':
       return {
-        title: 'Per fruit',
-        subtitle: 'Match icons',
+        title: '',
+        subtitle: '',
+        hideTitle: true,
+        hideSubtitle: true,
+        layout: 'vertical-list',
         icons: (card.saladFruits ?? []).map((fruit, index) => ({
           fruit,
           label: scoreLabel(card.scoring.points[index] ?? 0)
@@ -105,8 +117,54 @@ function getSaladDescriptor(card) {
   }
 }
 
+function getDescriptorIconTexture(iconData) {
+  if (iconData.special === 'basket') {
+    return 'icon_fruit_basket';
+  }
+
+  return getFruitIconTexture(iconData.fruit);
+}
+
+function addVerticalList(scene, container, descriptor, width, height) {
+  const iconSize = Math.max(22, Math.floor(width * 0.16));
+  const rowHeight = iconSize + 6;
+  const totalHeight = descriptor.icons.length * rowHeight;
+  const startY = height * 0.36 - totalHeight / 2 + rowHeight / 2;
+  const iconX = width * 0.38;
+  const labelX = width * 0.64;
+
+  descriptor.icons.forEach((iconData, index) => {
+    const y = startY + index * rowHeight;
+    const icon = scene.add.image(iconX, y, getDescriptorIconTexture(iconData));
+    icon.setDisplaySize(iconSize, iconSize);
+    container.add(icon);
+
+    const label = scene.add.text(labelX, y, iconData.label ?? '', {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: `${Math.max(14, Math.round(width * 0.09))}px`,
+      color: '#111315',
+      fontStyle: 'bold'
+    }).setOrigin(0, 0.5);
+    container.add(label);
+  });
+}
+
 function addDescriptorIcons(scene, container, descriptor, width, height) {
   if (!descriptor.icons.length) {
+    return;
+  }
+
+  if (descriptor.layout === 'vertical-list') {
+    addVerticalList(scene, container, descriptor, width, height);
+    return;
+  }
+
+  const hasSingleBasket = descriptor.icons.length === 1 && descriptor.icons[0].special === 'basket';
+  if (hasSingleBasket) {
+    const basket = scene.add.image(width / 2, height * 0.57, getDescriptorIconTexture(descriptor.icons[0]));
+    const basketSize = Math.max(36, Math.floor(width * 0.3));
+    basket.setDisplaySize(basketSize, basketSize);
+    container.add(basket);
     return;
   }
 
@@ -125,7 +183,7 @@ function addDescriptorIcons(scene, container, descriptor, width, height) {
     const iconX = width / 2 - totalWidth / 2 + column * cellWidth;
     const iconY = startY + row * rowGap;
 
-    const icon = scene.add.image(iconX, iconY, getFruitIconTexture(iconData.fruit));
+    const icon = scene.add.image(iconX, iconY, getDescriptorIconTexture(iconData));
     icon.setDisplaySize(iconSize, iconSize);
     container.add(icon);
 
@@ -147,6 +205,8 @@ export function preloadCardTextures(scene) {
     scene.load.image(getFruitIconTexture(fruit), `assets/ui/icon_fruit_${fruit}.png`);
     scene.load.image(`card_salad_${fruit}`, `assets/cards/salads/card_salad_${fruit}.png`);
   });
+
+  scene.load.image('icon_fruit_basket', 'assets/ui/icon_fruit_basket.png');
 }
 
 export function drawFruitCard(scene, x, y, width, height, fruit) {
@@ -167,25 +227,30 @@ export function drawSaladCard(scene, x, y, width, height, card) {
   container.add(image);
   addCardFrame(scene, container, width, height);
 
-  const title = scene.add.text(width / 2, height * 0.34, descriptor.title, {
-    fontFamily: '"Trebuchet MS", sans-serif',
-    fontSize: `${Math.max(13, Math.round(width * 0.1))}px`,
-    color: '#111315',
-    fontStyle: 'bold',
-    align: 'center',
-    wordWrap: { width: width * 0.5 }
-  }).setOrigin(0.5);
-  container.add(title);
+  if (!descriptor.hideTitle) {
+    const title = scene.add.text(width / 2, height * 0.33, descriptor.title, {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: `${Math.max(13, Math.round(width * 0.095))}px`,
+      color: '#111315',
+      fontStyle: 'bold',
+      align: 'center',
+      wordWrap: { width: width * 0.54 }
+    }).setOrigin(0.5);
+    container.add(title);
+  }
 
-  const subtitle = scene.add.text(width / 2, height * 0.43, descriptor.subtitle, {
-    fontFamily: '"Trebuchet MS", sans-serif',
-    fontSize: `${Math.max(11, Math.round(width * 0.085))}px`,
-    color: '#2a3038',
-    fontStyle: 'bold',
-    align: 'center',
-    wordWrap: { width: width * 0.52 }
-  }).setOrigin(0.5);
-  container.add(subtitle);
+  if (!descriptor.hideSubtitle) {
+    const subtitleY = descriptor.hideTitle ? height * 0.38 : height * 0.43;
+    const subtitle = scene.add.text(width / 2, subtitleY, descriptor.subtitle, {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: `${Math.max(11, Math.round(width * 0.082))}px`,
+      color: '#2a3038',
+      fontStyle: 'bold',
+      align: 'center',
+      wordWrap: { width: width * 0.56 }
+    }).setOrigin(0.5);
+    container.add(subtitle);
+  }
 
   addDescriptorIcons(scene, container, descriptor, width, height);
   return container;

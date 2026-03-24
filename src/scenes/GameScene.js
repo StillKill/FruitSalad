@@ -20,6 +20,11 @@ export class GameScene extends Phaser.Scene {
     super('GameScene');
     this.session = null;
     this.dynamicObjects = [];
+    this.scrollState = {
+      salads: 0,
+      debug: 0
+    };
+    this.scrollMeta = {};
   }
 
   preload() {
@@ -34,6 +39,8 @@ export class GameScene extends Phaser.Scene {
 
     this.session = buildSession(defaultSessionOptions, sessionRules, scoringCards);
     this.applyScoringPreview();
+
+    this.input.on('wheel', this.handleWheel, this);
 
     this.drawBackground();
     this.drawShell();
@@ -54,9 +61,52 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  handleWheel(pointer, currentlyOver, deltaX, deltaY) {
+    const delta = Math.sign(deltaY) * 36;
+
+    if (delta === 0) {
+      return;
+    }
+
+    if (this.updateScrollFromPointer('salads', pointer, delta)) {
+      this.renderDynamicUi();
+      return;
+    }
+
+    if (this.updateScrollFromPointer('debug', pointer, delta)) {
+      this.renderDynamicUi();
+    }
+  }
+
+  updateScrollFromPointer(key, pointer, delta) {
+    const meta = this.scrollMeta[key];
+    if (!meta || meta.maxScroll <= 0) {
+      return false;
+    }
+
+    const insideViewport =
+      pointer.x >= meta.viewport.x &&
+      pointer.x <= meta.viewport.x + meta.viewport.width &&
+      pointer.y >= meta.viewport.y &&
+      pointer.y <= meta.viewport.y + meta.viewport.height;
+
+    if (!insideViewport) {
+      return false;
+    }
+
+    const nextOffset = Phaser.Math.Clamp(this.scrollState[key] + delta, 0, meta.maxScroll);
+    if (nextOffset === this.scrollState[key]) {
+      return false;
+    }
+
+    this.scrollState[key] = nextOffset;
+    return true;
+  }
+
   renderDynamicUi() {
     this.dynamicObjects.forEach((object) => object.destroy());
     this.dynamicObjects = [];
+    this.scrollMeta = {};
 
     this.applyScoringPreview();
     this.drawControls();
@@ -254,11 +304,17 @@ export class GameScene extends Phaser.Scene {
     const { palette, regions } = layoutConfig;
     const activePlayer = this.session.players[this.session.activePlayerIndex];
     const fruits = Object.entries(activePlayer.fruitCounts);
-    const saladCardWidth = 96;
-    const saladCardHeight = 132;
-    const saladGapX = 12;
-    const saladGapY = 10;
-    const saladColumns = 5;
+    const saladCardWidth = 124;
+    const saladCardHeight = 172;
+    const saladGapX = 14;
+    const saladGapY = 14;
+    const saladColumns = 4;
+    const saladViewport = {
+      x: regions.player.x + 24,
+      y: regions.player.y + 226,
+      width: regions.player.width - 56,
+      height: 250
+    };
 
     this.track(this.add.text(regions.player.x + 24, regions.player.y + 18, `${activePlayer.name} area`, {
       fontFamily: '"Trebuchet MS", sans-serif',
@@ -279,21 +335,23 @@ export class GameScene extends Phaser.Scene {
       color: palette.textMuted
     }));
 
+    const saladRows = Math.max(1, Math.ceil(activePlayer.salads.length / saladColumns));
+    const saladContentHeight = saladRows * saladCardHeight + Math.max(0, saladRows - 1) * saladGapY;
+    const saladOffset = this.registerScrollRegion('salads', saladViewport, saladContentHeight);
+    const saladContent = this.track(this.add.container(0, -saladOffset));
+    saladContent.setMask(this.createViewportMask(saladViewport));
+
     activePlayer.salads.forEach((cardData, index) => {
       const column = index % saladColumns;
       const row = Math.floor(index / saladColumns);
-      const x = regions.player.x + 24 + column * (saladCardWidth + saladGapX);
-      const y = regions.player.y + 226 + row * (saladCardHeight + saladGapY);
-
-      this.track(drawSaladCard(
-        this,
-        x,
-        y,
-        saladCardWidth,
-        saladCardHeight,
-        cardData
-      ));
+      const x = saladViewport.x + column * (saladCardWidth + saladGapX);
+      const y = saladViewport.y + row * (saladCardHeight + saladGapY);
+      const card = drawSaladCard(this, x, y, saladCardWidth, saladCardHeight, cardData);
+      saladContent.add(card);
+      this.track(card);
     });
+
+    this.drawScrollBar('salads');
   }
 
   drawScoreTabs() {
@@ -327,6 +385,17 @@ export class GameScene extends Phaser.Scene {
   drawDebugPanel() {
     const { palette, regions } = layoutConfig;
     const debugLines = buildDebugSnapshot(this.session);
+    const debugViewport = {
+      x: regions.debug.x + 18,
+      y: regions.debug.y + 30,
+      width: regions.debug.width - 42,
+      height: regions.debug.height - 38
+    };
+    const lineHeight = 15;
+    const debugContentHeight = debugLines.length * lineHeight;
+    const debugOffset = this.registerScrollRegion('debug', debugViewport, debugContentHeight);
+    const debugContent = this.track(this.add.container(0, -debugOffset));
+    debugContent.setMask(this.createViewportMask(debugViewport));
 
     this.track(this.add.text(regions.debug.x + 18, regions.debug.y + 10, 'Debug overlay', {
       fontFamily: '"Trebuchet MS", sans-serif',
@@ -336,13 +405,54 @@ export class GameScene extends Phaser.Scene {
     }));
 
     debugLines.forEach((line, index) => {
-      this.track(this.add.text(regions.debug.x + 18, regions.debug.y + 32 + index * 14, line, {
+      const text = this.add.text(debugViewport.x, debugViewport.y + index * lineHeight, line, {
         fontFamily: 'Consolas, monospace',
         fontSize: '11px',
         color: palette.textMuted,
-        wordWrap: { width: 760 }
-      }));
+        wordWrap: { width: debugViewport.width - 10 }
+      });
+      debugContent.add(text);
+      this.track(text);
     });
+
+    this.drawScrollBar('debug');
+  }
+
+  registerScrollRegion(key, viewport, contentHeight) {
+    const maxScroll = Math.max(0, contentHeight - viewport.height);
+    this.scrollState[key] = Phaser.Math.Clamp(this.scrollState[key] ?? 0, 0, maxScroll);
+    this.scrollMeta[key] = { viewport, contentHeight, maxScroll };
+    return this.scrollState[key];
+  }
+
+  createViewportMask(viewport) {
+    const graphics = this.track(this.add.graphics());
+    graphics.fillStyle(0xffffff, 1);
+    graphics.fillRect(viewport.x, viewport.y, viewport.width, viewport.height);
+    graphics.visible = false;
+    return graphics.createGeometryMask();
+  }
+
+  drawScrollBar(key) {
+    const meta = this.scrollMeta[key];
+    if (!meta || meta.maxScroll <= 0) {
+      return;
+    }
+
+    const { viewport, contentHeight } = meta;
+    const trackWidth = 6;
+    const trackX = viewport.x + viewport.width - trackWidth;
+    const track = this.track(this.add.graphics());
+    track.fillStyle(0x20262d, 1);
+    track.fillRoundedRect(trackX, viewport.y, trackWidth, viewport.height, 3);
+
+    const thumbHeight = Math.max(26, Math.round((viewport.height / contentHeight) * viewport.height));
+    const thumbTravel = viewport.height - thumbHeight;
+    const progress = meta.maxScroll === 0 ? 0 : this.scrollState[key] / meta.maxScroll;
+    const thumbY = viewport.y + thumbTravel * progress;
+    const thumb = this.track(this.add.graphics());
+    thumb.fillStyle(0x7f8a98, 1);
+    thumb.fillRoundedRect(trackX, thumbY, trackWidth, thumbHeight, 3);
   }
 
   drawSelectionOutline(x, y, width, height, color) {
