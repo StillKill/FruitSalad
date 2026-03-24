@@ -1,6 +1,8 @@
-# Changes Log
+﻿# Changes Log
 
 ## 2026-03-24
+- Added root `AGENTS.md` and moved repository operational workflow rules there so `project.md` stays focused on project specification and planning.
+- Verification: reviewed `AGENTS.md` and `project.md` to confirm the responsibilities of the two files are clearly separated.
 - Updated `project.md`: restored persistent agent rules in a more explicit operational format.
 - Added `changes.md` to the documented project structure and aligned deferred work with the final `Plan` section in `project.md`.
 - Verification: re-read the updated markdown structure and checked that the new workflow rules are consistent with the current project layout.

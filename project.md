@@ -8,16 +8,22 @@
 - Режим: Web, локальная игровая сессия на одном экране.
 - Базовый визуальный ориентир: `Fruit Salad layout.png`, адаптированный под Phaser-сцену.
 
-## Постоянные правила для работы агентов
-- Внутри файлов проекта писать комментарии и документацию только на английском; с пользователем общаться на русском.
-- Для создания новых файлов не использовать `apply_patch`: если patch для новых файлов отклоняется, создавать их через PowerShell.
-- После каждого завершенного этапа проверять результат: запускать подходящие тесты, делать ручную проверку или усиливать валидацию, если текущей недостаточно.
-- Каждую завершенную логическую задачу фиксировать отдельным git commit и кратко записывать в `changes.md`: что изменено и как проверено.
-- Обнаруженные по пути полезные, но отложенные изменения добавлять в раздел `План` в конце `project.md`.
+## Инструкции для агентов
+- Операционные правила проекта вынесены в `AGENTS.md` в корне репозитория.
+- `project.md` хранит описание проекта, целевую структуру и план.
+
+## Routing по skills
+- Папка `skills/` не участвует в runtime, но используется как слой task-routing и дополнительного контекста для агентов.
+- Если задача связана с layout или компоновкой сцены, сначала смотреть `skills/board-layout/`.
+- Если задача связана с gameplay flow, state transitions или turn rules, сначала смотреть `skills/gameplay-states/`.
+- Если задача связана с каталогом карт, rule schema или scoring rules, сначала смотреть `skills/scoring-data/`.
+- Если задача связана с настройками сессии и setup limits, сначала смотреть `skills/session-config/`.
+- Если задача связана с интерфейсом, контролами, tabs, overlay, popup или settings dialog, сначала смотреть `skills/ui-shell/`.
 
 ## Актуальная структура проекта
 ```text
 project-root/
+├── AGENTS.md
 ├── index.html
 ├── index.js
 ├── changes.md
@@ -39,12 +45,7 @@ project-root/
 │   │   └── debug-overlay-fields.json
 │   └── sessions/
 │       └── session-rules.json
-├── skills/
-│   ├── board-layout/
-│   ├── gameplay-states/
-│   ├── scoring-data/
-│   ├── session-config/
-│   └── ui-shell/
+├── skills/                # task-specific agent context and routing notes
 └── src/
     ├── config/
     ├── core/
@@ -69,7 +70,8 @@ project-root/
 
 ### 2. Session Config
 - Сессия поддерживает 2-6 игроков.
-- Количество карт для партии пока считается как `18 * количество игроков`.
+- Количество игроков и имена задаются на этапе `settings`.
+- Количество карт для партии берется из `playerCardPoolByCount`, а при отсутствии записи — из `cardsPerPlayer * количество игроков`.
 - Настройки партии и лимиты setup лежат в `data/sessions/session-rules.json`.
 - Полный каталог scoring-карт уже загружен в `data/cards/scoring-cards.json`.
 
@@ -148,32 +150,13 @@ project-root/
 - `emptyDeckRecovery`
 
 ## План на end_game и scoring
-### Этап 1. Нормализация данных
-- Полный список карт уже загружен.
-- Для каждой карты хранить: `id`, `ruleType`, `saladFruits`, `backFruit`, `scoring`.
-- Определить, какие правила считаются по игроку локально, а какие требуют сравнения всех игроков.
-- Зафиксировать tie rules для compare-механик.
-
-### Этап 2. Scoring engine
-- Реализованы `scoreSaladCard(card, fruitCounts, tableSnapshot)`, `scorePlayerTotal(saladCards, fruitCounts, tableSnapshot)` и `buildTableSnapshot(players)`.
-- Для `parity-fruit` учтено правило `zeroScores = false`.
-- Для `per-fruit-multi` очки считаются по фруктам из `saladFruits`.
-- Для compare-карт при ничьей по экстремуму начисляется `0`.
-
-### Этап 3. End game state
 - После истощения всех колод переходить в `refresh -> end_game`.
-- Замораживать финальный snapshot стола.
+- Замораживать финальный snapshot стола для итогового подсчета.
 - Считать очки по всем салатным картам каждого игрока.
 - Собирать breakdown: карта -> формула -> очки.
 - Показывать popup с местами, общими очками и детализацией.
 
-### Этап 4. Unit tests
-- Базовые unit-тесты на scoring engine добавлены на `node:test`.
-- Покрыты parity / threshold / missing / sets / compare / per-fruit-multi / total aggregation.
-- Отдельно проверена tie-механика compare-карт.
-
 ## План
 - Поддерживать `changes.md` как краткий журнал завершенных задач и проверок.
-- Интегрировать scoring engine в `end_game` и debug preview.
-- Потом перейти к `settings`, `turn/end_turn`, `refresh`, `end_game`.
-
+- Добавить переключение просмотра игроков через tabs, чтобы `viewedPlayerIndex` влиял на правую панель.
+- Довести `end_game`: финальный snapshot, итоговые места, breakdown по картам и popup.
