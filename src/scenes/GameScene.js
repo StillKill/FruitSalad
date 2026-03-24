@@ -25,8 +25,6 @@ export class GameScene extends Phaser.Scene {
   preload() {
     this.load.json('sessionRules', 'data/sessions/session-rules.json');
     this.load.json('scoringCards', 'data/cards/scoring-cards.json');
-    this.load.json('debugFields', 'data/debug/debug-overlay-fields.json');
-    this.load.image('layoutReference', 'assets/layout/fruit-salad-layout.png');
     preloadCardTextures(this);
   }
 
@@ -77,10 +75,6 @@ export class GameScene extends Phaser.Scene {
     const gradient = this.add.graphics();
     gradient.fillGradientStyle(0x14181d, 0x14181d, 0x0c0e10, 0x0c0e10, 1);
     gradient.fillRect(0, 0, layoutConfig.width, layoutConfig.height);
-
-    const ref = this.add.image(1410, 120, 'layoutReference');
-    ref.setDisplaySize(170, 120);
-    ref.setAlpha(0.28);
   }
 
   drawShell() {
@@ -151,9 +145,9 @@ export class GameScene extends Phaser.Scene {
       `${getTurnHint(this.session)} Leader: ${leaderText}`,
       {
         fontFamily: '"Trebuchet MS", sans-serif',
-        fontSize: '18px',
+        fontSize: '17px',
         color: palette.textMuted,
-        wordWrap: { width: 730 }
+        wordWrap: { width: 720 }
       }
     ));
   }
@@ -260,6 +254,11 @@ export class GameScene extends Phaser.Scene {
     const { palette, regions } = layoutConfig;
     const activePlayer = this.session.players[this.session.activePlayerIndex];
     const fruits = Object.entries(activePlayer.fruitCounts);
+    const saladCardWidth = 96;
+    const saladCardHeight = 132;
+    const saladGapX = 12;
+    const saladGapY = 10;
+    const saladColumns = 5;
 
     this.track(this.add.text(regions.player.x + 24, regions.player.y + 18, `${activePlayer.name} area`, {
       fontFamily: '"Trebuchet MS", sans-serif',
@@ -274,19 +273,24 @@ export class GameScene extends Phaser.Scene {
       this.track(drawFruitCounter(this, x, y, fruit, count));
     });
 
-    this.track(this.add.text(regions.player.x + 24, regions.player.y + 196, 'Salad cards', {
+    this.track(this.add.text(regions.player.x + 24, regions.player.y + 196, `Salad cards (${activePlayer.salads.length})`, {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '18px',
       color: palette.textMuted
     }));
 
-    activePlayer.salads.slice(0, 4).forEach((cardData, index) => {
+    activePlayer.salads.forEach((cardData, index) => {
+      const column = index % saladColumns;
+      const row = Math.floor(index / saladColumns);
+      const x = regions.player.x + 24 + column * (saladCardWidth + saladGapX);
+      const y = regions.player.y + 226 + row * (saladCardHeight + saladGapY);
+
       this.track(drawSaladCard(
         this,
-        regions.player.x + 24 + index * 150,
-        regions.player.y + 226,
-        132,
-        182,
+        x,
+        y,
+        saladCardWidth,
+        saladCardHeight,
         cardData
       ));
     });
@@ -314,7 +318,7 @@ export class GameScene extends Phaser.Scene {
 
       this.track(this.add.text(x + 12, y + 52, `Preview: ${player.score}`, {
         fontFamily: '"Trebuchet MS", sans-serif',
-        fontSize: '14px',
+        fontSize: '13px',
         color: palette.textMuted
       }));
     });
@@ -323,27 +327,22 @@ export class GameScene extends Phaser.Scene {
   drawDebugPanel() {
     const { palette, regions } = layoutConfig;
     const debugLines = buildDebugSnapshot(this.session);
-    const configuredFields = this.cache.json.get('debugFields').fields;
 
-    this.track(this.add.text(regions.debug.x + 18, regions.debug.y + 12, 'Debug overlay', {
+    this.track(this.add.text(regions.debug.x + 18, regions.debug.y + 10, 'Debug overlay', {
       fontFamily: '"Trebuchet MS", sans-serif',
-      fontSize: '18px',
+      fontSize: '17px',
       color: palette.textPrimary,
       fontStyle: 'bold'
     }));
 
-    this.track(this.add.text(regions.debug.x + 18, regions.debug.y + 40, debugLines.join('   |   '), {
-      fontFamily: 'Consolas, monospace',
-      fontSize: '14px',
-      color: palette.textMuted,
-      wordWrap: { width: 770 }
-    }));
-
-    this.track(this.add.text(regions.debug.x + 18, regions.debug.y + 60, `Useful fields: ${configuredFields.join(', ')}`, {
-      fontFamily: 'Consolas, monospace',
-      fontSize: '12px',
-      color: palette.textMuted
-    }));
+    debugLines.forEach((line, index) => {
+      this.track(this.add.text(regions.debug.x + 18, regions.debug.y + 32 + index * 14, line, {
+        fontFamily: 'Consolas, monospace',
+        fontSize: '11px',
+        color: palette.textMuted,
+        wordWrap: { width: 760 }
+      }));
+    });
   }
 
   drawSelectionOutline(x, y, width, height, color) {
@@ -396,5 +395,3 @@ export class GameScene extends Phaser.Scene {
     return this.session.pendingSelection.length < this.session.rules.turnRules.marketPickLimit;
   }
 }
-
-

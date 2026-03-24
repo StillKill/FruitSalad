@@ -13,3 +13,5 @@
 - Implemented interactive turn flow: market cards and deck tops are clickable, selections are highlighted, `Confirm` and `Reset` change state, and turns advance through `turn -> end_turn -> refresh -> turn/end_game`.
 - Added session action tests for selection, confirm, reset, refill, and end-game transition; updated debug overlay to show selection and last action.
 - Verification: `node tests/run-tests.js`; `node --check src/scenes/GameScene.js`; `node --check src/core/sessionActions.js`; `node --check src/ui/debugOverlay.js`; `node --check src/ui/boardLayout.js`.
+- Removed the reference layout image from the scene, compacted debug overlay lines to stay inside the frame, and changed the player salad area to render all current salads in a compact grid.
+- Verification: `node tests/run-tests.js`; `node --check src/scenes/GameScene.js`; `node --check src/ui/debugOverlay.js`.
