@@ -1,3 +1,5 @@
+import { getPendingSelectionSummary } from '../core/sessionActions.js';
+
 export function buildDebugSnapshot(session) {
   const activePlayer = session.players[session.activePlayerIndex];
   const viewedPlayer = session.players[session.viewedPlayerIndex];
@@ -14,11 +16,12 @@ export function buildDebugSnapshot(session) {
     `turn=${session.turnNumber}`,
     `active=${activePlayer.name}`,
     `view=${viewedPlayer.name}`,
-    `selected=${session.pendingSelection.length}`,
+    `selected=${getPendingSelectionSummary(session)}`,
     `decks=${deckSummary}`,
     `liveScoring=${session.options.liveScoring}`,
     `activeScore=${activePlayer.score}`,
     `salads=${activePlayer.salads.length}`,
+    `lastAction=${session.lastAction ?? 'n/a'}`,
     `leader=${previewLeader ? `${previewLeader.playerName}:${previewLeader.totalPoints}` : 'n/a'}`
   ];
 }

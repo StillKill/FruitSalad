@@ -12,20 +12,23 @@ export function drawPanel(scene, region, fillColor, strokeColor = layoutConfig.p
 }
 
 export function drawCardPlaceholder(scene, x, y, width, height, fillColor, label) {
+  const container = scene.add.container(x, y);
   const card = scene.add.graphics();
 
   card.fillStyle(fillColor, 1);
   card.lineStyle(2, 0x171b20, 1);
-  card.fillRoundedRect(x, y, width, height, 12);
-  card.strokeRoundedRect(x, y, width, height, 12);
+  card.fillRoundedRect(0, 0, width, height, 12);
+  card.strokeRoundedRect(0, 0, width, height, 12);
+  container.add(card);
 
-  scene.add.text(x + 10, y + 10, label, {
+  const text = scene.add.text(10, 10, label, {
     fontFamily: '"Trebuchet MS", sans-serif',
     fontSize: '14px',
     color: '#111315',
     fontStyle: 'bold',
     wordWrap: { width: width - 20 }
   });
+  container.add(text);
 
-  return card;
+  return container;
 }

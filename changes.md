@@ -10,3 +10,6 @@
 - Implemented fruit-card rendering and salad-card overlays with fruit icons, and changed deck setup so market slots are filled by flipping the top salad cards into their `backFruit` side.
 - Added session tests for market refill and a shared test runner in `package.json`.
 - Verification: `node tests/run-tests.js`; `node --check src/scenes/GameScene.js`; `node --check src/ui/cardRenderer.js`; `node --check src/core/sessionSetup.js`.
+- Implemented interactive turn flow: market cards and deck tops are clickable, selections are highlighted, `Confirm` and `Reset` change state, and turns advance through `turn -> end_turn -> refresh -> turn/end_game`.
+- Added session action tests for selection, confirm, reset, refill, and end-game transition; updated debug overlay to show selection and last action.
+- Verification: `node tests/run-tests.js`; `node --check src/scenes/GameScene.js`; `node --check src/core/sessionActions.js`; `node --check src/ui/debugOverlay.js`; `node --check src/ui/boardLayout.js`.
