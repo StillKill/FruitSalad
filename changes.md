@@ -1,6 +1,10 @@
 ﻿# Changes Log
 
 ## 2026-03-24
+- Added a real `settings` launcher flow in the Phaser scene: player count `2-6`, editable player names, and a fair-game start path that builds a clean session instead of auto-starting the prototype match.
+- Added a parallel demo launch mode from the same screen so UI/scoring preview can still start with seeded prototype progress without blocking honest playtesting.
+- Added session option normalization tests and full-catalog seeded integration tests so setup and turn flow are exercised against shuffled real card data.
+- Verification: `node tests/run-tests.js`; `node --check src/scenes/GameScene.js`; `node --check src/core/sessionSetup.js`; `node --check src/config/sessionDefaults.js`; `node --check tests/fullCatalogIntegration.test.js`.
 - Added root `AGENTS.md` and moved repository operational workflow rules there so `project.md` stays focused on project specification and planning.
 - Verification: reviewed `AGENTS.md` and `project.md` to confirm the responsibilities of the two files are clearly separated.
 - Updated `project.md`: restored persistent agent rules in a more explicit operational format.

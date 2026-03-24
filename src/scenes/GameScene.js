@@ -1,6 +1,12 @@
 import * as Phaser from '../../node_modules/phaser/dist/phaser.esm.js';
 import { layoutConfig } from '../config/layoutConfig.js';
-import { defaultSessionOptions } from '../config/sessionDefaults.js';
+import {
+  buildDefaultPlayerNames,
+  defaultSessionOptions,
+  normalizeSessionOptions,
+  MAX_PLAYER_COUNT,
+  MIN_PLAYER_COUNT
+} from '../config/sessionDefaults.js';
 import { buildSession } from '../core/sessionSetup.js';
 import {
   canConfirmSelection,
@@ -15,11 +21,25 @@ import { preloadCardTextures, drawFruitCard, drawFruitCounter, drawSaladCard } f
 import { buildDebugSnapshot } from '../ui/debugOverlay.js';
 import { scoreTable } from '../core/scoring/scoringEngine.js';
 
+const SETTINGS_NAME_MAX_LENGTH = 18;
+
+function createSettingsDraft(options = defaultSessionOptions) {
+  const normalized = normalizeSessionOptions(options);
+  return {
+    playerCount: normalized.playerCount,
+    playerNames: [...normalized.playerNames]
+  };
+}
+
 export class GameScene extends Phaser.Scene {
   constructor() {
     super('GameScene');
     this.session = null;
+    this.sessionRules = null;
+    this.scoringCards = null;
     this.dynamicObjects = [];
+    this.settingsDraft = createSettingsDraft();
+    this.activeSettingsField = 0;
     this.scrollState = {
       salads: 0,
       debug: 0
@@ -34,20 +54,22 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
-    const sessionRules = this.cache.json.get('sessionRules');
-    const scoringCards = this.cache.json.get('scoringCards');
-
-    this.session = buildSession(defaultSessionOptions, sessionRules, scoringCards);
-    this.applyScoringPreview();
+    this.sessionRules = this.cache.json.get('sessionRules');
+    this.scoringCards = this.cache.json.get('scoringCards');
+    this.settingsDraft = createSettingsDraft(defaultSessionOptions);
 
     this.input.on('wheel', this.handleWheel, this);
+    this.input.keyboard?.on('keydown', this.handleKeyDown, this);
 
     this.drawBackground();
-    this.drawShell();
     this.renderDynamicUi();
   }
 
   applyScoringPreview() {
+    if (!this.session) {
+      return;
+    }
+
     const preview = scoreTable(this.session.players, this.session.scoringCatalog.fruits)
       .sort((left, right) => right.totalPoints - left.totalPoints);
 
@@ -61,7 +83,59 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  handleKeyDown(event) {
+    if (this.session) {
+      return;
+    }
+
+    if (event.key === 'Tab') {
+      event.preventDefault();
+      const direction = event.shiftKey ? -1 : 1;
+      const nextIndex = Phaser.Math.Wrap(this.activeSettingsField + direction, 0, this.settingsDraft.playerCount);
+      this.activeSettingsField = nextIndex;
+      this.renderDynamicUi();
+      return;
+    }
+
+    if (event.key === 'Enter') {
+      this.startSessionFromSettings();
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      this.activeSettingsField = null;
+      this.renderDynamicUi();
+      return;
+    }
+
+    if (this.activeSettingsField === null) {
+      return;
+    }
+
+    const currentName = this.settingsDraft.playerNames[this.activeSettingsField] ?? '';
+
+    if (event.key === 'Backspace') {
+      this.settingsDraft.playerNames[this.activeSettingsField] = currentName.slice(0, -1);
+      this.renderDynamicUi();
+      return;
+    }
+
+    if (event.key === ' ' || event.key.length === 1) {
+      if (currentName.length >= SETTINGS_NAME_MAX_LENGTH) {
+        return;
+      }
+
+      const nextName = `${currentName}${event.key}`;
+      this.settingsDraft.playerNames[this.activeSettingsField] = nextName;
+      this.renderDynamicUi();
+    }
+  }
+
   handleWheel(pointer, currentlyOver, deltaX, deltaY) {
+    if (!this.session) {
+      return;
+    }
+
     const delta = Math.sign(deltaY) * 36;
 
     if (delta === 0) {
@@ -108,7 +182,13 @@ export class GameScene extends Phaser.Scene {
     this.dynamicObjects = [];
     this.scrollMeta = {};
 
+    if (!this.session) {
+      this.drawSettingsScreen();
+      return;
+    }
+
     this.applyScoringPreview();
+    this.drawShell();
     this.drawControls();
     this.drawMarket();
     this.drawPlayerArea();
@@ -135,12 +215,198 @@ export class GameScene extends Phaser.Scene {
     drawPanel(this, regions.scoreTabs, palette.panelAlt);
     drawPanel(this, regions.debug, palette.panelAlt);
 
-    this.add.text(30, 10, 'Fruit Salad Prototype', {
+    this.track(this.add.text(30, 10, 'Fruit Salad Prototype', {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '22px',
       color: palette.textPrimary,
       fontStyle: 'bold'
+    }));
+  }
+
+  drawSettingsScreen() {
+    const { palette } = layoutConfig;
+    const panelX = 360;
+    const panelY = 92;
+    const panelWidth = 880;
+    const panelHeight = 716;
+    const countY = panelY + 178;
+    const nameStartY = panelY + 286;
+
+    drawPanel(this, { x: panelX, y: panelY, width: panelWidth, height: panelHeight }, palette.panelAlt);
+
+    this.track(this.add.text(panelX + 42, panelY + 28, 'Fruit Salad Setup', {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '34px',
+      color: palette.textPrimary,
+      fontStyle: 'bold'
+    }));
+
+    this.track(this.add.text(panelX + 42, panelY + 78, 'Choose the player count, then click a name field to type. Press Enter to start a fair session.', {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '18px',
+      color: palette.textMuted,
+      wordWrap: { width: panelWidth - 84 }
+    }));
+
+    this.track(this.add.text(panelX + 42, panelY + 108, 'Need a fast UI/scoring preview instead? Launch the demo session with seeded progress.', {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '16px',
+      color: palette.textMuted,
+      wordWrap: { width: panelWidth - 84 }
+    }));
+
+    this.track(this.add.text(panelX + 42, panelY + 142, 'Players', {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '22px',
+      color: palette.textPrimary,
+      fontStyle: 'bold'
+    }));
+
+    for (let playerCount = MIN_PLAYER_COUNT; playerCount <= MAX_PLAYER_COUNT; playerCount += 1) {
+      const index = playerCount - MIN_PLAYER_COUNT;
+      const buttonX = panelX + 42 + index * 92;
+      const isSelected = this.settingsDraft.playerCount === playerCount;
+      this.drawSettingsCountButton(buttonX, countY, 72, 48, playerCount, isSelected);
+    }
+
+    this.track(this.add.text(panelX + 42, panelY + 246, 'Names', {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '22px',
+      color: palette.textPrimary,
+      fontStyle: 'bold'
+    }));
+
+    for (let index = 0; index < this.settingsDraft.playerCount; index += 1) {
+      const row = Math.floor(index / 2);
+      const column = index % 2;
+      const fieldX = panelX + 42 + column * 392;
+      const fieldY = nameStartY + row * 100;
+      this.drawSettingsNameField(fieldX, fieldY, 348, 62, index);
+    }
+
+    this.drawActionButton(
+      panelX + panelWidth - 406,
+      panelY + panelHeight - 86,
+      172,
+      48,
+      0x7f8a98,
+      'Open Demo',
+      true,
+      () => this.startDemoSession()
+    );
+
+    this.drawActionButton(
+      panelX + panelWidth - 214,
+      panelY + panelHeight - 86,
+      172,
+      48,
+      palette.accent,
+      'Start Fair Game',
+      true,
+      () => this.startSessionFromSettings()
+    );
+  }
+
+  drawSettingsCountButton(x, y, width, height, playerCount, isSelected) {
+    const { palette } = layoutConfig;
+    const fill = isSelected ? palette.accent : 0x343a44;
+    const textColor = isSelected ? '#111315' : palette.textPrimary;
+    const graphics = this.track(this.add.graphics());
+
+    graphics.fillStyle(fill, 1);
+    graphics.lineStyle(2, 0x171b20, 1);
+    graphics.fillRoundedRect(x, y, width, height, 12);
+    graphics.strokeRoundedRect(x, y, width, height, 12);
+
+    this.track(this.add.text(x + width / 2, y + height / 2, String(playerCount), {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '22px',
+      color: textColor,
+      fontStyle: 'bold'
+    }).setOrigin(0.5));
+
+    this.addClickZone(x, y, width, height, () => {
+      this.updateSettingsPlayerCount(playerCount);
     });
+  }
+
+  drawSettingsNameField(x, y, width, height, index) {
+    const { palette } = layoutConfig;
+    const isActive = this.activeSettingsField === index;
+    const label = `Player ${index + 1}`;
+    const value = this.settingsDraft.playerNames[index] ?? '';
+    const graphics = this.track(this.add.graphics());
+
+    graphics.fillStyle(0x1a1f25, 1);
+    graphics.lineStyle(3, isActive ? palette.accent : palette.border, 1);
+    graphics.fillRoundedRect(x, y, width, height, 14);
+    graphics.strokeRoundedRect(x, y, width, height, 14);
+
+    this.track(this.add.text(x, y - 24, label, {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '16px',
+      color: palette.textMuted,
+      fontStyle: 'bold'
+    }));
+
+    const displayValue = value || 'Type a name';
+    const suffix = isActive ? '|' : '';
+    this.track(this.add.text(x + 16, y + 18, `${displayValue}${suffix}`, {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '24px',
+      color: value ? palette.textPrimary : palette.textMuted
+    }));
+
+    this.addClickZone(x, y, width, height, () => {
+      this.activeSettingsField = index;
+      this.renderDynamicUi();
+    });
+  }
+
+  updateSettingsPlayerCount(playerCount) {
+    const previousNames = [...this.settingsDraft.playerNames];
+    const defaultNames = buildDefaultPlayerNames(playerCount);
+
+    this.settingsDraft.playerCount = playerCount;
+    this.settingsDraft.playerNames = defaultNames.map((fallbackName, index) => {
+      const candidate = typeof previousNames[index] === 'string' ? previousNames[index].trim() : '';
+      return candidate || fallbackName;
+    });
+    this.activeSettingsField = Phaser.Math.Clamp(this.activeSettingsField ?? 0, 0, playerCount - 1);
+    this.renderDynamicUi();
+  }
+
+  startSessionFromSettings() {
+    const options = normalizeSessionOptions({
+      playerCount: this.settingsDraft.playerCount,
+      playerNames: this.settingsDraft.playerNames,
+      liveScoring: false,
+      seedDemoProgress: false
+    });
+
+    this.settingsDraft = createSettingsDraft(options);
+    this.launchSession(options);
+  }
+
+  startDemoSession() {
+    const options = normalizeSessionOptions({
+      playerCount: 2,
+      playerNames: ['Demo 1', 'Demo 2'],
+      liveScoring: false,
+      seedDemoProgress: true
+    });
+
+    this.launchSession(options);
+  }
+
+  launchSession(options) {
+    this.activeSettingsField = null;
+    this.scrollState = {
+      salads: 0,
+      debug: 0
+    };
+    this.session = buildSession(options, this.sessionRules, this.scoringCards);
+    this.renderDynamicUi();
   }
 
   drawControls() {

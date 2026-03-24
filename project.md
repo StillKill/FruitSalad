@@ -71,6 +71,7 @@ project-root/
 ### 2. Session Config
 - Сессия поддерживает 2-6 игроков.
 - Количество игроков и имена задаются на этапе `settings`.
+- На старте доступны два режима запуска: честная партия через `settings` и demo/simulation с seeded progress для быстрой проверки UI.
 - Количество карт для партии берется из `playerCardPoolByCount`, а при отсутствии записи — из `cardsPerPlayer * количество игроков`.
 - Настройки партии и лимиты setup лежат в `data/sessions/session-rules.json`.
 - Полный каталог scoring-карт уже загружен в `data/cards/scoring-cards.json`.
@@ -88,6 +89,7 @@ project-root/
 - Панель управления ходом: `Confirm`, `Reset`, строка подсказки.
 - Tabs игроков и scoreboard.
 - Debug overlay справа снизу.
+- Отдельный demo launch для seeded prototype session.
 - Позже можно добавить постоянную нижнюю панель со сводкой по всем игрокам.
 
 ### 5. Card & Scoring Data
@@ -131,7 +133,7 @@ project-root/
 
 ## Базовая сцена
 - `preload`: грузит JSON-конфиги, полный каталог карт и reference layout image.
-- `create`: создает prototype session на 2 игроков, строит shell интерфейса.
+- `create`: показывает `settings`, откуда можно запустить честную сессию или demo/simulation режим.
 - `setup`: сейчас встроен в `buildSession()` и подготавливает колоды, рынок, игроков и state machine.
 
 ## Полезные поля для debug overlay
@@ -160,3 +162,4 @@ project-root/
 - Поддерживать `changes.md` как краткий журнал завершенных задач и проверок.
 - Добавить переключение просмотра игроков через tabs, чтобы `viewedPlayerIndex` влиял на правую панель.
 - Довести `end_game`: финальный snapshot, итоговые места, breakdown по картам и popup.
+- При необходимости расширить demo/simulation режим отдельными debug controls вместо простого seeded launch.

@@ -1,3 +1,5 @@
+import './sessionDefaults.test.js';
 import './scoringEngine.test.js';
 import './sessionSetup.test.js';
 import './sessionActions.test.js';
+import './fullCatalogIntegration.test.js';

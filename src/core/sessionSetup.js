@@ -1,5 +1,6 @@
 import { TurnStateMachine } from './stateMachine.js';
 import { expandCardTemplates } from '../data/cardCatalog.js';
+import { normalizeSessionOptions } from '../config/sessionDefaults.js';
 
 function createMarketFruitCard(card) {
   return {
@@ -102,18 +103,23 @@ function seedPrototypeProgress(session) {
 }
 
 export function buildSession(options, sessionRules, scoringCatalog) {
+  const normalizedOptions = normalizeSessionOptions(options);
   const selectedCardCount =
-    sessionRules.playerCardPoolByCount[String(options.playerCount)]?.selectedCards ??
-    sessionRules.cardsPerPlayer * options.playerCount;
+    sessionRules.playerCardPoolByCount[String(normalizedOptions.playerCount)]?.selectedCards ??
+    sessionRules.cardsPerPlayer * normalizedOptions.playerCount;
 
   const playableDeck = expandCardTemplates(scoringCatalog, selectedCardCount);
   const decks = splitIntoDecks(playableDeck, sessionRules.deckCount);
-  const players = createPlayers(options, scoringCatalog.fruits);
+  const players = createPlayers(normalizedOptions, scoringCatalog.fruits);
   const stateMachine = new TurnStateMachine('setup');
-  const logs = ['Session created', `Selected cards: ${selectedCardCount}`];
+  const logs = [
+    'Session created',
+    `Players: ${normalizedOptions.playerCount}`,
+    `Selected cards: ${selectedCardCount}`
+  ];
 
   const session = {
-    options,
+    options: normalizedOptions,
     players,
     decks,
     scoringCatalog,
@@ -130,7 +136,10 @@ export function buildSession(options, sessionRules, scoringCatalog) {
     refillDeckMarket(deck, sessionRules.marketSlotsPerDeck, logs);
   });
 
-  seedPrototypeProgress(session);
+  if (normalizedOptions.seedDemoProgress) {
+    seedPrototypeProgress(session);
+  }
+
   stateMachine.transition('turn');
   session.logs.push('State changed to turn');
 
