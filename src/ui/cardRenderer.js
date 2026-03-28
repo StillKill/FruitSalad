@@ -31,6 +31,26 @@ function makeBasketIcon() {
   return [{ special: 'basket' }];
 }
 
+export function getPerFruitMultiDisplayIcons(card) {
+  return (card.saladFruits ?? [])
+    .map((fruit, index) => ({
+      fruit,
+      points: card.scoring.points[index] ?? 0,
+      index
+    }))
+    .sort((left, right) => {
+      if (right.points !== left.points) {
+        return right.points - left.points;
+      }
+
+      return left.index - right.index;
+    })
+    .map(({ fruit, points }) => ({
+      fruit,
+      label: scoreLabel(points)
+    }));
+}
+
 function getSaladDescriptor(card) {
   const distinctFruits = [...new Set(card.saladFruits ?? [])];
   const allKinds = usesAllFruitKinds(distinctFruits);
@@ -106,10 +126,7 @@ function getSaladDescriptor(card) {
         hideTitle: true,
         hideSubtitle: true,
         layout: 'vertical-list',
-        icons: (card.saladFruits ?? []).map((fruit, index) => ({
-          fruit,
-          label: scoreLabel(card.scoring.points[index] ?? 0)
-        }))
+        icons: getPerFruitMultiDisplayIcons(card)
       };
     default:
       return {

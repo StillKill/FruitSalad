@@ -1,6 +1,9 @@
 ﻿# Changes Log
 
 ## 2026-03-24
+- Changed `per-fruit-multi` card rendering so the fruit list is shown by descending point value on the card, while gameplay data and scoring order remain unchanged.
+- Added a renderer-level regression test for the sorted display order, including stable ordering for equal point values.
+- Verification: `node tests/run-tests.js`; `node --check src/ui/cardRenderer.js`; `node --check tests/cardRenderer.test.js`.
 - Made player tabs interactive so `viewedPlayerIndex` now switches the right-side player panel during a turn, while the active player remains separately highlighted.
 - Updated session coverage and project notes for the viewed-player flow, including the turn-advance reset back to the new active player.
 - Verification: `node tests/run-tests.js`; `node --check src/scenes/GameScene.js`; `node --check tests/sessionActions.test.js`.

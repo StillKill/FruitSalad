@@ -110,7 +110,7 @@ project-root/
 - `set-same-kind`: наборы одинаковых фруктов.
 - `set-distinct-kind`: наборы разных фруктов, где число разных фруктов всегда равно `setSize`.
 - `per-fruit-flat`: фиксированные очки за фрукт одного вида.
-- `per-fruit-multi`: очки за несколько фруктов, перечисленных в `saladFruits`; порядок очков совпадает с порядком фруктов.
+- `per-fruit-multi`: очки за несколько фруктов, перечисленных в `saladFruits`; в данных порядок очков совпадает с порядком фруктов, но на карте список отображается по убыванию очков.
 
 ## Правила интерпретации scoring
 - Для `compare-majority`, `compare-minority`, `parity-fruit` и `per-fruit-flat` целевой фрукт определяется по `saladFruits`, а не по `backFruit`.
@@ -164,4 +164,3 @@ project-root/
 
 - Довести `end_game`: финальный snapshot, итоговые места, breakdown по картам и popup.
 - При необходимости расширить demo/simulation режим отдельными debug controls вместо простого seeded launch.
-
