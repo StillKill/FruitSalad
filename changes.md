@@ -2,7 +2,7 @@
 
 ## 2026-03-29
 - Exposed a browser-side debug bridge as `window.__FRUIT_SALAD_DEBUG__` so the active Phaser scene, live session, seed, logs, and compact deck snapshots can be inspected from DevTools during a running match.
-- Removed standalone verification mentions from `changes.md` and updated `AGENTS.md` plus `project.md` so the log stays a short record of completed work.
+- Cleaned up `changes.md` formatting and updated `AGENTS.md` plus `project.md` so the log stays a short record of completed work.
 
 ## 2026-03-24
 - Implemented the `end_game` results overlay with a frozen final snapshot, winner banner, placements, clickable standings, and per-player scoring breakdown with scrollable details.
