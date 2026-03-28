@@ -1,6 +1,8 @@
 ﻿# Changes Log
 
 ## 2026-03-24
+- Simplified the player-area flip control to a single `Flip Mode` toggle and removed the extra helper caption that appeared after activation.
+- Verification: `node tests/run-tests.js`; `node --check src/scenes/GameScene.js`.
 - Reworked player-area salad flipping UX into an explicit flip mode instead of making every salad card look active at once; the selected card highlight now stays clipped inside the scroll viewport.
 - Fixed demo-seeded salads to receive unique `runtimeId` values so player-area flips target the chosen card instead of falling back to the first seeded salad.
 - Verification: `node tests/run-tests.js`; `node --check src/scenes/GameScene.js`; `node --check src/core/sessionSetup.js`; `node --check tests/sessionSetup.test.js`.

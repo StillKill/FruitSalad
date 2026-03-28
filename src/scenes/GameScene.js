@@ -657,18 +657,15 @@ export class GameScene extends Phaser.Scene {
     }));
 
     if (canFlipViewedSalads) {
-      const playerFlipLabel = hasPendingPlayerFlip
-        ? 'Cancel Area Flip'
-        : this.playerAreaFlipMode
-          ? 'Exit Flip Mode'
-          : 'Flip One Salad';
+      const playerFlipLabel = 'Flip Mode';
+      const playerFlipColor = hasPendingPlayerFlip || this.playerAreaFlipMode ? palette.warning : 0xf5c451;
 
       this.drawActionButton(
         regions.player.x + regions.player.width - 196,
         regions.player.y + 190,
         172,
         28,
-        hasPendingPlayerFlip ? palette.warning : 0xf5c451,
+        playerFlipColor,
         playerFlipLabel,
         true,
         () => {
@@ -682,14 +679,6 @@ export class GameScene extends Phaser.Scene {
         },
         '13px'
       );
-
-      if (showPlayerFlipMode) {
-        this.track(this.add.text(regions.player.x + regions.player.width - 24, regions.player.y + 198, 'Flip mode: choose one salad card', {
-          fontFamily: '"Trebuchet MS", sans-serif',
-          fontSize: '13px',
-          color: palette.textMuted
-        }).setOrigin(1, 0));
-      }
     }
 
     const saladRows = Math.max(1, Math.ceil(viewedPlayer.salads.length / saladColumns));
