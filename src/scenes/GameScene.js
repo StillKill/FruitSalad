@@ -581,7 +581,8 @@ export class GameScene extends Phaser.Scene {
   drawPlayerArea() {
     const { palette, regions } = layoutConfig;
     const activePlayer = this.session.players[this.session.activePlayerIndex];
-    const fruits = Object.entries(activePlayer.fruitCounts);
+    const viewedPlayer = this.session.players[this.session.viewedPlayerIndex];
+    const fruits = Object.entries(viewedPlayer.fruitCounts);
     const saladCardWidth = 124;
     const saladCardHeight = 172;
     const saladGapX = 14;
@@ -594,12 +595,19 @@ export class GameScene extends Phaser.Scene {
       height: 250
     };
 
-    this.track(this.add.text(regions.player.x + 24, regions.player.y + 18, `${activePlayer.name} area`, {
+    this.track(this.add.text(regions.player.x + 24, regions.player.y + 18, `${viewedPlayer.name} area`, {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '24px',
       color: palette.textPrimary,
       fontStyle: 'bold'
     }));
+
+    this.track(this.add.text(regions.player.x + regions.player.width - 24, regions.player.y + 24, `Active: ${activePlayer.name}`, {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '14px',
+      color: palette.textMuted,
+      fontStyle: 'bold'
+    }).setOrigin(1, 0));
 
     fruits.forEach(([fruit, count], index) => {
       const x = regions.player.x + 24 + index * 124;
@@ -607,19 +615,19 @@ export class GameScene extends Phaser.Scene {
       this.track(drawFruitCounter(this, x, y, fruit, count));
     });
 
-    this.track(this.add.text(regions.player.x + 24, regions.player.y + 196, `Salad cards (${activePlayer.salads.length})`, {
+    this.track(this.add.text(regions.player.x + 24, regions.player.y + 196, `Salad cards (${viewedPlayer.salads.length})`, {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '18px',
       color: palette.textMuted
     }));
 
-    const saladRows = Math.max(1, Math.ceil(activePlayer.salads.length / saladColumns));
+    const saladRows = Math.max(1, Math.ceil(viewedPlayer.salads.length / saladColumns));
     const saladContentHeight = saladRows * saladCardHeight + Math.max(0, saladRows - 1) * saladGapY;
     const saladOffset = this.registerScrollRegion('salads', saladViewport, saladContentHeight);
     const saladContent = this.track(this.add.container(0, -saladOffset));
     saladContent.setMask(this.createViewportMask(saladViewport));
 
-    activePlayer.salads.forEach((cardData, index) => {
+    viewedPlayer.salads.forEach((cardData, index) => {
       const column = index % saladColumns;
       const row = Math.floor(index / saladColumns);
       const x = saladViewport.x + column * (saladCardWidth + saladGapX);
@@ -639,16 +647,19 @@ export class GameScene extends Phaser.Scene {
       const x = regions.scoreTabs.x + 18 + index * 132;
       const y = regions.scoreTabs.y + 10;
       const isActive = index === this.session.activePlayerIndex;
-      const fill = isActive ? palette.accent : 0x343a44;
+      const isViewed = index === this.session.viewedPlayerIndex;
+      const fill = isViewed ? palette.accent : 0x343a44;
       const pill = this.track(this.add.graphics());
 
       pill.fillStyle(fill, 1);
+      pill.lineStyle(2, isActive ? 0xf6f1c7 : 0x171b20, 1);
       pill.fillRoundedRect(x, y, 118, 38, 12);
+      pill.strokeRoundedRect(x, y, 118, 38, 12);
 
       this.track(this.add.text(x + 12, y + 7, player.name, {
         fontFamily: '"Trebuchet MS", sans-serif',
         fontSize: '16px',
-        color: isActive ? '#111315' : palette.textPrimary,
+        color: isViewed ? '#111315' : palette.textPrimary,
         fontStyle: 'bold'
       }));
 
@@ -657,7 +668,26 @@ export class GameScene extends Phaser.Scene {
         fontSize: '12px',
         color: palette.textMuted
       }));
+
+      this.addClickZone(x, y, 118, 38, () => {
+        this.setViewedPlayerIndex(index);
+      });
     });
+  }
+
+  setViewedPlayerIndex(index) {
+    if (!this.session) {
+      return;
+    }
+
+    const nextIndex = Phaser.Math.Clamp(index, 0, this.session.players.length - 1);
+    if (nextIndex === this.session.viewedPlayerIndex) {
+      return;
+    }
+
+    this.session.viewedPlayerIndex = nextIndex;
+    this.scrollState.salads = 0;
+    this.renderDynamicUi();
   }
 
   drawDebugPanel() {

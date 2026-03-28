@@ -1,6 +1,9 @@
 ﻿# Changes Log
 
 ## 2026-03-24
+- Made player tabs interactive so `viewedPlayerIndex` now switches the right-side player panel during a turn, while the active player remains separately highlighted.
+- Updated session coverage and project notes for the viewed-player flow, including the turn-advance reset back to the new active player.
+- Verification: `node tests/run-tests.js`; `node --check src/scenes/GameScene.js`; `node --check tests/sessionActions.test.js`.
 - Updated `AGENTS.md` to require syncing `project.md` whenever a task changes architecture, long-lived behavior, workflow, or project structure.
 - Verification: reviewed `AGENTS.md` and confirmed the new rule is explicit and consistent with the repository workflow section.
 - Fixed session setup shuffling: the selected card pool is now shuffled by seed before being split into decks, so the initial market no longer mirrors the catalog order.

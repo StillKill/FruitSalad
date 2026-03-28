@@ -93,6 +93,7 @@ test('confirmSelection applies market fruits, refills slots, and advances the ac
   const firstFruit = firstDeck.market[0].fruit;
   const secondFruit = secondDeck.market[0].fruit;
 
+  session.viewedPlayerIndex = 0;
   selectMarketCard(session, firstDeck.id, firstDeck.market[0].id);
   selectMarketCard(session, secondDeck.id, secondDeck.market[0].id);
 
@@ -100,6 +101,7 @@ test('confirmSelection applies market fruits, refills slots, and advances the ac
   assert.equal(session.players[0].fruitCounts[firstFruit], 1);
   assert.equal(session.players[0].fruitCounts[secondFruit], 1);
   assert.equal(session.activePlayerIndex, 1);
+  assert.equal(session.viewedPlayerIndex, 1);
   assert.equal(session.turnNumber, 2);
   assert.equal(session.stateMachine.state, 'turn');
   assert.equal(session.decks[0].market.length, 2);
