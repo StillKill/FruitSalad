@@ -35,6 +35,25 @@ function createSettingsDraft(options = defaultSessionOptions) {
   };
 }
 
+function buildDeckDebugSnapshot(deck) {
+  return {
+    id: deck.id,
+    saladsLeft: deck.cards.length,
+    topSalad: deck.cards[0]
+      ? {
+        runtimeId: deck.cards[0].runtimeId,
+        cardId: deck.cards[0].id,
+        backFruit: deck.cards[0].backFruit
+      }
+      : null,
+    market: deck.market.map((card) => ({
+      id: card.id,
+      fruit: card.fruit,
+      sourceCardId: card.sourceCardId
+    }))
+  };
+}
+
 export class GameScene extends Phaser.Scene {
   constructor() {
     super('GameScene');
@@ -67,8 +86,55 @@ export class GameScene extends Phaser.Scene {
     this.input.on('wheel', this.handleWheel, this);
     this.input.keyboard?.on('keydown', this.handleKeyDown, this);
 
+    this.installDebugBridge();
     this.drawBackground();
     this.renderDynamicUi();
+  }
+
+  installDebugBridge() {
+    if (typeof globalThis !== 'object' || !globalThis) {
+      return;
+    }
+
+    const scene = this;
+    globalThis.__FRUIT_SALAD_DEBUG__ = {
+      get game() {
+        return globalThis.__FRUIT_SALAD_GAME__ ?? null;
+      },
+      get scene() {
+        return scene;
+      },
+      get session() {
+        return scene.session;
+      },
+      get logs() {
+        return scene.session?.logs ?? [];
+      },
+      get seed() {
+        return scene.session?.options?.randomSeed ?? null;
+      },
+      snapshot() {
+        if (!scene.session) {
+          return null;
+        }
+
+        return {
+          seed: scene.session.options?.randomSeed ?? null,
+          state: scene.session.stateMachine.state,
+          turnNumber: scene.session.turnNumber,
+          activePlayerIndex: scene.session.activePlayerIndex,
+          viewedPlayerIndex: scene.session.viewedPlayerIndex,
+          lastAction: scene.session.lastAction ?? null,
+          decks: scene.session.decks.map(buildDeckDebugSnapshot),
+          pendingSelection: structuredClone(scene.session.pendingSelection),
+          pendingFlip: scene.session.pendingFlip ? structuredClone(scene.session.pendingFlip) : null,
+          logs: [...scene.session.logs]
+        };
+      },
+      deckSummary() {
+        return scene.session?.decks.map(buildDeckDebugSnapshot) ?? [];
+      }
+    };
   }
 
   applyScoringPreview() {
@@ -1118,4 +1184,5 @@ export class GameScene extends Phaser.Scene {
     return this.session.pendingSelection.length < this.session.rules.turnRules.marketPickLimit;
   }
 }
+
 

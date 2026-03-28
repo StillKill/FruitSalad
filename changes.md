@@ -1,5 +1,9 @@
 ﻿# Changes Log
 
+## 2026-03-29
+- Exposed a browser-side debug bridge as `window.__FRUIT_SALAD_DEBUG__` so the active Phaser scene, live session, seed, logs, and compact deck snapshots can be inspected from DevTools during a running match.
+- Verification: `node --check src/scenes/GameScene.js`; `node tests/run-tests.js`.
+
 ## 2026-03-24
 - Implemented the `end_game` results overlay with a frozen final snapshot, winner banner, placements, clickable standings, and per-player scoring breakdown with scrollable details.
 - Added a dedicated end-game results helper plus tests for ranking, tied placements, and snapshot freezing before the popup is rendered.
@@ -52,3 +56,4 @@
 - Verification: `node tests/run-tests.js`; `node --check src/scenes/GameScene.js`; `node --check src/core/sessionSetup.js`; `node --check src/ui/cardRenderer.js`.
 - Lowered short vertical icon lists on salad cards and changed `per-fruit-flat` to an `icon / points` presentation.
 - Verification: `node tests/run-tests.js`; `node --check src/ui/cardRenderer.js`.
+

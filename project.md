@@ -138,6 +138,7 @@ project-root/
 - `preload`: грузит JSON-конфиги, полный каталог карт и reference layout image.
 - `create`: показывает `settings`, откуда можно запустить честную сессию или demo/simulation режим.
 - `setup`: сейчас встроен в `buildSession()` и подготавливает колоды, рынок, игроков и state machine.
+- Для живого дебага в DevTools сцена экспортирует `window.__FRUIT_SALAD_DEBUG__` с доступом к текущим `game`, `scene`, `session`, `logs`, `seed`, а также helper-методами `snapshot()` и `deckSummary()`.
 
 ## Полезные поля для debug overlay
 - `state`
@@ -166,6 +167,4 @@ project-root/
 
 - При необходимости улучшить `end_game` overlay: компактность breakdown, визуальные акценты мест и дополнительные summary-метрики.
 - При необходимости расширить demo/simulation режим отдельными debug controls вместо простого seeded launch.
-
-
 
