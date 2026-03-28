@@ -17,6 +17,44 @@ function generateSessionSeed() {
   return Math.floor(Math.random() * 0x100000000);
 }
 
+function moveBottomHalfToEmptyDeck(sourceDeck, targetDeck, logs = []) {
+  const movedCount = Math.floor(sourceDeck.cards.length / 2);
+
+  if (movedCount <= 0) {
+    return false;
+  }
+
+  const movedCards = sourceDeck.cards.splice(sourceDeck.cards.length - movedCount, movedCount);
+  targetDeck.cards.push(...movedCards);
+  logs.push(`${targetDeck.id} restored from ${sourceDeck.id} with ${movedCount} cards`);
+  return true;
+}
+
+export function rebalanceEmptyDeck(targetDeck, decks, logs = []) {
+  if (targetDeck.cards.length > 0) {
+    return false;
+  }
+
+  const donorDeck = decks.reduce((selectedDeck, deck) => {
+    if (deck.id === targetDeck.id || deck.cards.length < 2) {
+      return selectedDeck;
+    }
+
+    if (!selectedDeck || deck.cards.length > selectedDeck.cards.length) {
+      return deck;
+    }
+
+    return selectedDeck;
+  }, null);
+
+  if (!donorDeck) {
+    logs.push(`${targetDeck.id} cannot be restored from the remaining decks`);
+    return false;
+  }
+
+  return moveBottomHalfToEmptyDeck(donorDeck, targetDeck, logs);
+}
+
 export function refillDeckMarket(deck, slotsPerDeck, logs = []) {
   const filledSlots = [];
 
@@ -35,6 +73,22 @@ export function refillDeckMarket(deck, slotsPerDeck, logs = []) {
   if (deck.market.length < slotsPerDeck && deck.cards.length === 0) {
     logs.push(`${deck.id} cannot fully refill market`);
   }
+}
+
+export function refillSessionMarkets(decks, slotsPerDeck, logs = []) {
+  decks.forEach((deck) => {
+    while (deck.market.length < slotsPerDeck) {
+      if (deck.cards.length === 0 && !rebalanceEmptyDeck(deck, decks, logs)) {
+        break;
+      }
+
+      refillDeckMarket(deck, slotsPerDeck, logs);
+
+      if (deck.cards.length === 0 && deck.market.length >= slotsPerDeck) {
+        break;
+      }
+    }
+  });
 }
 
 function splitIntoDecks(cards, count) {
@@ -143,9 +197,7 @@ export function buildSession(options, sessionRules, scoringCatalog) {
     logs
   };
 
-  decks.forEach((deck) => {
-    refillDeckMarket(deck, sessionRules.marketSlotsPerDeck, logs);
-  });
+  refillSessionMarkets(decks, sessionRules.marketSlotsPerDeck, logs);
 
   if (sessionOptions.seedDemoProgress) {
     seedPrototypeProgress(session);

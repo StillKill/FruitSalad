@@ -1,6 +1,9 @@
 ﻿# Changes Log
 
 ## 2026-03-24
+- Added empty-deck recovery that restores the exhausted deck from the bottom half of the thickest remaining deck before market refill, matching the original Point Salad rule with deterministic tie-breaking.
+- Covered deck redistribution with setup-level tests for thickest-deck selection, stable tie resolution, and restored market refill.
+- Verification: `node tests/run-tests.js`; `node --check src/core/sessionSetup.js`; `node --check src/core/sessionActions.js`; `node --check tests/sessionSetup.test.js`.
 - Changed `per-fruit-multi` card rendering so the fruit list is shown by descending point value on the card, while gameplay data and scoring order remain unchanged.
 - Added a renderer-level regression test for the sorted display order, including stable ordering for equal point values.
 - Verification: `node tests/run-tests.js`; `node --check src/ui/cardRenderer.js`; `node --check tests/cardRenderer.test.js`.

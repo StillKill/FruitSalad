@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { buildSession, refillDeckMarket } from '../src/core/sessionSetup.js';
+import { buildSession, rebalanceEmptyDeck, refillDeckMarket, refillSessionMarkets } from '../src/core/sessionSetup.js';
 
 const fruits = ['kiwi', 'orange', 'apple', 'banana', 'lime', 'mango'];
 
@@ -89,6 +89,87 @@ test('buildSession starts with empty player progress unless demo seeding is enab
   assert.ok(seededSession.players[0].salads.length > 0);
   assert.ok(seededSession.players[1].salads.length > 0);
   assert.ok(seededSession.logs.includes('Prototype scoring preview seeded'));
+});
+
+
+test('rebalanceEmptyDeck restores an empty deck from the thickest remaining deck', () => {
+  const logs = [];
+  const decks = [
+    {
+      id: 'deck-1',
+      market: [],
+      cards: []
+    },
+    {
+      id: 'deck-2',
+      market: [],
+      cards: [makeCard('020', 'kiwi'), makeCard('021', 'orange'), makeCard('022', 'apple'), makeCard('023', 'banana'), makeCard('024', 'lime')]
+    },
+    {
+      id: 'deck-3',
+      market: [],
+      cards: [makeCard('030', 'mango'), makeCard('031', 'kiwi')]
+    }
+  ];
+
+  assert.equal(rebalanceEmptyDeck(decks[0], decks, logs), true);
+  assert.deepEqual(decks[0].cards.map((card) => card.id), ['023', '024']);
+  assert.deepEqual(decks[1].cards.map((card) => card.id), ['020', '021', '022']);
+  assert.match(logs[0], /deck-1 restored from deck-2 with 2 cards/);
+});
+
+test('rebalanceEmptyDeck picks the first tied deck to stay deterministic', () => {
+  const logs = [];
+  const decks = [
+    {
+      id: 'deck-1',
+      market: [],
+      cards: []
+    },
+    {
+      id: 'deck-2',
+      market: [],
+      cards: [makeCard('040', 'kiwi'), makeCard('041', 'orange'), makeCard('042', 'apple'), makeCard('043', 'banana')]
+    },
+    {
+      id: 'deck-3',
+      market: [],
+      cards: [makeCard('050', 'lime'), makeCard('051', 'mango'), makeCard('052', 'kiwi'), makeCard('053', 'orange')]
+    }
+  ];
+
+  assert.equal(rebalanceEmptyDeck(decks[0], decks, logs), true);
+  assert.deepEqual(decks[0].cards.map((card) => card.id), ['042', '043']);
+  assert.deepEqual(decks[1].cards.map((card) => card.id), ['040', '041']);
+  assert.deepEqual(decks[2].cards.map((card) => card.id), ['050', '051', '052', '053']);
+});
+
+test('refillSessionMarkets restores empty decks before filling their market slots', () => {
+  const logs = [];
+  const decks = [
+    {
+      id: 'deck-1',
+      market: [],
+      cards: []
+    },
+    {
+      id: 'deck-2',
+      market: [],
+      cards: [makeCard('060', 'kiwi'), makeCard('061', 'orange'), makeCard('062', 'apple'), makeCard('063', 'banana'), makeCard('064', 'lime')]
+    },
+    {
+      id: 'deck-3',
+      market: [],
+      cards: [makeCard('070', 'mango'), makeCard('071', 'kiwi'), makeCard('072', 'orange')]
+    }
+  ];
+
+  refillSessionMarkets(decks, 2, logs);
+
+  assert.deepEqual(decks[0].market.map((card) => card.fruit), ['banana', 'lime']);
+  assert.deepEqual(decks[0].cards, []);
+  assert.match(logs.join(' | '), /deck-1 restored from deck-2 with 2 cards/);
+  assert.match(logs.join(' | '), /deck-1 refilled market with banana, lime/);
 });
 
 test('refillDeckMarket only flips enough cards to fill empty slots', () => {

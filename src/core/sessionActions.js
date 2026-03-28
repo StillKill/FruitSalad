@@ -1,4 +1,4 @@
-import { refillDeckMarket } from './sessionSetup.js';
+import { refillSessionMarkets } from './sessionSetup.js';
 
 function getActivePlayer(session) {
   return session.players[session.activePlayerIndex];
@@ -192,9 +192,7 @@ function applyDeckSelection(session) {
 
 function refreshMarket(session) {
   session.stateMachine.transition('refresh');
-  session.decks.forEach((deck) => {
-    refillDeckMarket(deck, session.rules.marketSlotsPerDeck, session.logs);
-  });
+  refillSessionMarkets(session.decks, session.rules.marketSlotsPerDeck, session.logs);
 }
 
 function canContinuePlay(session) {
