@@ -1,6 +1,9 @@
 ﻿# Changes Log
 
 ## 2026-03-24
+- Added an optional once-per-turn pending flip action: one salad card can be queued to turn into its `backFruit` without affecting Confirm availability, including the selected top deck card or a salad already in the active player's area.
+- Updated the session UI with pending-flip status, clickable owned salads, and a deck-side flip button for selected top cards; added turn-action tests that cover both flip paths and Reset behaviour.
+- Verification: `node tests/run-tests.js`; `node --check src/core/sessionActions.js`; `node --check src/scenes/GameScene.js`; `node --check src/ui/debugOverlay.js`; `node --check tests/sessionActions.test.js`.
 - Added empty-deck recovery that restores the exhausted deck from the bottom half of the thickest remaining deck before market refill, matching the original Point Salad rule with deterministic tie-breaking.
 - Covered deck redistribution with setup-level tests for thickest-deck selection, stable tie resolution, and restored market refill.
 - Verification: `node tests/run-tests.js`; `node --check src/core/sessionSetup.js`; `node --check src/core/sessionActions.js`; `node --check tests/sessionSetup.test.js`.

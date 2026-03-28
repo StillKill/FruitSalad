@@ -15,11 +15,16 @@ export function buildDebugSnapshot(session) {
   const selected = session.pendingSelection.length > 0
     ? session.pendingSelection.map((selection) => selection.type === 'deck' ? `${selection.deckId}:salad` : `${selection.deckId}:${selection.fruit}`).join(', ')
     : 'none';
+  const pendingFlip = session.pendingFlip
+    ? session.pendingFlip.type === 'player-salad'
+      ? `area:${session.pendingFlip.cardId}`
+      : `${session.pendingFlip.deckId}:${session.pendingFlip.cardId}`
+    : 'none';
 
   return [
     `state=${session.stateMachine.state}  turn=${session.turnNumber}  active=${activePlayer.name}  view=${viewedPlayer.name}`,
-    `selected=${selected}  salads=${activePlayer.salads.length}  score=${activePlayer.score}  leader=${previewLeader ? `${previewLeader.playerName}:${previewLeader.totalPoints}` : 'n/a'}`,
-    `decks=${deckSummary}`,
+    `selected=${selected}  flip=${pendingFlip}  salads=${activePlayer.salads.length}  score=${activePlayer.score}`,
+    `leader=${previewLeader ? `${previewLeader.playerName}:${previewLeader.totalPoints}` : 'n/a'}  decks=${deckSummary}`,
     `last=${lastAction}`
   ];
 }

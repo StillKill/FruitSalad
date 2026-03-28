@@ -194,6 +194,7 @@ export function buildSession(options, sessionRules, scoringCatalog) {
     activePlayerIndex: 0,
     viewedPlayerIndex: 0,
     pendingSelection: [],
+    pendingFlip: null,
     logs
   };
 

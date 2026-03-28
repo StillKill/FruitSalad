@@ -16,6 +16,54 @@ function hasMarketSelection(session) {
   return session.pendingSelection.some((selection) => selection.type === 'market');
 }
 
+function getOwnedSaladByRuntimeId(session, runtimeId) {
+  return getActivePlayer(session).salads.find((card) => card.runtimeId === runtimeId) ?? null;
+}
+
+function getSelectedDeckCard(session) {
+  const selection = session.pendingSelection.find((item) => item.type === 'deck') ?? null;
+
+  if (!selection) {
+    return null;
+  }
+
+  const deck = getDeck(session, selection.deckId);
+  const topCard = deck?.cards[0] ?? null;
+
+  if (!topCard || topCard.runtimeId !== selection.runtimeId) {
+    return null;
+  }
+
+  return {
+    selection,
+    deck,
+    card: topCard
+  };
+}
+
+function getPendingFlipCard(session) {
+  if (!session.pendingFlip) {
+    return null;
+  }
+
+  if (session.pendingFlip.type === 'player-salad') {
+    return getOwnedSaladByRuntimeId(session, session.pendingFlip.runtimeId);
+  }
+
+  const selectedDeckCard = getSelectedDeckCard(session);
+  if (!selectedDeckCard) {
+    return null;
+  }
+
+  return selectedDeckCard.selection.deckId === session.pendingFlip.deckId ? selectedDeckCard.card : null;
+}
+
+function clearSelectedDeckFlip(session) {
+  if (session.pendingFlip?.type === 'selected-deck') {
+    session.pendingFlip = null;
+  }
+}
+
 function setTurnStateFromSelection(session) {
   if (session.pendingSelection.length === 0) {
     session.stateMachine.transition('turn');
@@ -41,21 +89,46 @@ export function getPendingSelectionSummary(session) {
     .join(', ');
 }
 
+export function getPendingFlipSummary(session) {
+  if (!session.pendingFlip) {
+    return 'none';
+  }
+
+  const targetCard = getPendingFlipCard(session);
+  const fruit = targetCard?.backFruit ?? 'missing';
+
+  if (session.pendingFlip.type === 'player-salad') {
+    return `area:${fruit}`;
+  }
+
+  return `${session.pendingFlip.deckId}:${fruit}`;
+}
+
 export function getTurnHint(session) {
+  const flipHint = session.pendingFlip ? `Pending flip: ${getPendingFlipSummary(session)}. ` : '';
+
   if (session.stateMachine.state === 'end_game') {
-    return 'No deck can continue play. Session reached end game.';
+    return `${flipHint}No deck can continue play. Session reached end game.`.trim();
   }
 
   if (hasDeckSelection(session)) {
-    return 'Confirm to take the top salad card from the selected deck, or Reset to cancel.';
+    const selectedDeckCard = getSelectedDeckCard(session);
+    const deckHint = session.pendingFlip?.type === 'selected-deck' && selectedDeckCard
+      ? `Confirm to take ${selectedDeckCard.card.backFruit} from the selected deck, or Reset to cancel.`
+      : 'Confirm to take the top salad card from the selected deck, or Reset to cancel.';
+    return `${flipHint}${deckHint}`.trim();
   }
 
   if (hasMarketSelection(session)) {
     if (session.pendingSelection.length < session.rules.turnRules.marketPickLimit) {
-      return `Pick ${session.rules.turnRules.marketPickLimit - session.pendingSelection.length} more fruit card from the market.`;
+      return `${flipHint}Pick ${session.rules.turnRules.marketPickLimit - session.pendingSelection.length} more fruit card from the market.`.trim();
     }
 
-    return 'Confirm to take the selected fruit cards, or Reset to choose again.';
+    return `${flipHint}Confirm to take the selected fruit cards, or Reset to choose again.`.trim();
+  }
+
+  if (session.pendingFlip) {
+    return `${flipHint}Pick 2 fruit cards from the market or 1 salad card from the top of any deck.`.trim();
   }
 
   return 'Pick 2 fruit cards from the market or 1 salad card from the top of any deck.';
@@ -63,8 +136,60 @@ export function getTurnHint(session) {
 
 export function resetPendingSelection(session) {
   session.pendingSelection = [];
+  session.pendingFlip = null;
   session.logs.push('Pending selection cleared');
   setTurnStateFromSelection(session);
+}
+
+export function togglePlayerSaladFlip(session, runtimeId) {
+  if (!['turn', 'end_turn'].includes(session.stateMachine.state)) {
+    return false;
+  }
+
+  const card = getOwnedSaladByRuntimeId(session, runtimeId);
+  if (!card) {
+    return false;
+  }
+
+  if (session.pendingFlip?.type === 'player-salad' && session.pendingFlip.runtimeId === runtimeId) {
+    session.pendingFlip = null;
+    session.logs.push(`Cancelled pending flip for ${card.backFruit} in player area`);
+    return true;
+  }
+
+  session.pendingFlip = {
+    type: 'player-salad',
+    runtimeId,
+    cardId: card.id
+  };
+  session.logs.push(`Queued flip for ${card.backFruit} in player area`);
+  return true;
+}
+
+export function toggleSelectedDeckFlip(session, deckId) {
+  if (!['turn', 'end_turn'].includes(session.stateMachine.state)) {
+    return false;
+  }
+
+  const selectedDeckCard = getSelectedDeckCard(session);
+  if (!selectedDeckCard || selectedDeckCard.selection.deckId !== deckId) {
+    return false;
+  }
+
+  if (session.pendingFlip?.type === 'selected-deck' && session.pendingFlip.deckId === deckId && session.pendingFlip.runtimeId === selectedDeckCard.card.runtimeId) {
+    session.pendingFlip = null;
+    session.logs.push(`Cancelled pending flip for ${deckId}`);
+    return true;
+  }
+
+  session.pendingFlip = {
+    type: 'selected-deck',
+    deckId,
+    runtimeId: selectedDeckCard.card.runtimeId,
+    cardId: selectedDeckCard.card.id
+  };
+  session.logs.push(`Queued flip for top card from ${deckId}`);
+  return true;
 }
 
 export function selectMarketCard(session, deckId, cardId) {
@@ -130,6 +255,7 @@ export function selectDeckCard(session, deckId) {
     return true;
   }
 
+  clearSelectedDeckFlip(session);
   session.pendingSelection = [{
     type: 'deck',
     deckId,
@@ -171,23 +297,46 @@ function applyMarketSelection(session) {
   });
 
   session.logs.push(`${player.name} took market fruits: ${takenFruits.join(', ')}`);
-  session.lastAction = `${player.name} took ${takenFruits.join(', ')}`;
+  return `${player.name} took ${takenFruits.join(', ')}`;
 }
 
 function applyDeckSelection(session) {
   const player = getActivePlayer(session);
-  const selection = session.pendingSelection[0];
-  const deck = getDeck(session, selection.deckId);
-  const topCard = deck?.cards[0] ?? null;
+  const selectedDeckCard = getSelectedDeckCard(session);
 
-  if (!topCard || topCard.runtimeId !== selection.runtimeId) {
-    return false;
+  if (!selectedDeckCard) {
+    return null;
+  }
+
+  const { selection, deck, card } = selectedDeckCard;
+  if (session.pendingFlip?.type === 'selected-deck' && session.pendingFlip.deckId === selection.deckId && session.pendingFlip.runtimeId === card.runtimeId) {
+    deck.cards.shift();
+    player.fruitCounts[card.backFruit] += 1;
+    session.logs.push(`${player.name} flipped the top salad card from ${selection.deckId} into ${card.backFruit}`);
+    return `${player.name} flipped ${selection.deckId} into ${card.backFruit}`;
   }
 
   player.salads.push(deck.cards.shift());
   session.logs.push(`${player.name} took a salad card from ${selection.deckId}`);
-  session.lastAction = `${player.name} took a salad from ${selection.deckId}`;
-  return true;
+  return `${player.name} took a salad from ${selection.deckId}`;
+}
+
+function applyPlayerAreaFlip(session) {
+  if (session.pendingFlip?.type !== 'player-salad') {
+    return null;
+  }
+
+  const player = getActivePlayer(session);
+  const saladIndex = player.salads.findIndex((card) => card.runtimeId === session.pendingFlip.runtimeId);
+
+  if (saladIndex < 0) {
+    return null;
+  }
+
+  const [flippedCard] = player.salads.splice(saladIndex, 1);
+  player.fruitCounts[flippedCard.backFruit] += 1;
+  session.logs.push(`${player.name} flipped ${flippedCard.backFruit} from the player area`);
+  return `${player.name} flipped ${flippedCard.backFruit}`;
 }
 
 function refreshMarket(session) {
@@ -206,6 +355,7 @@ function advanceTurn(session) {
   session.turnNumber += 1;
   session.activePlayerIndex = (session.activePlayerIndex + 1) % session.players.length;
   session.viewedPlayerIndex = session.activePlayerIndex;
+  session.pendingFlip = null;
 }
 
 export function confirmSelection(session) {
@@ -213,13 +363,26 @@ export function confirmSelection(session) {
     return false;
   }
 
-  const applied = hasDeckSelection(session) ? applyDeckSelection(session) : (applyMarketSelection(session), true);
-
-  if (!applied) {
+  const actionSummaries = [];
+  const appliedPlayerFlip = applyPlayerAreaFlip(session);
+  if (session.pendingFlip?.type === 'player-salad' && !appliedPlayerFlip) {
     return false;
   }
 
+  if (appliedPlayerFlip) {
+    actionSummaries.push(appliedPlayerFlip);
+  }
+
+  const appliedSelection = hasDeckSelection(session) ? applyDeckSelection(session) : applyMarketSelection(session);
+
+  if (!appliedSelection) {
+    return false;
+  }
+
+  actionSummaries.push(appliedSelection);
+  session.lastAction = actionSummaries.join(' + ');
   session.pendingSelection = [];
+  session.pendingFlip = null;
   refreshMarket(session);
 
   if (!canContinuePlay(session)) {

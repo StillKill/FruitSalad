@@ -11,10 +11,13 @@ import { buildSession } from '../core/sessionSetup.js';
 import {
   canConfirmSelection,
   confirmSelection,
+  getPendingFlipSummary,
   getTurnHint,
   resetPendingSelection,
   selectDeckCard,
-  selectMarketCard
+  selectMarketCard,
+  togglePlayerSaladFlip,
+  toggleSelectedDeckFlip
 } from '../core/sessionActions.js';
 import { drawPanel, drawCardPlaceholder } from '../ui/boardLayout.js';
 import { preloadCardTextures, drawFruitCard, drawFruitCounter, drawSaladCard } from '../ui/cardRenderer.js';
@@ -418,6 +421,7 @@ export class GameScene extends Phaser.Scene {
       ? 'End game reached'
       : `${activePlayer.name} turn`;
     const leaderText = leader ? `${leader.playerName} (${leader.totalPoints})` : 'n/a';
+    const flipText = this.session.pendingFlip ? getPendingFlipSummary(this.session) : 'none';
 
     this.track(this.add.text(regions.controls.x + 24, buttonY, title, {
       fontFamily: '"Trebuchet MS", sans-serif',
@@ -448,7 +452,7 @@ export class GameScene extends Phaser.Scene {
       42,
       palette.warning,
       'Reset',
-      this.session.pendingSelection.length > 0 && this.session.stateMachine.state !== 'end_game',
+      (this.session.pendingSelection.length > 0 || !!this.session.pendingFlip) && this.session.stateMachine.state !== 'end_game',
       () => {
         resetPendingSelection(this.session);
         this.renderDynamicUi();
@@ -457,11 +461,11 @@ export class GameScene extends Phaser.Scene {
 
     this.track(this.add.text(
       regions.controls.x + 24,
-      regions.controls.y + 58,
+      regions.controls.y + 56,
       getTurnHint(this.session),
       {
         fontFamily: '"Trebuchet MS", sans-serif',
-        fontSize: '14px',
+        fontSize: '13px',
         color: palette.textMuted,
         wordWrap: { width: 720 }
       }
@@ -469,18 +473,18 @@ export class GameScene extends Phaser.Scene {
 
     this.track(this.add.text(
       regions.controls.x + 24,
-      regions.controls.y + 86,
-      `Leader: ${leaderText}`,
+      regions.controls.y + 92,
+      `Leader: ${leaderText}   Flip: ${flipText}`,
       {
         fontFamily: '"Trebuchet MS", sans-serif',
-        fontSize: '14px',
+        fontSize: '13px',
         color: palette.textMuted,
         fontStyle: 'bold'
       }
     ));
   }
 
-  drawActionButton(x, y, width, height, fillColor, label, enabled, onClick) {
+  drawActionButton(x, y, width, height, fillColor, label, enabled, onClick, fontSize = '20px') {
     const container = this.track(this.add.container(x, y));
     const graphics = this.add.graphics();
     const alpha = enabled ? 1 : 0.32;
@@ -493,7 +497,7 @@ export class GameScene extends Phaser.Scene {
 
     const text = this.add.text(width / 2, height / 2, label, {
       fontFamily: '"Trebuchet MS", sans-serif',
-      fontSize: '20px',
+      fontSize,
       color: enabled ? '#111315' : '#43474d',
       fontStyle: 'bold'
     }).setOrigin(0.5);
@@ -523,6 +527,7 @@ export class GameScene extends Phaser.Scene {
       const titleY = deckY + 30;
       const topSalad = deck.cards[0] ?? null;
       const deckSelected = topSalad ? this.isDeckSelected(deck.id, topSalad.runtimeId) : false;
+      const deckFlipQueued = topSalad ? this.isPendingDeckFlip(deck.id, topSalad.runtimeId) : false;
       const deckEnabled = topSalad && this.canInteractWithDeck(deck.id);
 
       this.track(this.add.text(columnX, titleY, `${deck.id} (${deck.cards.length} salads left)`, {
@@ -541,7 +546,7 @@ export class GameScene extends Phaser.Scene {
       }
 
       if (deckSelected) {
-        this.drawSelectionOutline(columnX, titleY + 24, card.width, card.height, 0x7ed957);
+        this.drawSelectionOutline(columnX, titleY + 24, card.width, card.height, deckFlipQueued ? 0xf5c451 : 0x7ed957);
       }
 
       if (deckEnabled) {
@@ -550,6 +555,24 @@ export class GameScene extends Phaser.Scene {
             this.renderDynamicUi();
           }
         });
+      }
+
+      if (deckSelected) {
+        this.drawActionButton(
+          columnX,
+          titleY + 24 + card.height + 2,
+          card.width,
+          18,
+          deckFlipQueued ? 0xc7b672 : 0xf5c451,
+          deckFlipQueued ? 'Keep as Salad' : 'Flip to Fruit',
+          this.canToggleSelectedDeckFlip(deck.id),
+          () => {
+            if (toggleSelectedDeckFlip(this.session, deck.id)) {
+              this.renderDynamicUi();
+            }
+          },
+          '13px'
+        );
       }
 
       deck.market.forEach((marketCard, marketIndex) => {
@@ -588,6 +611,7 @@ export class GameScene extends Phaser.Scene {
     const saladGapX = 14;
     const saladGapY = 14;
     const saladColumns = 4;
+    const canFlipViewedSalads = this.canInteractWithOwnedSalads() && viewedPlayer.id === activePlayer.id;
     const saladViewport = {
       x: regions.player.x + 24,
       y: regions.player.y + 226,
@@ -621,6 +645,14 @@ export class GameScene extends Phaser.Scene {
       color: palette.textMuted
     }));
 
+    if (canFlipViewedSalads) {
+      this.track(this.add.text(regions.player.x + regions.player.width - 24, regions.player.y + 198, 'Click one salad to flip it this turn', {
+        fontFamily: '"Trebuchet MS", sans-serif',
+        fontSize: '13px',
+        color: palette.textMuted
+      }).setOrigin(1, 0));
+    }
+
     const saladRows = Math.max(1, Math.ceil(viewedPlayer.salads.length / saladColumns));
     const saladContentHeight = saladRows * saladCardHeight + Math.max(0, saladRows - 1) * saladGapY;
     const saladOffset = this.registerScrollRegion('salads', saladViewport, saladContentHeight);
@@ -632,9 +664,22 @@ export class GameScene extends Phaser.Scene {
       const row = Math.floor(index / saladColumns);
       const x = saladViewport.x + column * (saladCardWidth + saladGapX);
       const y = saladViewport.y + row * (saladCardHeight + saladGapY);
+      const renderedY = y - saladOffset;
       const card = drawSaladCard(this, x, y, saladCardWidth, saladCardHeight, cardData);
       saladContent.add(card);
       this.track(card);
+
+      if (this.isPendingPlayerSaladFlip(cardData.runtimeId)) {
+        this.drawSelectionOutline(x, renderedY, saladCardWidth, saladCardHeight, 0xf5c451);
+      }
+
+      if (canFlipViewedSalads && this.isVisibleInViewport(renderedY, saladCardHeight, saladViewport)) {
+        this.addClickZone(x, renderedY, saladCardWidth, saladCardHeight, () => {
+          if (togglePlayerSaladFlip(this.session, cardData.runtimeId)) {
+            this.renderDynamicUi();
+          }
+        });
+      }
     });
 
     this.drawScrollBar('salads');
@@ -776,12 +821,39 @@ export class GameScene extends Phaser.Scene {
     return zone;
   }
 
+  isVisibleInViewport(y, height, viewport) {
+    return y < viewport.y + viewport.height && y + height > viewport.y;
+  }
+
   isDeckSelected(deckId, runtimeId) {
     return this.session.pendingSelection.some((selection) => selection.type === 'deck' && selection.deckId === deckId && selection.runtimeId === runtimeId);
   }
 
   isMarketSelected(deckId, cardId) {
     return this.session.pendingSelection.some((selection) => selection.type === 'market' && selection.deckId === deckId && selection.cardId === cardId);
+  }
+
+  isPendingDeckFlip(deckId, runtimeId) {
+    return this.session.pendingFlip?.type === 'selected-deck'
+      && this.session.pendingFlip.deckId === deckId
+      && this.session.pendingFlip.runtimeId === runtimeId;
+  }
+
+  isPendingPlayerSaladFlip(runtimeId) {
+    return this.session.pendingFlip?.type === 'player-salad' && this.session.pendingFlip.runtimeId === runtimeId;
+  }
+
+  canToggleSelectedDeckFlip(deckId) {
+    if (!['turn', 'end_turn'].includes(this.session.stateMachine.state)) {
+      return false;
+    }
+
+    const selection = this.session.pendingSelection.find((item) => item.type === 'deck');
+    return selection?.deckId === deckId;
+  }
+
+  canInteractWithOwnedSalads() {
+    return ['turn', 'end_turn'].includes(this.session.stateMachine.state);
   }
 
   canInteractWithDeck(deckId) {

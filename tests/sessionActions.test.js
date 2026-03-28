@@ -5,11 +5,14 @@ import { buildSession } from '../src/core/sessionSetup.js';
 import {
   canConfirmSelection,
   confirmSelection,
+  getPendingFlipSummary,
   getPendingSelectionSummary,
   getTurnHint,
   resetPendingSelection,
   selectDeckCard,
-  selectMarketCard
+  selectMarketCard,
+  togglePlayerSaladFlip,
+  toggleSelectedDeckFlip
 } from '../src/core/sessionActions.js';
 
 const fruits = ['kiwi', 'orange', 'apple', 'banana', 'lime', 'mango'];
@@ -124,14 +127,59 @@ test('deck selection is exclusive and confirm moves the salad card to the player
   assert.equal(session.activePlayerIndex, 1);
 });
 
-test('resetPendingSelection clears the current choice and returns to turn state', () => {
-  const session = makeSession();
 
+test('player-area salad flip is optional and resolves together with a market pick', () => {
+  const session = makeSession();
+  const player = session.players[0];
+  const ownedSalad = session.decks[0].cards.shift();
+  const firstFruit = session.decks[0].market[0].fruit;
+  const secondFruit = session.decks[1].market[0].fruit;
+
+  player.salads.push(ownedSalad);
+
+  assert.equal(togglePlayerSaladFlip(session, ownedSalad.runtimeId), true);
+  assert.equal(getPendingFlipSummary(session), `area:${ownedSalad.backFruit}`);
+  assert.equal(canConfirmSelection(session), false);
+
+  selectMarketCard(session, session.decks[0].id, session.decks[0].market[0].id);
+  selectMarketCard(session, session.decks[1].id, session.decks[1].market[0].id);
+
+  assert.equal(confirmSelection(session), true);
+  assert.equal(player.salads.length, 0);
+  assert.equal(player.fruitCounts[ownedSalad.backFruit], 1);
+  assert.equal(player.fruitCounts[firstFruit], 1);
+  assert.equal(player.fruitCounts[secondFruit], 1);
+  assert.equal(session.pendingFlip, null);
+});
+
+test('selected deck card can be flipped into its back fruit before confirm', () => {
+  const session = makeSession();
+  const player = session.players[0];
+  const topCard = session.decks[0].cards[0];
+
+  assert.equal(selectDeckCard(session, 'deck-1'), true);
+  assert.equal(toggleSelectedDeckFlip(session, 'deck-1'), true);
+  assert.equal(getPendingFlipSummary(session), `deck-1:${topCard.backFruit}`);
+  assert.equal(canConfirmSelection(session), true);
+
+  assert.equal(confirmSelection(session), true);
+  assert.equal(player.salads.length, 0);
+  assert.equal(player.fruitCounts[topCard.backFruit], 1);
+  assert.equal(session.pendingFlip, null);
+});
+
+test('resetPendingSelection clears the current choice and pending flip', () => {
+  const session = makeSession();
+  const ownedSalad = session.decks[0].cards.shift();
+
+  session.players[0].salads.push(ownedSalad);
   selectDeckCard(session, 'deck-2');
+  togglePlayerSaladFlip(session, ownedSalad.runtimeId);
   assert.equal(session.stateMachine.state, 'end_turn');
 
   resetPendingSelection(session);
   assert.equal(session.pendingSelection.length, 0);
+  assert.equal(session.pendingFlip, null);
   assert.equal(session.stateMachine.state, 'turn');
   assert.equal(getPendingSelectionSummary(session), 'none');
 });
