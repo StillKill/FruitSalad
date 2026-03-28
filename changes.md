@@ -4,7 +4,7 @@
 - Exposed a browser-side debug bridge as `window.__FRUIT_SALAD_DEBUG__` so the active Phaser scene, live session, seed, logs, and compact deck snapshots can be inspected from DevTools during a running match.
 - Cleaned up `changes.md` formatting and updated `AGENTS.md` plus `project.md` so the log stays a short record of completed work.
 
-## 2026-03-24
+## 2026-03-28
 - Implemented the `end_game` results overlay with a frozen final snapshot, winner banner, placements, clickable standings, and per-player scoring breakdown with scrollable details.
 - Added a dedicated end-game results helper plus tests for ranking, tied placements, and snapshot freezing before the popup is rendered.
 - Simplified the player-area flip control to a single `Flip Mode` toggle and removed the extra helper caption that appeared after activation.
@@ -18,6 +18,8 @@
 - Added a renderer-level regression test for the sorted display order, including stable ordering for equal point values.
 - Made player tabs interactive so `viewedPlayerIndex` now switches the right-side player panel during a turn, while the active player remains separately highlighted.
 - Updated session coverage and project notes for the viewed-player flow, including the turn-advance reset back to the new active player.
+
+## 2026-03-24
 - Updated `AGENTS.md` to require syncing `project.md` whenever a task changes architecture, long-lived behavior, workflow, or project structure.
 - Fixed session setup shuffling: the selected card pool is now shuffled by seed before being split into decks, so the initial market no longer mirrors the catalog order.
 - Stored the runtime seed in session options/logs and covered the setup with deterministic seed-based tests on both fixture decks and the full scoring catalog.
