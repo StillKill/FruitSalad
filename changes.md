@@ -1,6 +1,9 @@
 ﻿# Changes Log
 
 ## 2026-03-24
+- Implemented the `end_game` results overlay with a frozen final snapshot, winner banner, placements, clickable standings, and per-player scoring breakdown with scrollable details.
+- Added a dedicated end-game results helper plus tests for ranking, tied placements, and snapshot freezing before the popup is rendered.
+- Verification: `node tests/run-tests.js`; `node --check src/scenes/GameScene.js`; `node --check src/core/endGameResults.js`; `node --check tests/endGameResults.test.js`.
 - Simplified the player-area flip control to a single `Flip Mode` toggle and removed the extra helper caption that appeared after activation.
 - Verification: `node tests/run-tests.js`; `node --check src/scenes/GameScene.js`.
 - Reworked player-area salad flipping UX into an explicit flip mode instead of making every salad card look active at once; the selected card highlight now stays clipped inside the scroll viewport.

@@ -23,6 +23,7 @@ import { drawPanel, drawCardPlaceholder } from '../ui/boardLayout.js';
 import { preloadCardTextures, drawFruitCard, drawFruitCounter, drawSaladCard } from '../ui/cardRenderer.js';
 import { buildDebugSnapshot } from '../ui/debugOverlay.js';
 import { scoreTable } from '../core/scoring/scoringEngine.js';
+import { buildEndGameResults } from '../core/endGameResults.js';
 
 const SETTINGS_NAME_MAX_LENGTH = 18;
 
@@ -45,7 +46,8 @@ export class GameScene extends Phaser.Scene {
     this.activeSettingsField = 0;
     this.scrollState = {
       salads: 0,
-      debug: 0
+      debug: 0,
+      results: 0
     };
     this.scrollMeta = {};
     this.playerAreaFlipMode = false;
@@ -85,6 +87,68 @@ export class GameScene extends Phaser.Scene {
         player.score = entry.totalPoints;
       }
     });
+  }
+
+  getEndGameResults() {
+    if (!this.session) {
+      return null;
+    }
+
+    if (!this.session.endGameResults || this.session.endGameResults.turnNumber !== this.session.turnNumber) {
+      this.session.endGameResults = {
+        turnNumber: this.session.turnNumber,
+        ...buildEndGameResults(this.session.players, this.session.scoringCatalog.fruits)
+      };
+    }
+
+    return this.session.endGameResults;
+  }
+
+  getEndGameViewedEntry() {
+    const results = this.getEndGameResults();
+    if (!results) {
+      return null;
+    }
+
+    return results.standings.find((entry) => entry.playerId === this.session.players[this.session.viewedPlayerIndex]?.id) ?? results.standings[0] ?? null;
+  }
+
+  formatPlacement(placement) {
+    const suffix = placement === 1 ? 'st' : placement === 2 ? 'nd' : placement === 3 ? 'rd' : 'th';
+    return `${placement}${suffix}`;
+  }
+
+  formatFruitSummary(fruitCounts) {
+    return Object.entries(fruitCounts)
+      .map(([fruit, count]) => `${fruit}:${count}`)
+      .join('  ');
+  }
+
+  formatBreakdownLine(cardScore) {
+    const { breakdown } = cardScore;
+
+    switch (breakdown.kind) {
+      case 'compare':
+        return `${cardScore.ruleType} -> metric ${breakdown.metric}, card ${cardScore.points}`;
+      case 'parity':
+        return `${breakdown.targetFruit} ${breakdown.parity} (${breakdown.count}) -> ${cardScore.points}`;
+      case 'threshold':
+        return `${breakdown.qualifiedKinds} kinds at ${breakdown.threshold}+ -> ${cardScore.points}`;
+      case 'missing':
+        return `${breakdown.missingKinds} missing kinds -> ${cardScore.points}`;
+      case 'same-kind-set':
+        return `${breakdown.targetFruit} x${breakdown.count}, ${breakdown.completedSets} sets -> ${cardScore.points}`;
+      case 'distinct-kind-set':
+        return `${breakdown.completedSets} distinct sets of ${breakdown.setSize} -> ${cardScore.points}`;
+      case 'per-fruit-flat':
+        return `${breakdown.targetFruit} x${breakdown.count} @ ${breakdown.pointsPerFruit} -> ${cardScore.points}`;
+      case 'per-fruit-multi':
+        return breakdown.contributions
+          .map((item) => `${item.fruit} ${item.count}x${item.pointsPerFruit}=${item.subtotal}`)
+          .join('  ');
+      default:
+        return `${cardScore.ruleType} -> ${cardScore.points}`;
+    }
   }
 
   handleKeyDown(event) {
@@ -146,6 +210,11 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
+    if (this.session.stateMachine.state === 'end_game' && this.updateScrollFromPointer('results', pointer, delta)) {
+      this.renderDynamicUi();
+      return;
+    }
+
     if (this.updateScrollFromPointer('salads', pointer, delta)) {
       this.renderDynamicUi();
       return;
@@ -198,6 +267,10 @@ export class GameScene extends Phaser.Scene {
     this.drawPlayerArea();
     this.drawScoreTabs();
     this.drawDebugPanel();
+
+    if (this.session.stateMachine.state === 'end_game') {
+      this.drawEndGameOverlay();
+    }
   }
 
   track(object) {
@@ -407,7 +480,8 @@ export class GameScene extends Phaser.Scene {
     this.activeSettingsField = null;
     this.scrollState = {
       salads: 0,
-      debug: 0
+      debug: 0,
+      results: 0
     };
     this.playerAreaFlipMode = false;
     this.session = buildSession(options, this.sessionRules, this.scoringCards);
@@ -802,6 +876,134 @@ export class GameScene extends Phaser.Scene {
     this.drawScrollBar('debug');
   }
 
+
+  drawEndGameOverlay() {
+    const { palette } = layoutConfig;
+    const overlay = this.track(this.add.graphics());
+    overlay.fillStyle(0x0b0d10, 0.72);
+    overlay.fillRect(0, 0, layoutConfig.width, layoutConfig.height);
+    const blocker = this.track(this.add.zone(layoutConfig.width / 2, layoutConfig.height / 2, layoutConfig.width, layoutConfig.height).setInteractive());
+    blocker.on('pointerdown', () => {});
+
+    const popup = {
+      x: 120,
+      y: 92,
+      width: 1360,
+      height: 716
+    };
+    drawPanel(this, popup, palette.panelAlt);
+
+    const results = this.getEndGameResults();
+    const viewedEntry = this.getEndGameViewedEntry();
+    if (!results || !viewedEntry) {
+      return;
+    }
+
+    const viewedState = results.playerStates.find((player) => player.playerId === viewedEntry.playerId) ?? null;
+    const winner = results.winner;
+    const leftX = popup.x + 28;
+    const rightX = popup.x + 530;
+    const topY = popup.y + 28;
+    const standingsRowHeight = 54;
+    const breakdownViewport = {
+      x: rightX,
+      y: popup.y + 146,
+      width: popup.width - 560,
+      height: popup.height - 178
+    };
+
+    this.track(this.add.text(leftX, topY, 'Final Results', {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '34px',
+      color: palette.textPrimary,
+      fontStyle: 'bold'
+    }));
+
+    this.track(this.add.text(leftX, topY + 46, winner ? `${winner.playerName} wins with ${winner.totalPoints} points` : 'Game finished', {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '18px',
+      color: palette.textMuted,
+      fontStyle: 'bold'
+    }));
+
+    this.track(this.add.text(leftX, popup.y + 108, 'Standings', {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '22px',
+      color: palette.textPrimary,
+      fontStyle: 'bold'
+    }));
+
+    results.standings.forEach((entry, index) => {
+      const rowY = popup.y + 146 + index * standingsRowHeight;
+      const isViewed = entry.playerId === viewedEntry.playerId;
+      const row = this.track(this.add.graphics());
+      row.fillStyle(isViewed ? 0x343a44 : 0x242a31, 0.96);
+      row.lineStyle(2, isViewed ? palette.accent : 0x171b20, 1);
+      row.fillRoundedRect(leftX, rowY, 360, 42, 12);
+      row.strokeRoundedRect(leftX, rowY, 360, 42, 12);
+
+      this.track(this.add.text(leftX + 14, rowY + 8, `${this.formatPlacement(entry.placement)}  ${entry.playerName}`, {
+        fontFamily: '"Trebuchet MS", sans-serif',
+        fontSize: '18px',
+        color: isViewed ? palette.accent : palette.textPrimary,
+        fontStyle: 'bold'
+      }));
+
+      this.track(this.add.text(leftX + 286, rowY + 10, String(entry.totalPoints), {
+        fontFamily: '"Trebuchet MS", sans-serif',
+        fontSize: '20px',
+        color: palette.textPrimary,
+        fontStyle: 'bold'
+      }).setOrigin(1, 0));
+
+      this.addClickZone(leftX, rowY, 360, 42, () => {
+        this.setViewedPlayerIndex(results.playerStates.findIndex((player) => player.playerId === entry.playerId));
+      });
+    });
+
+    this.track(this.add.text(rightX, popup.y + 108, `${viewedEntry.playerName} Breakdown`, {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '22px',
+      color: palette.textPrimary,
+      fontStyle: 'bold'
+    }));
+
+    if (viewedState) {
+      this.track(this.add.text(rightX, popup.y + 138, `Fruits: ${this.formatFruitSummary(viewedState.fruitCounts)}`, {
+        fontFamily: 'Consolas, monospace',
+        fontSize: '13px',
+        color: palette.textMuted
+      }));
+    }
+
+    const breakdownLines = viewedEntry.cardScores.length > 0
+      ? viewedEntry.cardScores.flatMap((cardScore) => [
+        `#${cardScore.cardId} ${cardScore.ruleType}  =>  ${cardScore.points}`,
+        this.formatBreakdownLine(cardScore)
+      ])
+      : ['No salad cards scored in this game.'];
+
+    const lineHeight = 24;
+    const breakdownContentHeight = breakdownLines.length * lineHeight;
+    const breakdownOffset = this.registerScrollRegion('results', breakdownViewport, breakdownContentHeight);
+    const breakdownContent = this.track(this.add.container(0, -breakdownOffset));
+    breakdownContent.setMask(this.createViewportMask(breakdownViewport));
+
+    breakdownLines.forEach((line, index) => {
+      const isHeader = index % 2 === 0 || viewedEntry.cardScores.length === 0;
+      const text = this.add.text(breakdownViewport.x, breakdownViewport.y + index * lineHeight, line, {
+        fontFamily: isHeader ? '"Trebuchet MS", sans-serif' : 'Consolas, monospace',
+        fontSize: isHeader ? '16px' : '13px',
+        color: isHeader ? palette.textPrimary : palette.textMuted,
+        fontStyle: isHeader ? 'bold' : 'normal',
+        wordWrap: { width: breakdownViewport.width - 18 }
+      });
+      breakdownContent.add(text);
+      this.track(text);
+    });
+
+    this.drawScrollBar('results');
+  }
   registerScrollRegion(key, viewport, contentHeight) {
     const maxScroll = Math.max(0, contentHeight - viewport.height);
     this.scrollState[key] = Phaser.Math.Clamp(this.scrollState[key] ?? 0, 0, maxScroll);
