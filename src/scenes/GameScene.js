@@ -48,6 +48,7 @@ export class GameScene extends Phaser.Scene {
       debug: 0
     };
     this.scrollMeta = {};
+    this.playerAreaFlipMode = false;
   }
 
   preload() {
@@ -408,6 +409,7 @@ export class GameScene extends Phaser.Scene {
       salads: 0,
       debug: 0
     };
+    this.playerAreaFlipMode = false;
     this.session = buildSession(options, this.sessionRules, this.scoringCards);
     this.renderDynamicUi();
   }
@@ -440,6 +442,7 @@ export class GameScene extends Phaser.Scene {
       canConfirmSelection(this.session),
       () => {
         if (confirmSelection(this.session)) {
+          this.playerAreaFlipMode = false;
           this.renderDynamicUi();
         }
       }
@@ -455,6 +458,7 @@ export class GameScene extends Phaser.Scene {
       (this.session.pendingSelection.length > 0 || !!this.session.pendingFlip) && this.session.stateMachine.state !== 'end_game',
       () => {
         resetPendingSelection(this.session);
+        this.playerAreaFlipMode = false;
         this.renderDynamicUi();
       }
     );
@@ -568,6 +572,7 @@ export class GameScene extends Phaser.Scene {
           this.canToggleSelectedDeckFlip(deck.id),
           () => {
             if (toggleSelectedDeckFlip(this.session, deck.id)) {
+              this.playerAreaFlipMode = false;
               this.renderDynamicUi();
             }
           },
@@ -612,12 +617,18 @@ export class GameScene extends Phaser.Scene {
     const saladGapY = 14;
     const saladColumns = 4;
     const canFlipViewedSalads = this.canInteractWithOwnedSalads() && viewedPlayer.id === activePlayer.id;
+    const hasPendingPlayerFlip = this.session.pendingFlip?.type === 'player-salad';
+    const showPlayerFlipMode = canFlipViewedSalads && this.playerAreaFlipMode && !hasPendingPlayerFlip;
     const saladViewport = {
       x: regions.player.x + 24,
       y: regions.player.y + 226,
       width: regions.player.width - 56,
       height: 250
     };
+
+    if (!canFlipViewedSalads) {
+      this.playerAreaFlipMode = false;
+    }
 
     this.track(this.add.text(regions.player.x + 24, regions.player.y + 18, `${viewedPlayer.name} area`, {
       fontFamily: '"Trebuchet MS", sans-serif',
@@ -646,11 +657,39 @@ export class GameScene extends Phaser.Scene {
     }));
 
     if (canFlipViewedSalads) {
-      this.track(this.add.text(regions.player.x + regions.player.width - 24, regions.player.y + 198, 'Click one salad to flip it this turn', {
-        fontFamily: '"Trebuchet MS", sans-serif',
-        fontSize: '13px',
-        color: palette.textMuted
-      }).setOrigin(1, 0));
+      const playerFlipLabel = hasPendingPlayerFlip
+        ? 'Cancel Area Flip'
+        : this.playerAreaFlipMode
+          ? 'Exit Flip Mode'
+          : 'Flip One Salad';
+
+      this.drawActionButton(
+        regions.player.x + regions.player.width - 196,
+        regions.player.y + 190,
+        172,
+        28,
+        hasPendingPlayerFlip ? palette.warning : 0xf5c451,
+        playerFlipLabel,
+        true,
+        () => {
+          if (hasPendingPlayerFlip) {
+            togglePlayerSaladFlip(this.session, this.session.pendingFlip.runtimeId);
+            this.playerAreaFlipMode = false;
+          } else {
+            this.playerAreaFlipMode = !this.playerAreaFlipMode;
+          }
+          this.renderDynamicUi();
+        },
+        '13px'
+      );
+
+      if (showPlayerFlipMode) {
+        this.track(this.add.text(regions.player.x + regions.player.width - 24, regions.player.y + 198, 'Flip mode: choose one salad card', {
+          fontFamily: '"Trebuchet MS", sans-serif',
+          fontSize: '13px',
+          color: palette.textMuted
+        }).setOrigin(1, 0));
+      }
     }
 
     const saladRows = Math.max(1, Math.ceil(viewedPlayer.salads.length / saladColumns));
@@ -670,12 +709,14 @@ export class GameScene extends Phaser.Scene {
       this.track(card);
 
       if (this.isPendingPlayerSaladFlip(cardData.runtimeId)) {
-        this.drawSelectionOutline(x, renderedY, saladCardWidth, saladCardHeight, 0xf5c451);
+        const outline = this.drawSelectionOutline(x, y, saladCardWidth, saladCardHeight, 0xf5c451);
+        saladContent.add(outline);
       }
 
-      if (canFlipViewedSalads && this.isVisibleInViewport(renderedY, saladCardHeight, saladViewport)) {
+      if (showPlayerFlipMode && this.isVisibleInViewport(renderedY, saladCardHeight, saladViewport)) {
         this.addClickZone(x, renderedY, saladCardWidth, saladCardHeight, () => {
           if (togglePlayerSaladFlip(this.session, cardData.runtimeId)) {
+            this.playerAreaFlipMode = false;
             this.renderDynamicUi();
           }
         });
@@ -731,6 +772,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.session.viewedPlayerIndex = nextIndex;
+    this.playerAreaFlipMode = false;
     this.scrollState.salads = 0;
     this.renderDynamicUi();
   }

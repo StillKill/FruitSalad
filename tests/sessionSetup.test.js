@@ -172,6 +172,25 @@ test('refillSessionMarkets restores empty decks before filling their market slot
   assert.match(logs.join(' | '), /deck-1 refilled market with banana, lime/);
 });
 
+
+test('buildSession assigns runtime ids to seeded demo salads', () => {
+  const scoringCatalog = makeSeededCatalog();
+  const sessionRules = {
+    deckCount: 3,
+    marketSlotsPerDeck: 2,
+    cardsPerPlayer: 18,
+    playerCardPoolByCount: {
+      '2': { selectedCards: 12 }
+    }
+  };
+
+  const seededSession = buildSession({ playerCount: 2, playerNames: ['A', 'B'], seedDemoProgress: true, randomSeed: 22 }, sessionRules, scoringCatalog);
+  const runtimeIds = seededSession.players.flatMap((player) => player.salads.map((card) => card.runtimeId));
+
+  assert.ok(runtimeIds.every(Boolean));
+  assert.equal(new Set(runtimeIds).size, runtimeIds.length);
+});
+
 test('refillDeckMarket only flips enough cards to fill empty slots', () => {
   const logs = [];
   const deck = {

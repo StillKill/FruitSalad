@@ -124,9 +124,17 @@ function findCardsByIds(scoringCatalog, ids) {
   return ids.map((id) => index.get(id)).filter(Boolean);
 }
 
+function instantiateCatalogCardsByIds(scoringCatalog, ids, runtimePrefix) {
+  return findCardsByIds(scoringCatalog, ids).map((card, index) => ({
+    ...structuredClone(card),
+    runtimeId: `${runtimePrefix}__${card.id}__${index + 1}`,
+    sourceId: card.id
+  }));
+}
+
 function findPrototypeShowcaseCards(scoringCatalog) {
   const preferredIds = ['000', '030', '066', '067', '068', '069', '071', '102', '103', '104', '106'];
-  return findCardsByIds(scoringCatalog, preferredIds);
+  return instantiateCatalogCardsByIds(scoringCatalog, preferredIds, 'demo-p2');
 }
 
 function seedPrototypeProgress(session) {
@@ -154,7 +162,7 @@ function seedPrototypeProgress(session) {
     mango: 5
   };
 
-  playerOne.salads = findCardsByIds(session.scoringCatalog, ['102', '071', '104', '054']);
+  playerOne.salads = instantiateCatalogCardsByIds(session.scoringCatalog, ['102', '071', '104', '054'], 'demo-p1');
   playerTwo.salads = findPrototypeShowcaseCards(session.scoringCatalog);
 
   session.logs.push('Prototype scoring preview seeded');
