@@ -1,4 +1,4 @@
-﻿# Fruit Salad (Фруктовый Салат)
+# Fruit Salad (Фруктовый Салат)
 
 Цифровая версия Point Salad на Phaser 3 с локальным hot-seat мультиплеером для 2-6 игроков.
 
@@ -11,6 +11,12 @@
 ## Инструкции для агентов
 - Операционные правила проекта вынесены в `AGENTS.md` в корне репозитория.
 - `project.md` хранит описание проекта, целевую структуру и план.
+
+## Text Encoding Policy
+- Canonical text encoding for project files is UTF-8 without BOM.
+- Canonical line ending for project text files is LF.
+- Any edit to files with Cyrillic or other non-ASCII text must preserve readable UTF-8 content in both the file and `git diff`.
+- If an edit tool produces mojibake, restore the file from git immediately and redo the change with explicit UTF-8 handling.
 
 ## Routing по skills
 - Папка `skills/` не участвует в runtime, но используется как слой task-routing и дополнительного контекста для агентов.
