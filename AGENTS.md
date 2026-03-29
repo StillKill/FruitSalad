@@ -13,6 +13,7 @@
 - If `apply_patch` still rejects after encoding checks, refresh the exact current file contents before retrying, split the edit into smaller hunks, and avoid patching the same file from stale context after any shell-based rewrite.
 - If `apply_patch` fails at the sandbox refresh stage instead of rejecting a hunk, switch immediately to safe PowerShell editing with explicit UTF-8 without BOM output and then verify `git diff` readability before continuing.
 - After each completed logical task, run appropriate verification: tests, targeted checks, or manual validation if automated coverage is insufficient.
+- Treat `npm test` as the default verification baseline. Run Playwright visual snapshot coverage (`npm run test:e2e`) when a task changes UI, layout, responsive behavior, visible text flow, or other player-facing visuals; skip it for logic-only changes that cannot affect presentation.
 - Record each completed logical task in `changes.md` with a short note about what changed. Do not add separate `Verification:` entries to the log.
 - Commit each completed logical task as a separate git commit.
 - If a task changes architecture, system behavior, workflow, project structure, or other long-lived project assumptions, update `project.md` to keep the project description in sync.
