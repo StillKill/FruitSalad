@@ -109,6 +109,7 @@ project-root/
 - Для fair game settings-экран показывает `Continue` / `New Game`, если найден локальный fair-save; demo mode вынесен в отдельный визуальный блок и не смешивается с основными настройками партии.
 - Runtime localization supports `ru` and `en`. The scene resolves locale from `?lang=` first and browser language second, exposes a manual `RU/EN` switch in settings and during play, and English fruit cards reuse the same bilingual fruit asset by flipping the image on both axes instead of duplicating PNG files.
 - Settings and control-panel layout should stay resilient to localization: section spacing is driven by rendered text height, name fields scale to the available column width, and the in-game language toggle keeps its own reserved area instead of sharing button space with `Confirm` / `Reset`.
+- Player name fields should use browser-native text input bridging over the Phaser scene so mobile keyboards, paste, and standard text editing work in `settings` on touch devices.
 - Market deck headers should use localized player-facing labels, and salad-card center copy should prefer compact localized phrasing so bilingual gameplay text stays legible before a later icon-first redesign.
 - Панель управления ходом: `Confirm`, `Reset`, строка подсказки и статус pending flip.
 - Tabs игроков и scoreboard; активный игрок и просматриваемый игрок различаются визуально.

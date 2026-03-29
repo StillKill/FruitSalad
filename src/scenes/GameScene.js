@@ -78,6 +78,9 @@ export class GameScene extends Phaser.Scene {
     this.lastFairSessionOptions = null;
     this.savedFairSessionState = null;
     this.activeSettingsField = 0;
+    this.settingsInput = null;
+    this.settingsFieldBounds = new Map();
+    this.pendingSettingsInputFocus = false;
     this.scrollState = {
       salads: 0,
       debug: 0,
@@ -151,6 +154,10 @@ export class GameScene extends Phaser.Scene {
 
     this.input.on('wheel', this.handleWheel, this);
     this.input.keyboard?.on('keydown', this.handleKeyDown, this);
+    this.scale.on('resize', this.syncSettingsDomInput, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.destroySettingsDomInput, this);
+    this.events.once(Phaser.Scenes.Events.DESTROY, this.destroySettingsDomInput, this);
+    this.ensureSettingsDomInput();
 
     this.installDebugBridge();
     this.drawBackground();
@@ -483,11 +490,14 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
+    const settingsInputFocused = !!this.settingsInput && globalThis.document?.activeElement === this.settingsInput;
+
     if (event.key === 'Tab') {
       event.preventDefault();
       const direction = event.shiftKey ? -1 : 1;
       const nextIndex = Phaser.Math.Wrap(this.activeSettingsField + direction, 0, this.settingsDraft.playerCount);
       this.activeSettingsField = nextIndex;
+      this.pendingSettingsInputFocus = true;
       this.renderDynamicUi();
       return;
     }
@@ -499,7 +509,13 @@ export class GameScene extends Phaser.Scene {
 
     if (event.key === 'Escape') {
       this.activeSettingsField = null;
+      this.pendingSettingsInputFocus = false;
+      this.settingsInput?.blur();
       this.renderDynamicUi();
+      return;
+    }
+
+    if (settingsInputFocused) {
       return;
     }
 
@@ -526,6 +542,111 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  ensureSettingsDomInput() {
+    if (this.settingsInput || typeof document === 'undefined') {
+      return;
+    }
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.maxLength = SETTINGS_NAME_MAX_LENGTH;
+    input.autocomplete = 'off';
+    input.autocapitalize = 'words';
+    input.spellcheck = false;
+    input.setAttribute('aria-label', 'Player name');
+    Object.assign(input.style, {
+      position: 'fixed',
+      left: '0',
+      top: '0',
+      width: '0',
+      height: '0',
+      opacity: '0.01',
+      border: '0',
+      padding: '0',
+      margin: '0',
+      background: 'transparent',
+      color: 'transparent',
+      caretColor: 'transparent',
+      pointerEvents: 'none',
+      zIndex: '10000'
+    });
+
+    input.addEventListener('input', () => {
+      if (this.session || this.activeSettingsField === null) {
+        return;
+      }
+
+      const nextName = input.value.slice(0, SETTINGS_NAME_MAX_LENGTH);
+      if (this.settingsDraft.playerNames[this.activeSettingsField] === nextName) {
+        return;
+      }
+
+      this.settingsDraft.playerNames[this.activeSettingsField] = nextName;
+      this.renderDynamicUi();
+    });
+
+    document.body.appendChild(input);
+    this.settingsInput = input;
+  }
+
+  destroySettingsDomInput() {
+    this.scale?.off('resize', this.syncSettingsDomInput, this);
+    if (this.settingsInput?.parentNode) {
+      this.settingsInput.parentNode.removeChild(this.settingsInput);
+    }
+    this.settingsInput = null;
+  }
+
+  syncSettingsDomInput() {
+    if (!this.settingsInput) {
+      return;
+    }
+
+    if (this.session || this.activeSettingsField === null) {
+      this.settingsInput.style.pointerEvents = 'none';
+      this.settingsInput.style.width = '0';
+      this.settingsInput.style.height = '0';
+      this.settingsInput.style.opacity = '0';
+      return;
+    }
+
+    const fieldBounds = this.settingsFieldBounds.get(this.activeSettingsField);
+    const canvas = this.game.canvas;
+    if (!fieldBounds || !canvas) {
+      this.settingsInput.style.pointerEvents = 'none';
+      this.settingsInput.style.opacity = '0';
+      return;
+    }
+
+    const canvasRect = canvas.getBoundingClientRect();
+    const scaleX = canvasRect.width / layoutConfig.width;
+    const scaleY = canvasRect.height / layoutConfig.height;
+    const inputLeft = canvasRect.left + fieldBounds.x * scaleX;
+    const inputTop = canvasRect.top + fieldBounds.y * scaleY;
+    const inputWidth = fieldBounds.width * scaleX;
+    const inputHeight = fieldBounds.height * scaleY;
+    const nextValue = this.settingsDraft.playerNames[this.activeSettingsField] ?? '';
+
+    if (this.settingsInput.value !== nextValue) {
+      this.settingsInput.value = nextValue;
+    }
+
+    Object.assign(this.settingsInput.style, {
+      left: `${inputLeft}px`,
+      top: `${inputTop}px`,
+      width: `${Math.max(1, inputWidth)}px`,
+      height: `${Math.max(1, inputHeight)}px`,
+      opacity: '0.01',
+      pointerEvents: 'auto',
+      fontSize: `${Math.max(16, 24 * scaleY)}px`
+    });
+
+    if (this.pendingSettingsInputFocus) {
+      this.pendingSettingsInputFocus = false;
+      this.settingsInput.focus({ preventScroll: true });
+      this.settingsInput.setSelectionRange(this.settingsInput.value.length, this.settingsInput.value.length);
+    }
+  }
   handleWheel(pointer, currentlyOver, deltaX, deltaY) {
     if (!this.session) {
       return;
@@ -581,11 +702,13 @@ export class GameScene extends Phaser.Scene {
     this.dynamicObjects.forEach((object) => object.destroy());
     this.dynamicObjects = [];
     this.scrollMeta = {};
+    this.settingsFieldBounds = new Map();
     this.turnTimerText = null;
     this.turnTimerLabel = null;
 
     if (!this.session) {
       this.drawSettingsScreen();
+      this.syncSettingsDomInput();
       return;
     }
 
@@ -601,6 +724,7 @@ export class GameScene extends Phaser.Scene {
       this.drawEndGameOverlay();
     }
 
+    this.syncSettingsDomInput();
     this.syncTurnAudio();
   }
 
@@ -968,8 +1092,11 @@ export class GameScene extends Phaser.Scene {
       color: value ? palette.textPrimary : palette.textMuted
     }));
 
+    this.settingsFieldBounds.set(index, { x, y, width, height });
+
     this.addClickZone(x, y, width, height, () => {
       this.activeSettingsField = index;
+      this.pendingSettingsInputFocus = true;
       this.renderDynamicUi();
     });
   }
