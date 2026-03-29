@@ -1,6 +1,7 @@
 # Changes Log
 
 ## 2026-03-29
+- Added a manual `RU/EN` language switch to the settings screen and in-game controls, synchronized default player names when the locale changes, and exposed the active language in the debug overlay to make mixed-locale state easy to spot.
 - Localized the playable UI, turn hints, debug labels, fruit counters, and end-game copy for `ru`/`en`; English fruit cards now reuse the same bilingual art by flipping the existing fruit image on both axes instead of duplicating assets.
 - Reworked the end_game overlay into a visual card-by-card breakdown with mini salad cards, per-card point pills, and stronger summary metrics for the viewed player.
 - Documented a repo-wide UTF-8/LF policy in AGENTS.md, project.md, .gitattributes, and .editorconfig to prevent recurring mojibake when editing Cyrillic text.

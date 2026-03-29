@@ -8,6 +8,20 @@ export function buildDefaultPlayerNames(playerCount, locale = 'ru') {
   return Array.from({ length: playerCount }, (_, index) => buildPlayerName(index + 1, resolvedLocale));
 }
 
+export function relocalizePlayerNames(playerNames = [], playerCount, fromLocale = 'ru', toLocale = 'ru') {
+  const sourceNames = buildDefaultPlayerNames(playerCount, fromLocale);
+  const targetNames = buildDefaultPlayerNames(playerCount, toLocale);
+
+  return Array.from({ length: playerCount }, (_, index) => {
+    const currentName = typeof playerNames[index] === 'string' ? playerNames[index].trim() : '';
+    if (!currentName) {
+      return targetNames[index];
+    }
+
+    return currentName === sourceNames[index] ? targetNames[index] : currentName;
+  });
+}
+
 export function normalizeSessionOptions(options = {}, locale = 'ru') {
   const requestedCount = Number.isInteger(options.playerCount) ? options.playerCount : MIN_PLAYER_COUNT;
   const playerCount = Math.min(MAX_PLAYER_COUNT, Math.max(MIN_PLAYER_COUNT, requestedCount));

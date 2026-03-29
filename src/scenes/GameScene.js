@@ -4,6 +4,7 @@ import {
   buildDefaultPlayerNames,
   defaultSessionOptions,
   normalizeSessionOptions,
+  relocalizePlayerNames,
   MAX_PLAYER_COUNT,
   MIN_PLAYER_COUNT
 } from '../config/sessionDefaults.js';
@@ -24,7 +25,7 @@ import { preloadCardTextures, drawFruitCard, drawFruitCounter, drawSaladCard } f
 import { buildDebugSnapshot } from '../ui/debugOverlay.js';
 import { scoreTable } from '../core/scoring/scoringEngine.js';
 import { buildEndGameResults } from '../core/endGameResults.js';
-import { detectGameLocale, getCardCopy, getFruitName, getLocaleCopy, getParityLabel } from '../i18n/locale.js';
+import { detectGameLocale, getCardCopy, getFruitName, getLocaleCopy, getParityLabel, normalizeLocale } from '../i18n/locale.js';
 
 const SETTINGS_NAME_MAX_LENGTH = 18;
 
@@ -32,7 +33,8 @@ function createSettingsDraft(options = defaultSessionOptions, locale = defaultSe
   const normalized = normalizeSessionOptions(options, locale);
   return {
     playerCount: normalized.playerCount,
-    playerNames: [...normalized.playerNames]
+    playerNames: [...normalized.playerNames],
+    locale: normalized.locale
   };
 }
 
@@ -65,7 +67,7 @@ export class GameScene extends Phaser.Scene {
     this.sessionRules = null;
     this.scoringCards = null;
     this.dynamicObjects = [];
-    this.settingsDraft = createSettingsDraft();
+    this.settingsDraft = createSettingsDraft(defaultSessionOptions, this.locale);
     this.activeSettingsField = 0;
     this.scrollState = {
       salads: 0,
@@ -477,6 +479,87 @@ export class GameScene extends Phaser.Scene {
     }));
   }
 
+  getLanguageLabel() {
+    return this.locale === 'ru' ? '\u042f\u0437\u044b\u043a' : 'Language';
+  }
+
+  syncSettingsDraftLocale(previousLocale, nextLocale) {
+    const playerCount = this.settingsDraft.playerCount ?? defaultSessionOptions.playerCount;
+    this.settingsDraft = {
+      playerCount,
+      playerNames: relocalizePlayerNames(this.settingsDraft.playerNames ?? [], playerCount, previousLocale, nextLocale),
+      locale: nextLocale
+    };
+  }
+
+  syncSessionLocale(previousLocale, nextLocale) {
+    if (!this.session) {
+      return;
+    }
+
+    this.session.options.locale = nextLocale;
+    const nextNames = relocalizePlayerNames(
+      this.session.players.map((player) => player.name),
+      this.session.players.length,
+      previousLocale,
+      nextLocale
+    );
+
+    this.session.players.forEach((player, index) => {
+      player.name = nextNames[index];
+    });
+  }
+
+  setLocale(nextLocale) {
+    const resolvedLocale = normalizeLocale(nextLocale);
+    if (resolvedLocale === this.locale) {
+      return;
+    }
+
+    const previousLocale = this.locale;
+    this.locale = resolvedLocale;
+    this.copy = getLocaleCopy(this.locale);
+    this.fruitSaladLocale = this.locale;
+    this.syncSettingsDraftLocale(previousLocale, this.locale);
+    this.syncSessionLocale(previousLocale, this.locale);
+    this.renderDynamicUi();
+  }
+
+  drawLocaleToggle(x, y, width = 58, height = 28, showLabel = false) {
+    const { palette } = layoutConfig;
+
+    if (showLabel) {
+      this.track(this.add.text(x, y, this.getLanguageLabel(), {
+        fontFamily: '"Trebuchet MS", sans-serif',
+        fontSize: '15px',
+        color: palette.textMuted,
+        fontStyle: 'bold'
+      }));
+    }
+
+    const buttonY = showLabel ? y + 22 : y;
+    ['ru', 'en'].forEach((localeKey, index) => {
+      const buttonX = x + index * (width + 8);
+      const isSelected = this.locale === localeKey;
+      const graphics = this.track(this.add.graphics());
+      graphics.fillStyle(isSelected ? palette.accent : 0x343a44, 1);
+      graphics.lineStyle(2, isSelected ? 0xf6f1c7 : 0x171b20, 1);
+      graphics.fillRoundedRect(buttonX, buttonY, width, height, 10);
+      graphics.strokeRoundedRect(buttonX, buttonY, width, height, 10);
+
+      this.track(this.add.text(buttonX + width / 2, buttonY + height / 2, localeKey.toUpperCase(), {
+        fontFamily: '"Trebuchet MS", sans-serif',
+        fontSize: '15px',
+        color: isSelected ? '#111315' : palette.textPrimary,
+        fontStyle: 'bold'
+      }).setOrigin(0.5));
+
+      this.addClickZone(buttonX, buttonY, width, height, () => {
+        this.setLocale(localeKey);
+      });
+    });
+  }
+
   drawSettingsScreen() {
     const { palette } = layoutConfig;
     const panelX = 360;
@@ -508,6 +591,8 @@ export class GameScene extends Phaser.Scene {
       color: palette.textMuted,
       wordWrap: { width: panelWidth - 84 }
     }));
+
+    this.drawLocaleToggle(panelX + panelWidth - 182, panelY + 34, 58, 28, true);
 
     this.track(this.add.text(panelX + 42, panelY + 142, this.copy.players, {
       fontFamily: '"Trebuchet MS", sans-serif',
@@ -639,7 +724,7 @@ export class GameScene extends Phaser.Scene {
       seedDemoProgress: false
     }, this.locale);
 
-    this.settingsDraft = createSettingsDraft(options);
+    this.settingsDraft = createSettingsDraft(options, this.locale);
     this.launchSession(options);
   }
 
@@ -677,6 +762,8 @@ export class GameScene extends Phaser.Scene {
       : this.copy.turn(activePlayer.name);
     const leaderText = leader ? `${leader.playerName} (${leader.totalPoints})` : this.copy.none;
     const flipText = this.session.pendingFlip ? getPendingFlipSummary(this.session, this.locale) : this.copy.none;
+
+    this.drawLocaleToggle(regions.controls.x + regions.controls.width - 156, buttonY + 4, 58, 24, false);
 
     this.track(this.add.text(regions.controls.x + 24, buttonY, title, {
       fontFamily: '"Trebuchet MS", sans-serif',

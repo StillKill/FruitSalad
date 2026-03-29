@@ -28,6 +28,7 @@ export function buildDebugSnapshot(session, locale = session?.options?.locale) {
     : copy.none;
 
   return [
+    `lang=${resolvedLocale}`,
     copy.debugStateLine({ state: session.stateMachine.state, turnNumber: session.turnNumber, activePlayer: activePlayer.name, viewedPlayer: viewedPlayer.name }),
     copy.debugSelectedLine({ selected, pendingFlip, salads: activePlayer.salads.length, score: activePlayer.score }),
     copy.debugLeaderLine({ leader: previewLeader ? `${previewLeader.playerName}:${previewLeader.totalPoints}` : copy.none, decks: deckSummary }),

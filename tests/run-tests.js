@@ -1,6 +1,7 @@
 import './sessionDefaults.test.js';
 import './scoringEngine.test.js';
 import './cardRenderer.test.js';
+import './debugOverlay.test.js';
 import './endGameResults.test.js';
 import './sessionSetup.test.js';
 import './sessionActions.test.js';

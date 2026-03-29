@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   buildDefaultPlayerNames,
   defaultSessionOptions,
+  relocalizePlayerNames,
   normalizeSessionOptions,
   MAX_PLAYER_COUNT,
   MIN_PLAYER_COUNT
@@ -12,6 +13,13 @@ import {
 test('buildDefaultPlayerNames creates sequential localized fallback names', () => {
   assert.deepEqual(buildDefaultPlayerNames(4, 'en'), ['Player 1', 'Player 2', 'Player 3', 'Player 4']);
   assert.deepEqual(buildDefaultPlayerNames(2, 'ru'), ['\u0418\u0433\u0440\u043e\u043a 1', '\u0418\u0433\u0440\u043e\u043a 2']);
+});
+
+test('relocalizePlayerNames updates only untouched default names', () => {
+  assert.deepEqual(
+    relocalizePlayerNames(['Player 1', 'Mila', 'Player 3'], 3, 'en', 'ru'),
+    ['\u0418\u0433\u0440\u043e\u043a 1', 'Mila', '\u0418\u0433\u0440\u043e\u043a 3']
+  );
 });
 
 test('normalizeSessionOptions clamps player count and fills missing names', () => {
