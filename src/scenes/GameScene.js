@@ -30,7 +30,18 @@ import { detectGameLocale, getCardCopy, getFruitName, getLocaleCopy, getParityLa
 const SETTINGS_NAME_MAX_LENGTH = 18;
 
 function createSettingsDraft(options = defaultSessionOptions, locale = defaultSessionOptions.locale ?? 'ru') {
-  const normalized = normalizeSessionOptions(options, locale);
+  const draftLocale = normalizeLocale(locale);
+  const optionsLocale = normalizeLocale(options?.locale ?? draftLocale);
+  const requestedCount = Number.isInteger(options?.playerCount) ? options.playerCount : defaultSessionOptions.playerCount;
+  const playerCount = Math.min(MAX_PLAYER_COUNT, Math.max(MIN_PLAYER_COUNT, requestedCount));
+  const playerNames = optionsLocale === draftLocale
+    ? options?.playerNames
+    : relocalizePlayerNames(options?.playerNames ?? [], playerCount, optionsLocale, draftLocale);
+  const normalized = normalizeSessionOptions({
+    ...options,
+    locale: draftLocale,
+    playerNames
+  }, draftLocale);
   return {
     playerCount: normalized.playerCount,
     playerNames: [...normalized.playerNames],
@@ -566,61 +577,78 @@ export class GameScene extends Phaser.Scene {
     const panelY = 92;
     const panelWidth = 880;
     const panelHeight = 716;
-    const countY = panelY + 178;
-    const nameStartY = panelY + 286;
+    const contentX = panelX + 42;
+    const contentWidth = panelWidth - 84;
+    const contentRight = contentX + contentWidth;
+    const fieldGap = 28;
+    const fieldWidth = Math.floor((contentWidth - fieldGap) / 2);
+    let cursorY = panelY + 28;
 
     drawPanel(this, { x: panelX, y: panelY, width: panelWidth, height: panelHeight }, palette.panelAlt);
 
-    this.track(this.add.text(panelX + 42, panelY + 28, this.copy.setupTitle, {
+    const title = this.track(this.add.text(contentX, cursorY, this.copy.setupTitle, {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '34px',
       color: palette.textPrimary,
       fontStyle: 'bold'
     }));
+    cursorY = title.y + title.height + 18;
 
-    this.track(this.add.text(panelX + 42, panelY + 78, this.copy.setupLead, {
+    const localeLabel = this.track(this.add.text(contentX, cursorY + 6, this.getLanguageLabel(), {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '15px',
+      color: palette.textMuted,
+      fontStyle: 'bold'
+    }));
+    this.drawLocaleToggle(contentRight - 124, cursorY, 58, 28, false);
+    cursorY = localeLabel.y + localeLabel.height + 20;
+
+    const lead = this.track(this.add.text(contentX, cursorY, this.copy.setupLead, {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '18px',
       color: palette.textMuted,
-      wordWrap: { width: panelWidth - 84 }
+      wordWrap: { width: contentWidth }
     }));
+    cursorY = lead.y + lead.height + 10;
 
-    this.track(this.add.text(panelX + 42, panelY + 108, this.copy.setupDemo, {
+    const demo = this.track(this.add.text(contentX, cursorY, this.copy.setupDemo, {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '16px',
       color: palette.textMuted,
-      wordWrap: { width: panelWidth - 84 }
+      wordWrap: { width: contentWidth }
     }));
+    cursorY = demo.y + demo.height + 26;
 
-    this.drawLocaleToggle(panelX + panelWidth - 182, panelY + 34, 58, 28, true);
-
-    this.track(this.add.text(panelX + 42, panelY + 142, this.copy.players, {
+    const playersHeading = this.track(this.add.text(contentX, cursorY, this.copy.players, {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '22px',
       color: palette.textPrimary,
       fontStyle: 'bold'
     }));
+    cursorY = playersHeading.y + playersHeading.height + 16;
 
     for (let playerCount = MIN_PLAYER_COUNT; playerCount <= MAX_PLAYER_COUNT; playerCount += 1) {
       const index = playerCount - MIN_PLAYER_COUNT;
-      const buttonX = panelX + 42 + index * 92;
+      const buttonX = contentX + index * 92;
       const isSelected = this.settingsDraft.playerCount === playerCount;
-      this.drawSettingsCountButton(buttonX, countY, 72, 48, playerCount, isSelected);
+      this.drawSettingsCountButton(buttonX, cursorY, 72, 48, playerCount, isSelected);
     }
+    cursorY += 76;
 
-    this.track(this.add.text(panelX + 42, panelY + 246, this.copy.names, {
+    const namesHeading = this.track(this.add.text(contentX, cursorY, this.copy.names, {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '22px',
       color: palette.textPrimary,
       fontStyle: 'bold'
     }));
+    cursorY = namesHeading.y + namesHeading.height + 18;
 
     for (let index = 0; index < this.settingsDraft.playerCount; index += 1) {
       const row = Math.floor(index / 2);
       const column = index % 2;
-      const fieldX = panelX + 42 + column * 392;
-      const fieldY = nameStartY + row * 100;
-      this.drawSettingsNameField(fieldX, fieldY, 348, 62, index);
+      const fieldX = contentX + column * (fieldWidth + fieldGap);
+      const fieldY = cursorY + row * 100;
+      this.drawSettingsNameField(fieldX, fieldY, fieldWidth, 62, index);
     }
 
     this.drawActionButton(
@@ -754,7 +782,17 @@ export class GameScene extends Phaser.Scene {
 
   drawControls() {
     const { palette, regions } = layoutConfig;
-    const buttonY = regions.controls.y + 14;
+    const contentX = regions.controls.x + 24;
+    const contentRight = regions.controls.x + regions.controls.width - 24;
+    const titleY = regions.controls.y + 14;
+    const buttonY = regions.controls.y + 34;
+    const buttonWidth = 132;
+    const buttonGap = 16;
+    const localeToggleWidth = 124;
+    const localeX = contentRight - localeToggleWidth;
+    const resetX = localeX - 18 - buttonWidth;
+    const confirmX = resetX - buttonGap - buttonWidth;
+    const infoWidth = confirmX - contentX - 24;
     const activePlayer = this.session.players[this.session.activePlayerIndex];
     const leader = this.session.scorePreview?.[0] ?? null;
     const title = this.session.stateMachine.state === 'end_game'
@@ -763,19 +801,26 @@ export class GameScene extends Phaser.Scene {
     const leaderText = leader ? `${leader.playerName} (${leader.totalPoints})` : this.copy.none;
     const flipText = this.session.pendingFlip ? getPendingFlipSummary(this.session, this.locale) : this.copy.none;
 
-    this.drawLocaleToggle(regions.controls.x + regions.controls.width - 156, buttonY + 4, 58, 24, false);
+    this.track(this.add.text(localeX, titleY + 2, this.getLanguageLabel(), {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '13px',
+      color: palette.textMuted,
+      fontStyle: 'bold'
+    }));
+    this.drawLocaleToggle(localeX, titleY + 22, 58, 24, false);
 
-    this.track(this.add.text(regions.controls.x + 24, buttonY, title, {
+    this.track(this.add.text(contentX, titleY, title, {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '22px',
       color: palette.textPrimary,
-      fontStyle: 'bold'
+      fontStyle: 'bold',
+      wordWrap: { width: infoWidth }
     }));
 
     this.drawActionButton(
-      regions.controls.x + 458,
-      buttonY - 2,
-      136,
+      confirmX,
+      buttonY,
+      buttonWidth,
       42,
       palette.accent,
       this.copy.confirm,
@@ -785,13 +830,14 @@ export class GameScene extends Phaser.Scene {
           this.playerAreaFlipMode = false;
           this.renderDynamicUi();
         }
-      }
+      },
+      '18px'
     );
 
     this.drawActionButton(
-      regions.controls.x + 620,
-      buttonY - 2,
-      136,
+      resetX,
+      buttonY,
+      buttonWidth,
       42,
       palette.warning,
       this.copy.reset,
@@ -800,30 +846,32 @@ export class GameScene extends Phaser.Scene {
         resetPendingSelection(this.session);
         this.playerAreaFlipMode = false;
         this.renderDynamicUi();
-      }
+      },
+      '18px'
     );
 
     this.track(this.add.text(
-      regions.controls.x + 24,
-      regions.controls.y + 56,
+      contentX,
+      regions.controls.y + 46,
       getTurnHint(this.session, this.locale),
       {
         fontFamily: '"Trebuchet MS", sans-serif',
         fontSize: '13px',
         color: palette.textMuted,
-        wordWrap: { width: 720 }
+        wordWrap: { width: infoWidth }
       }
     ));
 
     this.track(this.add.text(
-      regions.controls.x + 24,
-      regions.controls.y + 92,
+      contentX,
+      regions.controls.y + 82,
       `${this.copy.leader}: ${leaderText}   ${this.copy.flip}: ${flipText}`,
       {
         fontFamily: '"Trebuchet MS", sans-serif',
         fontSize: '13px',
         color: palette.textMuted,
-        fontStyle: 'bold'
+        fontStyle: 'bold',
+        wordWrap: { width: regions.controls.width - 48 }
       }
     ));
   }

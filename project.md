@@ -97,6 +97,7 @@ project-root/
 ### 4. UI Shell
 - Settings dialog.
 - Runtime localization supports `ru` and `en`. The scene resolves locale from `?lang=` first and browser language second, exposes a manual `RU/EN` switch in settings and during play, and English fruit cards reuse the same bilingual fruit asset by flipping the image on both axes instead of duplicating PNG files.
+- Settings and control-panel layout should stay resilient to localization: section spacing is driven by rendered text height, name fields scale to the available column width, and the in-game language toggle keeps its own reserved area instead of sharing button space with `Confirm` / `Reset`.
 - Панель управления ходом: `Confirm`, `Reset`, строка подсказки и статус pending flip.
 - Tabs игроков и scoreboard; активный игрок и просматриваемый игрок различаются визуально.
 - Для верхней карты выбранной колоды доступна отдельная кнопка переворота в `backFruit`, а для салатов в области активного игрока используется кнопка-переключатель `Flip Mode` с выбором одной карты следующим кликом.

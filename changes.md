@@ -46,3 +46,6 @@
 - Added a generated fruit-basket icon, switched all-6-fruit scoring cards to use it, made salad cards larger again, added wheel-scrollable salad/debug panels, and changed `per-fruit-multi` cards to a vertical icon-plus-points layout.
 - Tuned panel spacing and typography so the title, player tabs, market header, and control hints stay inside their frames; updated prototype seeding so Player 2 now shows one sample of each salad rule type for visual QA.
 - Lowered short vertical icon lists on salad cards and changed `per-fruit-flat` to an `icon / points` presentation.
+
+- Fixed the first-start locale mismatch so default player names now initialize in the active UI language instead of inheriting Russian names from the base session defaults.
+- Reworked settings and in-session control layout to measure localized text flow, widen player-name fields, and reserve a dedicated language-toggle zone that no longer overlaps Confirm/Reset.
