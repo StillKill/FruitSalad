@@ -1,6 +1,7 @@
 # Changes Log
 
 ## 2026-03-29
+- Polished the mobile market/navigation details: removed the stray debug footer from the left rail, replaced the active-player rail marker with a clean dot, hid the redundant timer label, moved the deck flip control plus remaining-card count to the right of each salad stack, and removed fruit-card frames in the overlapped mobile market stack.
 - Restored the mobile market card proportions by stacking the two fruit cards with overlap under each salad deck card, collapsing the deck labels into a slimmer single header row, and adding an active-player highlight on the left mobile navigation rail.
 - Stabilized Playwright visual runs by lowering local parallelism in `playwright.config.js`, so the Phaser canvas boots reliably during screenshot coverage instead of timing out under heavy worker load.
 - Tightened the mobile gameplay composition: the left navigation is slimmer, the player fruit counters now stay in one horizontal row, the player view uses seeded demo salads for visual QA, and the mobile market/player cards were enlarged to claim more of the main play area.

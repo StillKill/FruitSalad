@@ -184,7 +184,7 @@ export function preloadCardTextures(scene) {
   scene.load.image('icon_fruit_basket', 'assets/ui/icon_fruit_basket.png');
 }
 
-export function drawFruitCard(scene, x, y, width, height, fruit) {
+export function drawFruitCard(scene, x, y, width, height, fruit, options = {}) {
   const locale = getSceneLocale(scene);
   const container = scene.add.container(x, y);
   const image = scene.add.image(0, 0, getFruitCardTexture(fruit)).setOrigin(0, 0);

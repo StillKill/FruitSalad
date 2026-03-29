@@ -1630,12 +1630,11 @@ export class GameScene extends Phaser.Scene {
     if (state.activePlayer) {
       const marker = this.track(this.add.graphics());
       marker.fillStyle(state.selected ? 0x111315 : 0xf5c451, 1);
-      marker.fillRoundedRect(x + width - 12, y + 8, 6, 20, 3);
+      marker.fillCircle(x + width - 12, y + 12, 4);
     }
     this.addClickZone(x, y, width, height, onClick);
   }
   drawMobileNavigation() {
-    const { palette } = layoutConfig;
     const regions = this.getMobileUiRegions();
     const entries = this.getMobileNavEntries();
     const activeSection = this.resolveMobileSection();
@@ -1643,13 +1642,6 @@ export class GameScene extends Phaser.Scene {
     const buttonHeight = 56;
     const gap = 12;
     let y = regions.nav.y + 18;
-    this.track(this.add.text(regions.nav.x + regions.nav.width / 2, regions.nav.y + regions.nav.height - 18, this.copy.debugOverlay, {
-      fontFamily: '"Trebuchet MS", sans-serif',
-      fontSize: '11px',
-      color: palette.textMuted,
-      align: 'center',
-      wordWrap: { width: regions.nav.width - 12 }
-    }).setOrigin(0.5, 1));
     entries.forEach((entry) => {
       this.drawMobileNavButton(
         regions.nav.x + 14,
@@ -1682,7 +1674,7 @@ export class GameScene extends Phaser.Scene {
     timerBadge.lineStyle(2, 0x343c46, 1);
     timerBadge.fillRoundedRect(topBar.x + 16, topBar.y + 16, 150, 50, 14);
     timerBadge.strokeRoundedRect(topBar.x + 16, topBar.y + 16, 150, 50, 14);
-    this.turnTimerLabel = this.track(this.add.text(topBar.x + 28, topBar.y + 24, this.copy.turnTimer(''), {
+    this.turnTimerLabel = this.track(this.add.text(topBar.x + 28, topBar.y + 24, '', {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '12px',
       color: timerVisualState.labelColor,
@@ -1766,12 +1758,12 @@ export class GameScene extends Phaser.Scene {
         color: palette.textPrimary,
         fontStyle: 'bold'
       }));
-      this.track(this.add.text(columnX + cardWidth, labelY + 2, this.copy.saladsLeft(deck.cards.length), {
+      this.track(this.add.text(columnX + cardWidth + 16, labelY + 6, `(${deck.cards.length})`, {
         fontFamily: '"Trebuchet MS", sans-serif',
-        fontSize: '12px',
+        fontSize: '13px',
         color: palette.textMuted,
         fontStyle: 'bold'
-      }).setOrigin(1, 0));
+      }).setOrigin(0, 0));
       const deckVisual = topSalad
         ? drawSaladCard(this, columnX, deckY, cardWidth, cardHeight, topSalad)
         : drawCardPlaceholder(this, columnX, deckY, cardWidth, cardHeight, palette.deckBack, this.copy.deckEmpty);
@@ -1791,15 +1783,16 @@ export class GameScene extends Phaser.Scene {
           }
         });
       }
-      const flipButtonY = deckY + cardHeight + 6;
+      const flipButtonX = columnX + cardWidth + 12;
+      const flipButtonY = deckY + 126;
       if (deckSelected) {
         this.drawActionButton(
-          columnX,
+          flipButtonX,
           flipButtonY,
-          cardWidth,
-          22,
+          92,
+          28,
           deckFlipQueued ? 0xc7b672 : 0xf5c451,
-          deckFlipQueued ? this.copy.keepAsSalad : this.copy.flipToFruit,
+          'Flip',
           this.canToggleSelectedDeckFlip(deck.id),
           () => {
             if (toggleSelectedDeckFlip(this.session, deck.id)) {
@@ -1808,15 +1801,17 @@ export class GameScene extends Phaser.Scene {
               this.renderDynamicUi();
             }
           },
-          '12px'
+          '20px'
         );
       }
-      const marketStartY = flipButtonY + (deckSelected ? 26 : 10);
+      const marketStartY = deckY + cardHeight + 12;
       deck.market.forEach((marketCard, marketIndex) => {
         const slotY = marketStartY + marketIndex * fruitOverlap;
         const selected = this.isMarketSelected(deck.id, marketCard.id);
         const marketEnabled = this.canInteractWithMarketCard(deck.id, marketCard.id);
-        const fruitCard = drawFruitCard(this, columnX, slotY, cardWidth, cardHeight, marketCard.fruit);
+        const fruitCard = drawFruitCard(this, columnX, slotY, cardWidth, cardHeight, marketCard.fruit, {
+          hideFrame: true
+        });
         this.track(fruitCard);
         if (!marketEnabled) {
           fruitCard.setAlpha(0.72);
