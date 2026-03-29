@@ -1,6 +1,8 @@
 # Changes Log
 
 ## 2026-03-29
+- Reworked the main gameplay scene for mobile landscape play: a persistent top control bar now stays visible across sections, portrait phones show a rotate-device prompt, and the mobile body switches between market, per-player, and debug views through a compact left navigation rail.
+- Added Playwright gameplay snapshot coverage for the new mobile session layout, including market, player-view, and rotate-prompt baselines so future responsive changes can be checked visually.
 - Renamed the main `Fair Game` user-facing copy to plain `Game`, kept `Demo Mode` as a separate launch path, and added a new `Freestyle` mode that uses the full deck regardless of player count.
 - Added a master sound volume set to 80% by default and a settings-screen sound control block with volume steps plus mute / unmute.
 - Replaced the settings name-entry flow with a browser-native input bridge over the Phaser UI, so mobile devices can open the keyboard, edit player names, and paste from the clipboard in fair-game setup.

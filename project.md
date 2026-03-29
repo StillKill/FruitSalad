@@ -81,6 +81,8 @@ project-root/
 - Правая часть: панель просматриваемого игрока, счетчики фруктов и карты салатов; во время своего хода можно переключать просмотр через tabs.
 - Нижняя часть справа: вкладки игроков и debug overlay.
 - Исходный ориентир по пропорциям и зонам хранить в `assets/layout/fruit-salad-layout.png`.
+- Mobile gameplay now has a separate landscape-first composition: a persistent top bar stays visible above all sections, a compact left navigation rail switches between `Market`, per-player views, and `Debug`, and the main content gives priority to readable three-card rows instead of scaling the desktop board down.
+- Portrait phones are intentionally blocked with a rotate-device prompt instead of compressing the gameplay board into an unreadable narrow layout.
 
 ### 2. Session Config
 - Сессия поддерживает 2-6 игроков.
@@ -115,6 +117,8 @@ project-root/
 - Market deck headers should use localized player-facing labels, and salad-card center copy should prefer compact localized phrasing so bilingual gameplay text stays legible before a later icon-first redesign.
 - Панель управления ходом: `Confirm`, `Reset`, строка подсказки и статус pending flip.
 - Tabs игроков и scoreboard; активный игрок и просматриваемый игрок различаются визуально.
+- On mobile landscape, the gameplay control bar is global and always visible; market/player/debug content below it changes through the left navigation instead of stacking every gameplay panel into one scaled canvas view.
+- The mobile `Debug` panel is hidden behind navigation instead of sitting on top of the active gameplay view.
 - Для верхней карты выбранной колоды доступна отдельная кнопка переворота в `backFruit`, а для салатов в области активного игрока используется кнопка-переключатель `Flip Mode` с выбором одной карты следующим кликом.
 - Debug overlay справа снизу.
 - Отдельный demo launch для seeded prototype session.
@@ -172,6 +176,7 @@ project-root/
 - `setup`: сейчас встроен в `buildSession()` и подготавливает колоды, рынок, игроков и state machine.
 - Для живого дебага в DevTools сцена экспортирует `window.__FRUIT_SALAD_DEBUG__` с доступом к текущим `game`, `scene`, `session`, `logs`, `seed`, а также helper-методами `snapshot()` и `deckSummary()`.
 - Playwright visual regression coverage can boot the local static build, wait for the Phaser settings shell through the debug bridge, and compare desktop/mobile screenshots against committed baselines.
+- Playwright coverage now also includes mobile gameplay baselines for the market view, player view, and portrait rotate prompt so responsive session changes are checked before UI polish lands.
 
 ## Полезные поля для debug overlay
 - `state`
@@ -196,6 +201,7 @@ project-root/
 - Анимации.
 - Local scoreboard.
 - Expand Playwright screenshot coverage beyond the settings shell so mobile/tablet/desktop layout regressions are caught before UI polish work.
-- Carry the same responsive treatment into the main gameplay scene so mobile and desktop no longer rely on a single FIT-scaled board composition.
+- Refine the desktop gameplay layout now that mobile has its own composition, so the larger screen stops inheriting spacing compromises from the old one-size-fits-all board.
+- Improve salad-card readability on gameplay mobile views with a more compact icon-first text treatment tuned for three cards per row.
 - При необходимости расширить demo/simulation режим отдельными debug controls вместо простого seeded launch.
 - Пересобрать тексты salad-карт в полноценный icon-first/abbreviation layout для RU/EN, чтобы длинные правила не упирались в центральную область карты.

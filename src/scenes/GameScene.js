@@ -83,6 +83,7 @@ export class GameScene extends Phaser.Scene {
     this.settingsInput = null;
     this.settingsOverlay = null;
     this.settingsAudioExpanded = false;
+    this.mobileSection = 'market';
     this.settingsFieldBounds = new Map();
     this.pendingSettingsInputFocus = false;
     this.scrollState = {
@@ -722,6 +723,14 @@ export class GameScene extends Phaser.Scene {
     this.hideSettingsOverlay();
 
     this.applyScoringPreview();
+    this.syncMobileSectionWithSession();
+
+    if (this.isMobilePortraitBlocked()) {
+      this.drawRotatePrompt();
+      this.syncTurnAudio();
+      return;
+    }
+
     this.drawShell();
     this.drawControls();
     this.drawMarket();
@@ -748,6 +757,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   drawShell() {
+    if (this.isMobileLandscapeLayout()) {
+      this.drawMobileShell();
+      this.drawMobileNavigation();
+      return;
+    }
+
     const { regions, palette } = layoutConfig;
     drawPanel(this, regions.market, palette.panel);
     drawPanel(this, regions.controls, palette.panelAlt);
@@ -763,6 +778,109 @@ export class GameScene extends Phaser.Scene {
     }));
   }
 
+  getViewportMetrics() {
+    const canvas = this.game?.canvas ?? null;
+    const rect = canvas?.getBoundingClientRect?.();
+    return {
+      width: rect?.width ?? globalThis.innerWidth ?? layoutConfig.width,
+      height: rect?.height ?? globalThis.innerHeight ?? layoutConfig.height
+    };
+  }
+  isMobileViewport() {
+    return this.getViewportMetrics().width <= 960;
+  }
+  isMobileLandscapeLayout() {
+    const viewport = this.getViewportMetrics();
+    return viewport.width <= 960 && viewport.width > viewport.height;
+  }
+  isMobilePortraitBlocked() {
+    const viewport = this.getViewportMetrics();
+    return viewport.width <= 960 && viewport.width <= viewport.height;
+  }
+  getMobileUiRegions() {
+    return {
+      topBar: { x: 24, y: 20, width: 1552, height: 94 },
+      nav: { x: 24, y: 132, width: 110, height: 744 },
+      content: { x: 152, y: 132, width: 1424, height: 744 }
+    };
+  }
+  getMobileNavEntries() {
+    if (!this.session) {
+      return [];
+    }
+    return [
+      { section: 'market', label: 'Mkt' },
+      ...this.session.players.map((player, index) => ({
+        section: `player-${index}`,
+        label: String(index + 1),
+        title: player.name
+      })),
+      { section: 'debug', label: 'Dbg' }
+    ];
+  }
+  resolveMobileSection(section = this.mobileSection) {
+    if (!this.session) {
+      return 'market';
+    }
+    if (section === 'market' || section === 'debug') {
+      return section;
+    }
+    if (typeof section === 'string' && section.startsWith('player-')) {
+      const parsedIndex = Number(section.slice('player-'.length));
+      const playerIndex = Phaser.Math.Clamp(Number.isFinite(parsedIndex) ? parsedIndex : 0, 0, this.session.players.length - 1);
+      return `player-${playerIndex}`;
+    }
+    return 'market';
+  }
+  syncMobileSectionWithSession() {
+    if (!this.session) {
+      return;
+    }
+    this.mobileSection = this.resolveMobileSection();
+    if (this.mobileSection.startsWith('player-')) {
+      const playerIndex = Number(this.mobileSection.slice('player-'.length));
+      this.session.viewedPlayerIndex = playerIndex;
+    }
+  }
+  setMobileSection(section) {
+    if (!this.session) {
+      return;
+    }
+    const nextSection = this.resolveMobileSection(section);
+    const currentSection = this.resolveMobileSection();
+    if (nextSection === currentSection) {
+      return;
+    }
+    this.mobileSection = nextSection;
+    this.syncMobileSectionWithSession();
+    this.persistFairSession();
+    this.playSound(SOUND_KEYS.tabSelect);
+    this.playerAreaFlipMode = false;
+    this.scrollState.salads = 0;
+    this.renderDynamicUi();
+  }
+  drawRotatePrompt() {
+    const { palette } = layoutConfig;
+    const popup = { x: 330, y: 230, width: 940, height: 440 };
+    drawPanel(this, popup, palette.panelAlt);
+    this.track(this.add.text(layoutConfig.width / 2, popup.y + 104, 'Rotate device', {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '40px',
+      color: palette.textPrimary,
+      fontStyle: 'bold'
+    }).setOrigin(0.5));
+    this.track(this.add.text(layoutConfig.width / 2, popup.y + 182, 'Use landscape orientation for mobile play.', {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '24px',
+      color: palette.textMuted,
+      fontStyle: 'bold'
+    }).setOrigin(0.5));
+    this.track(this.add.text(layoutConfig.width / 2, popup.y + 252, this.copy.turn(this.session.players[this.session.activePlayerIndex].name), {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '22px',
+      color: palette.textMuted
+    }).setOrigin(0.5));
+  }
   getLanguageLabel() {
     return this.locale === 'ru' ? '\u042f\u0437\u044b\u043a' : 'Language';
   }
@@ -834,6 +952,7 @@ export class GameScene extends Phaser.Scene {
       results: 0
     };
     this.playerAreaFlipMode = false;
+    this.mobileSection = 'market';
   }
 
   setLocale(nextLocale) {
@@ -1484,7 +1603,384 @@ export class GameScene extends Phaser.Scene {
     this.settingsDraft = createMenuSettingsDraft(this.lastFairSessionOptions, this.locale);
     this.renderDynamicUi();
   }
+  drawMobileShell() {
+    const { palette } = layoutConfig;
+    const regions = this.getMobileUiRegions();
+    drawPanel(this, regions.topBar, palette.panelAlt);
+    drawPanel(this, regions.nav, palette.panelAlt);
+    drawPanel(this, regions.content, palette.panel);
+  }
+  drawMobileNavButton(x, y, width, height, label, isSelected, onClick) {
+    const { palette } = layoutConfig;
+    const fill = isSelected ? palette.accent : 0x343a44;
+    const textColor = isSelected ? '#111315' : palette.textPrimary;
+    const button = this.track(this.add.graphics());
+    button.fillStyle(fill, 1);
+    button.lineStyle(2, isSelected ? 0xf6f1c7 : 0x171b20, 1);
+    button.fillRoundedRect(x, y, width, height, 16);
+    button.strokeRoundedRect(x, y, width, height, 16);
+    this.track(this.add.text(x + width / 2, y + height / 2, label, {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '22px',
+      color: textColor,
+      fontStyle: 'bold'
+    }).setOrigin(0.5));
+    this.addClickZone(x, y, width, height, onClick);
+  }
+  drawMobileNavigation() {
+    const { palette } = layoutConfig;
+    const regions = this.getMobileUiRegions();
+    const entries = this.getMobileNavEntries();
+    const activeSection = this.resolveMobileSection();
+    const buttonHeight = 56;
+    const gap = 12;
+    let y = regions.nav.y + 18;
+    this.track(this.add.text(regions.nav.x + regions.nav.width / 2, regions.nav.y + regions.nav.height - 18, this.copy.debugOverlay, {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '11px',
+      color: palette.textMuted,
+      align: 'center',
+      wordWrap: { width: regions.nav.width - 12 }
+    }).setOrigin(0.5, 1));
+    entries.forEach((entry) => {
+      this.drawMobileNavButton(
+        regions.nav.x + 14,
+        y,
+        regions.nav.width - 28,
+        buttonHeight,
+        entry.label,
+        activeSection === entry.section,
+        () => this.setMobileSection(entry.section)
+      );
+      y += buttonHeight + gap;
+    });
+  }
+  drawMobileControls() {
+    const { palette } = layoutConfig;
+    const regions = this.getMobileUiRegions();
+    const activePlayer = this.session.players[this.session.activePlayerIndex];
+    const topBar = regions.topBar;
+    const timerValue = this.formatTurnTimer(this.session.turnTimer?.remainingMs ?? 0);
+    const localeX = topBar.x + topBar.width - 150;
+    const resetX = localeX - 122;
+    const confirmX = resetX - 122;
+    const titleWidth = confirmX - (topBar.x + 210) - 16;
+    const timerVisualState = this.getTurnTimerVisualState(this.session.turnTimer?.remainingMs ?? 0);
+    const timerBadge = this.track(this.add.graphics());
+    timerBadge.fillStyle(0x1a1f25, 0.98);
+    timerBadge.lineStyle(2, 0x343c46, 1);
+    timerBadge.fillRoundedRect(topBar.x + 18, topBar.y + 18, 162, 58, 14);
+    timerBadge.strokeRoundedRect(topBar.x + 18, topBar.y + 18, 162, 58, 14);
+    this.turnTimerLabel = this.track(this.add.text(topBar.x + 32, topBar.y + 28, this.copy.turnTimer(''), {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '13px',
+      color: timerVisualState.labelColor,
+      fontStyle: 'bold'
+    }).setAlpha(timerVisualState.alpha));
+    this.turnTimerText = this.track(this.add.text(topBar.x + 98, topBar.y + 46, timerValue, {
+      fontFamily: 'Consolas, monospace',
+      fontSize: '23px',
+      color: timerVisualState.color,
+      fontStyle: 'bold',
+      stroke: '#111315',
+      strokeThickness: 3
+    }).setOrigin(0.5).setAlpha(timerVisualState.alpha));
+    this.track(this.add.text(topBar.x + 210, topBar.y + 18, this.session.stateMachine.state === 'end_game' ? this.copy.endGameReached : this.copy.turn(activePlayer.name), {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '22px',
+      color: palette.textPrimary,
+      fontStyle: 'bold',
+      wordWrap: { width: titleWidth }
+    }));
+    this.track(this.add.text(topBar.x + 210, topBar.y + 56, getTurnHint(this.session, this.locale), {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '12px',
+      color: palette.textMuted,
+      wordWrap: { width: titleWidth }
+    }));
+    this.drawActionButton(
+      confirmX,
+      topBar.y + 20,
+      106,
+      42,
+      palette.accent,
+      this.copy.confirm,
+      canConfirmSelection(this.session),
+      () => {
+        if (confirmSelection(this.session)) {
+          this.persistFairSession();
+          this.playerAreaFlipMode = false;
+          this.renderDynamicUi();
+        }
+      },
+      '17px'
+    );
+    this.drawActionButton(
+      resetX,
+      topBar.y + 20,
+      106,
+      42,
+      palette.warning,
+      this.copy.reset,
+      (this.session.pendingSelection.length > 0 || !!this.session.pendingFlip) && this.session.stateMachine.state !== 'end_game',
+      () => {
+        resetPendingSelection(this.session);
+        this.persistFairSession();
+        this.playerAreaFlipMode = false;
+        this.renderDynamicUi();
+      },
+      '17px'
+    );
+    this.drawLocaleToggle(localeX, topBar.y + 28, 58, 24, false);
+  }
+  drawMobileMarket() {
+    const { palette } = layoutConfig;
+    const { content } = this.getMobileUiRegions();
+    const cardWidth = 154;
+    const cardHeight = 214;
+    const gap = Math.floor((content.width - 48 - cardWidth * 3) / 2);
+    const titleY = content.y + 18;
+    this.track(this.add.text(content.x + 24, titleY, this.copy.marketTitle, {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '26px',
+      color: palette.textPrimary,
+      fontStyle: 'bold'
+    }));
+    this.session.decks.forEach((deck, index) => {
+      const columnX = content.x + 24 + index * (cardWidth + gap);
+      const labelY = content.y + 58;
+      const topSalad = deck.cards[0] ?? null;
+      const deckSelected = topSalad ? this.isDeckSelected(deck.id, topSalad.runtimeId) : false;
+      const deckFlipQueued = topSalad ? this.isPendingDeckFlip(deck.id, topSalad.runtimeId) : false;
+      const deckEnabled = topSalad && this.canInteractWithDeck(deck.id);
+      this.track(this.add.text(columnX, labelY, this.copy.deckLabel(index + 1), {
+        fontFamily: '"Trebuchet MS", sans-serif',
+        fontSize: '18px',
+        color: palette.textMuted,
+        fontStyle: 'bold'
+      }));
+      this.track(this.add.text(columnX, labelY + 20, this.copy.saladsLeft(deck.cards.length), {
+        fontFamily: '"Trebuchet MS", sans-serif',
+        fontSize: '14px',
+        color: palette.textMuted
+      }));
+      const deckY = labelY + 50;
+      const deckVisual = topSalad
+        ? drawSaladCard(this, columnX, deckY, cardWidth, cardHeight, topSalad)
+        : drawCardPlaceholder(this, columnX, deckY, cardWidth, cardHeight, palette.deckBack, this.copy.deckEmpty);
+      this.track(deckVisual);
+      if (!deckEnabled && topSalad) {
+        deckVisual.setAlpha(0.72);
+      }
+      if (deckSelected) {
+        this.drawSelectionOutline(columnX, deckY, cardWidth, cardHeight, deckFlipQueued ? 0xf5c451 : 0x7ed957);
+      }
+      if (deckEnabled) {
+        this.addClickZone(columnX, deckY, cardWidth, cardHeight, () => {
+          if (selectDeckCard(this.session, deck.id)) {
+            this.persistFairSession();
+            this.playSound(SOUND_KEYS.cardSelect);
+            this.renderDynamicUi();
+          }
+        });
+      }
+      const flipButtonY = deckY + cardHeight + 8;
+      if (deckSelected) {
+        this.drawActionButton(
+          columnX,
+          flipButtonY,
+          cardWidth,
+          24,
+          deckFlipQueued ? 0xc7b672 : 0xf5c451,
+          deckFlipQueued ? this.copy.keepAsSalad : this.copy.flipToFruit,
+          this.canToggleSelectedDeckFlip(deck.id),
+          () => {
+            if (toggleSelectedDeckFlip(this.session, deck.id)) {
+              this.persistFairSession();
+              this.playerAreaFlipMode = false;
+              this.renderDynamicUi();
+            }
+          },
+          '13px'
+        );
+      }
+      const marketStartY = flipButtonY + (deckSelected ? 34 : 8);
+      deck.market.forEach((marketCard, marketIndex) => {
+        const slotY = marketStartY + marketIndex * (cardHeight + 14);
+        const selected = this.isMarketSelected(deck.id, marketCard.id);
+        const marketEnabled = this.canInteractWithMarketCard(deck.id, marketCard.id);
+        const fruitCard = drawFruitCard(this, columnX, slotY, cardWidth, cardHeight, marketCard.fruit);
+        this.track(fruitCard);
+        if (!marketEnabled) {
+          fruitCard.setAlpha(0.72);
+        }
+        if (selected) {
+          this.drawSelectionOutline(columnX, slotY, cardWidth, cardHeight, 0x7ed957);
+        }
+        if (marketEnabled) {
+          this.addClickZone(columnX, slotY, cardWidth, cardHeight, () => {
+            if (selectMarketCard(this.session, deck.id, marketCard.id)) {
+              this.persistFairSession();
+              this.playSound(SOUND_KEYS.cardSelect);
+              this.renderDynamicUi();
+            }
+          });
+        }
+      });
+    });
+  }
+  drawMobilePlayerArea() {
+    const { palette } = layoutConfig;
+    const { content } = this.getMobileUiRegions();
+    const activePlayer = this.session.players[this.session.activePlayerIndex];
+    const viewedPlayer = this.session.players[this.session.viewedPlayerIndex];
+    const fruits = Object.entries(viewedPlayer.fruitCounts);
+    const canFlipViewedSalads = this.canInteractWithOwnedSalads() && viewedPlayer.id === activePlayer.id;
+    const hasPendingPlayerFlip = this.session.pendingFlip?.type === 'player-salad';
+    const showPlayerFlipMode = canFlipViewedSalads && this.playerAreaFlipMode && !hasPendingPlayerFlip;
+    const counterColumns = 3;
+    const counterGapX = 18;
+    const counterGapY = 14;
+    const counterBlockWidth = 92;
+    const counterStartX = content.x + 24;
+    const counterStartY = content.y + 82;
+    const cardWidth = 154;
+    const cardHeight = 214;
+    const saladColumns = 3;
+    const saladGapX = Math.floor((content.width - 48 - cardWidth * saladColumns) / (saladColumns - 1));
+    const saladGapY = 16;
+    const saladViewport = {
+      x: content.x + 24,
+      y: content.y + 308,
+      width: content.width - 48,
+      height: content.height - 332
+    };
+    if (!canFlipViewedSalads) {
+      this.playerAreaFlipMode = false;
+    }
+    this.track(this.add.text(content.x + 24, content.y + 18, this.copy.playerArea(viewedPlayer.name), {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '26px',
+      color: palette.textPrimary,
+      fontStyle: 'bold'
+    }));
+    this.track(this.add.text(content.x + content.width - 24, content.y + 24, this.copy.activePlayer(activePlayer.name), {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '16px',
+      color: palette.textMuted,
+      fontStyle: 'bold'
+    }).setOrigin(1, 0));
+    fruits.forEach(([fruit, count], index) => {
+      const column = index % counterColumns;
+      const row = Math.floor(index / counterColumns);
+      const x = counterStartX + column * (counterBlockWidth + counterGapX);
+      const y = counterStartY + row * (102 + counterGapY);
+      this.track(drawFruitCounter(this, x, y, fruit, count));
+    });
+    this.track(this.add.text(content.x + 24, content.y + 270, this.copy.saladCards(viewedPlayer.salads.length), {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '18px',
+      color: palette.textMuted,
+      fontStyle: 'bold'
+    }));
+    if (canFlipViewedSalads) {
+      const flipModeActive = hasPendingPlayerFlip || this.playerAreaFlipMode;
+      this.drawActionButton(
+        content.x + content.width - 220,
+        content.y + 262,
+        196,
+        30,
+        flipModeActive ? palette.warning : 0x3b4350,
+        this.copy.flipMode,
+        true,
+        () => {
+          if (hasPendingPlayerFlip) {
+            togglePlayerSaladFlip(this.session, this.session.pendingFlip.runtimeId);
+            this.persistFairSession();
+            this.playerAreaFlipMode = false;
+          } else {
+            this.playerAreaFlipMode = !this.playerAreaFlipMode;
+          }
+          this.renderDynamicUi();
+        },
+        '14px',
+        {
+          borderColor: flipModeActive ? 0xf6f1c7 : 0x56606d,
+          textColor: flipModeActive ? '#111315' : palette.textPrimary
+        }
+      );
+    }
+    const saladRows = Math.max(1, Math.ceil(viewedPlayer.salads.length / saladColumns));
+    const saladContentHeight = saladRows * cardHeight + Math.max(0, saladRows - 1) * saladGapY;
+    const saladOffset = this.registerScrollRegion('salads', saladViewport, saladContentHeight);
+    const saladContent = this.track(this.add.container(0, -saladOffset));
+    saladContent.setMask(this.createViewportMask(saladViewport));
+    viewedPlayer.salads.forEach((cardData, index) => {
+      const column = index % saladColumns;
+      const row = Math.floor(index / saladColumns);
+      const x = saladViewport.x + column * (cardWidth + saladGapX);
+      const y = saladViewport.y + row * (cardHeight + saladGapY);
+      const renderedY = y - saladOffset;
+      const card = drawSaladCard(this, x, y, cardWidth, cardHeight, cardData);
+      saladContent.add(card);
+      this.track(card);
+      if (this.isPendingPlayerSaladFlip(cardData.runtimeId)) {
+        const outline = this.drawSelectionOutline(x, y, cardWidth, cardHeight, 0xf5c451);
+        saladContent.add(outline);
+      }
+      if (showPlayerFlipMode && this.isVisibleInViewport(renderedY, cardHeight, saladViewport)) {
+        this.addClickZone(x, renderedY, cardWidth, cardHeight, () => {
+          if (togglePlayerSaladFlip(this.session, cardData.runtimeId)) {
+            this.persistFairSession();
+            this.playSound(SOUND_KEYS.cardSelect);
+            this.playerAreaFlipMode = false;
+            this.renderDynamicUi();
+          }
+        });
+      }
+    });
+    this.drawScrollBar('salads');
+  }
+  drawMobileDebugPanel() {
+    const { palette } = layoutConfig;
+    const { content } = this.getMobileUiRegions();
+    const debugLines = buildDebugSnapshot(this.session, this.locale);
+    const debugViewport = {
+      x: content.x + 24,
+      y: content.y + 58,
+      width: content.width - 42,
+      height: content.height - 82
+    };
+    const lineHeight = 18;
+    const debugContentHeight = debugLines.length * lineHeight;
+    const debugOffset = this.registerScrollRegion('debug', debugViewport, debugContentHeight);
+    const debugContent = this.track(this.add.container(0, -debugOffset));
+    debugContent.setMask(this.createViewportMask(debugViewport));
+    this.track(this.add.text(content.x + 24, content.y + 18, this.copy.debugOverlay, {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '24px',
+      color: palette.textPrimary,
+      fontStyle: 'bold'
+    }));
+    debugLines.forEach((line, index) => {
+      const text = this.add.text(debugViewport.x, debugViewport.y + index * lineHeight, line, {
+        fontFamily: 'Consolas, monospace',
+        fontSize: '14px',
+        color: palette.textMuted,
+        wordWrap: { width: debugViewport.width - 10 }
+      });
+      debugContent.add(text);
+      this.track(text);
+    });
+    this.drawScrollBar('debug');
+  }
+
   drawControls() {
+    if (this.isMobileLandscapeLayout()) {
+      this.drawMobileControls();
+      return;
+    }
+
     const { palette, regions } = layoutConfig;
     const contentX = regions.controls.x + 24;
     const contentRight = regions.controls.x + regions.controls.width - 24;
@@ -1629,6 +2125,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   drawMarket() {
+    if (this.isMobileLandscapeLayout()) {
+      if (this.resolveMobileSection() !== 'market') {
+        return;
+      }
+      this.drawMobileMarket();
+      return;
+    }
+
     const { card, palette, regions } = layoutConfig;
     const deckX = regions.market.x + 24;
     const deckY = regions.market.y + 26;
@@ -1726,6 +2230,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   drawPlayerArea() {
+    if (this.isMobileLandscapeLayout()) {
+      if (!this.resolveMobileSection().startsWith('player-')) {
+        return;
+      }
+      this.drawMobilePlayerArea();
+      return;
+    }
+
     const { palette, regions } = layoutConfig;
     const activePlayer = this.session.players[this.session.activePlayerIndex];
     const viewedPlayer = this.session.players[this.session.viewedPlayerIndex];
@@ -1845,6 +2357,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   drawScoreTabs() {
+    if (this.isMobileLandscapeLayout()) {
+      return;
+    }
+
     const { palette, regions } = layoutConfig;
 
     this.session.players.forEach((player, index) => {
@@ -1890,6 +2406,9 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.session.viewedPlayerIndex = nextIndex;
+    if (this.isMobileLandscapeLayout()) {
+      this.mobileSection = `player-${nextIndex}`;
+    }
     this.persistFairSession();
     this.playSound(SOUND_KEYS.tabSelect);
     this.playerAreaFlipMode = false;
@@ -1898,6 +2417,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   drawDebugPanel() {
+    if (this.isMobileLandscapeLayout()) {
+      if (this.resolveMobileSection() !== 'debug') {
+        return;
+      }
+      this.drawMobileDebugPanel();
+      return;
+    }
+
     const { palette, regions } = layoutConfig;
     const debugLines = buildDebugSnapshot(this.session, this.locale);
     const debugViewport = {
