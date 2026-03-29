@@ -120,6 +120,8 @@ project-root/
 - On mobile landscape, the gameplay control bar is global and always visible; market/player/debug content below it changes through the left navigation instead of stacking every gameplay panel into one scaled canvas view.
 - The mobile `Debug` panel is hidden behind navigation instead of sitting on top of the active gameplay view.
 - The mobile player view keeps all six fruit counters in one row above the salads so the card grid can stay visually dominant, and current visual QA uses a seeded demo player state to verify the card area with real salads on screen.
+- The mobile market view keeps salad cards at a readable full ratio and overlaps the two fruit-market cards underneath each deck, because partial fruit-card visibility is still enough to identify the fruit while preserving more height for the salad card.
+- The left mobile navigation rail should always mark the active player clearly even when the market section is currently selected.
 - Для верхней карты выбранной колоды доступна отдельная кнопка переворота в `backFruit`, а для салатов в области активного игрока используется кнопка-переключатель `Flip Mode` с выбором одной карты следующим кликом.
 - Debug overlay справа снизу.
 - Отдельный demo launch для seeded prototype session.
@@ -178,6 +180,7 @@ project-root/
 - Для живого дебага в DevTools сцена экспортирует `window.__FRUIT_SALAD_DEBUG__` с доступом к текущим `game`, `scene`, `session`, `logs`, `seed`, а также helper-методами `snapshot()` и `deckSummary()`.
 - Playwright visual regression coverage can boot the local static build, wait for the Phaser settings shell through the debug bridge, and compare desktop/mobile screenshots against committed baselines.
 - Playwright coverage now also includes mobile gameplay baselines for the market view and a seeded player view with visible salads so responsive session changes are checked before UI polish lands.
+- Local Playwright runs use reduced worker parallelism so Phaser canvas startup stays stable during screenshot coverage on the current development machine.
 
 ## Полезные поля для debug overlay
 - `state`

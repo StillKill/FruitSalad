@@ -1610,13 +1610,15 @@ export class GameScene extends Phaser.Scene {
     drawPanel(this, regions.nav, palette.panelAlt);
     drawPanel(this, regions.content, palette.panel);
   }
-  drawMobileNavButton(x, y, width, height, label, isSelected, onClick) {
+  drawMobileNavButton(x, y, width, height, label, state, onClick) {
     const { palette } = layoutConfig;
-    const fill = isSelected ? palette.accent : 0x343a44;
-    const textColor = isSelected ? '#111315' : palette.textPrimary;
+    const fill = state.selected ? palette.accent : 0x343a44;
+    const textColor = state.selected ? '#111315' : palette.textPrimary;
+    const borderColor = state.selected ? 0xf6f1c7 : state.activePlayer ? 0xf5c451 : 0x171b20;
+    const borderWidth = state.selected || state.activePlayer ? 3 : 2;
     const button = this.track(this.add.graphics());
     button.fillStyle(fill, 1);
-    button.lineStyle(2, isSelected ? 0xf6f1c7 : 0x171b20, 1);
+    button.lineStyle(borderWidth, borderColor, 1);
     button.fillRoundedRect(x, y, width, height, 16);
     button.strokeRoundedRect(x, y, width, height, 16);
     this.track(this.add.text(x + width / 2, y + height / 2, label, {
@@ -1625,6 +1627,11 @@ export class GameScene extends Phaser.Scene {
       color: textColor,
       fontStyle: 'bold'
     }).setOrigin(0.5));
+    if (state.activePlayer) {
+      const marker = this.track(this.add.graphics());
+      marker.fillStyle(state.selected ? 0x111315 : 0xf5c451, 1);
+      marker.fillRoundedRect(x + width - 12, y + 8, 6, 20, 3);
+    }
     this.addClickZone(x, y, width, height, onClick);
   }
   drawMobileNavigation() {
@@ -1632,6 +1639,7 @@ export class GameScene extends Phaser.Scene {
     const regions = this.getMobileUiRegions();
     const entries = this.getMobileNavEntries();
     const activeSection = this.resolveMobileSection();
+    const activePlayerSection = this.session ? `player-${this.session.activePlayerIndex}` : null;
     const buttonHeight = 56;
     const gap = 12;
     let y = regions.nav.y + 18;
@@ -1649,7 +1657,10 @@ export class GameScene extends Phaser.Scene {
         regions.nav.width - 28,
         buttonHeight,
         entry.label,
-        activeSection === entry.section,
+        {
+          selected: activeSection === entry.section,
+          activePlayer: entry.section === activePlayerSection
+        },
         () => this.setMobileSection(entry.section)
       );
       y += buttonHeight + gap;
@@ -1736,20 +1747,15 @@ export class GameScene extends Phaser.Scene {
   drawMobileMarket() {
     const { palette } = layoutConfig;
     const { content } = this.getMobileUiRegions();
-    const cardWidth = 232;
-    const cardHeight = 210;
-    const sideInset = 20;
-    const titleY = content.y + 14;
+    const cardWidth = 210;
+    const cardHeight = 292;
+    const fruitOverlap = 118;
+    const sideInset = 18;
+    const labelY = content.y + 12;
+    const deckY = content.y + 34;
     const columnWidth = Math.floor((content.width - sideInset * 2) / 3);
-    this.track(this.add.text(content.x + sideInset, titleY, this.copy.marketTitle, {
-      fontFamily: '"Trebuchet MS", sans-serif',
-      fontSize: '24px',
-      color: palette.textPrimary,
-      fontStyle: 'bold'
-    }));
     this.session.decks.forEach((deck, index) => {
       const columnX = content.x + sideInset + index * columnWidth + Math.floor((columnWidth - cardWidth) / 2);
-      const labelY = content.y + 46;
       const topSalad = deck.cards[0] ?? null;
       const deckSelected = topSalad ? this.isDeckSelected(deck.id, topSalad.runtimeId) : false;
       const deckFlipQueued = topSalad ? this.isPendingDeckFlip(deck.id, topSalad.runtimeId) : false;
@@ -1757,15 +1763,15 @@ export class GameScene extends Phaser.Scene {
       this.track(this.add.text(columnX, labelY, this.copy.deckLabel(index + 1), {
         fontFamily: '"Trebuchet MS", sans-serif',
         fontSize: '17px',
-        color: palette.textMuted,
+        color: palette.textPrimary,
         fontStyle: 'bold'
       }));
-      this.track(this.add.text(columnX, labelY + 20, this.copy.saladsLeft(deck.cards.length), {
+      this.track(this.add.text(columnX + cardWidth, labelY + 2, this.copy.saladsLeft(deck.cards.length), {
         fontFamily: '"Trebuchet MS", sans-serif',
-        fontSize: '13px',
-        color: palette.textMuted
-      }));
-      const deckY = labelY + 42;
+        fontSize: '12px',
+        color: palette.textMuted,
+        fontStyle: 'bold'
+      }).setOrigin(1, 0));
       const deckVisual = topSalad
         ? drawSaladCard(this, columnX, deckY, cardWidth, cardHeight, topSalad)
         : drawCardPlaceholder(this, columnX, deckY, cardWidth, cardHeight, palette.deckBack, this.copy.deckEmpty);
@@ -1805,9 +1811,9 @@ export class GameScene extends Phaser.Scene {
           '12px'
         );
       }
-      const marketStartY = flipButtonY + (deckSelected ? 26 : 8);
+      const marketStartY = flipButtonY + (deckSelected ? 26 : 10);
       deck.market.forEach((marketCard, marketIndex) => {
-        const slotY = marketStartY + marketIndex * (cardHeight + 12);
+        const slotY = marketStartY + marketIndex * fruitOverlap;
         const selected = this.isMarketSelected(deck.id, marketCard.id);
         const marketEnabled = this.canInteractWithMarketCard(deck.id, marketCard.id);
         const fruitCard = drawFruitCard(this, columnX, slotY, cardWidth, cardHeight, marketCard.fruit);
@@ -1845,7 +1851,7 @@ export class GameScene extends Phaser.Scene {
     const counterStartX = content.x + Math.max(24, Math.floor((content.width - counterRowWidth) / 2));
     const counterStartY = content.y + 62;
     const cardWidth = 210;
-    const cardHeight = 232;
+    const cardHeight = 292;
     const saladColumns = 3;
     const saladGapX = Math.floor((content.width - 40 - cardWidth * saladColumns) / (saladColumns - 1));
     const saladGapY = 16;
