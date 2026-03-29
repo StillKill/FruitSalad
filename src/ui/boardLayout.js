@@ -8,6 +8,10 @@ export function drawPanel(scene, region, fillColor, strokeColor = layoutConfig.p
   graphics.fillRoundedRect(region.x, region.y, region.width, region.height, 18);
   graphics.strokeRoundedRect(region.x, region.y, region.width, region.height, 18);
 
+  if (typeof scene.track === 'function') {
+    scene.track(graphics);
+  }
+
   return graphics;
 }
 

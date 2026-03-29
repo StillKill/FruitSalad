@@ -88,6 +88,7 @@ export class GameScene extends Phaser.Scene {
     this.scrollMeta = {};
     this.playerAreaFlipMode = false;
     this.turnTimerText = null;
+    this.turnTimerLabel = null;
   }
 
   update() {
@@ -103,9 +104,19 @@ export class GameScene extends Phaser.Scene {
     const remainingMs = Math.max(0, turnTimer.deadlineAt - Date.now());
     turnTimer.remainingMs = remainingMs;
     const nextLabel = this.formatTurnTimer(remainingMs);
+    const visualState = this.getTurnTimerVisualState(remainingMs);
 
-    if (this.turnTimerText && this.turnTimerText.active && this.turnTimerText.text !== nextLabel) {
-      this.turnTimerText.setText(nextLabel);
+    if (this.turnTimerLabel && this.turnTimerLabel.active) {
+      this.turnTimerLabel.setColor(visualState.labelColor);
+      this.turnTimerLabel.setAlpha(visualState.alpha);
+    }
+
+    if (this.turnTimerText && this.turnTimerText.active) {
+      if (this.turnTimerText.text !== nextLabel) {
+        this.turnTimerText.setText(nextLabel);
+      }
+      this.turnTimerText.setColor(visualState.color);
+      this.turnTimerText.setAlpha(visualState.alpha);
     }
 
     if (remainingMs <= 0) {
@@ -232,6 +243,30 @@ export class GameScene extends Phaser.Scene {
     const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
     const seconds = String(totalSeconds % 60).padStart(2, '0');
     return `${minutes}:${seconds}`;
+  }
+
+  getTurnTimerVisualState(remainingMs) {
+    if (remainingMs <= 10000) {
+      return {
+        color: '#ff6b6b',
+        labelColor: '#ffb3b3',
+        alpha: 0.45 + Math.abs(Math.sin(Date.now() / 140)) * 0.55
+      };
+    }
+
+    if (remainingMs <= 30000) {
+      return {
+        color: '#ff8f6b',
+        labelColor: '#ffd2c7',
+        alpha: 1
+      };
+    }
+
+    return {
+      color: '#f8f4ea',
+      labelColor: '#c7c2b8',
+      alpha: 1
+    };
   }
 
   formatFruitSummary(fruitCounts) {
@@ -479,6 +514,7 @@ export class GameScene extends Phaser.Scene {
     this.dynamicObjects = [];
     this.scrollMeta = {};
     this.turnTimerText = null;
+    this.turnTimerLabel = null;
 
     if (!this.session) {
       this.drawSettingsScreen();
@@ -852,19 +888,28 @@ export class GameScene extends Phaser.Scene {
     }));
 
     if (this.session.stateMachine.state !== 'end_game') {
-      this.track(this.add.text(contentX, regions.controls.y + 42, this.copy.turnTimer(''), {
+      const timerVisualState = this.getTurnTimerVisualState(this.session.turnTimer?.remainingMs ?? 0);
+      const timerBadge = this.track(this.add.graphics());
+      timerBadge.fillStyle(0x1a1f25, 0.98);
+      timerBadge.lineStyle(2, 0x343c46, 1);
+      timerBadge.fillRoundedRect(contentX - 2, regions.controls.y + 36, 168, 36, 12);
+      timerBadge.strokeRoundedRect(contentX - 2, regions.controls.y + 36, 168, 36, 12);
+
+      this.turnTimerLabel = this.track(this.add.text(contentX + 10, regions.controls.y + 46, this.copy.turnTimer(''), {
         fontFamily: '"Trebuchet MS", sans-serif',
         fontSize: '13px',
-        color: palette.textMuted,
+        color: timerVisualState.labelColor,
         fontStyle: 'bold'
-      }));
+      }).setAlpha(timerVisualState.alpha));
 
       this.turnTimerText = this.track(this.add.text(contentX + 76, regions.controls.y + 39, timerValue, {
         fontFamily: 'Consolas, monospace',
         fontSize: '24px',
-        color: palette.warning,
-        fontStyle: 'bold'
-      }));
+        color: timerVisualState.color,
+        fontStyle: 'bold',
+        stroke: '#111315',
+        strokeThickness: 3
+      }).setAlpha(timerVisualState.alpha));
     }
 
     this.drawActionButton(
@@ -913,13 +958,15 @@ export class GameScene extends Phaser.Scene {
     ));
   }
 
-  drawActionButton(x, y, width, height, fillColor, label, enabled, onClick, fontSize = '20px') {
+  drawActionButton(x, y, width, height, fillColor, label, enabled, onClick, fontSize = '20px', options = {}) {
     const container = this.track(this.add.container(x, y));
     const graphics = this.add.graphics();
     const alpha = enabled ? 1 : 0.32;
+    const borderColor = enabled ? (options.borderColor ?? 0x171b20) : 0x171b20;
+    const textColor = enabled ? (options.textColor ?? '#111315') : '#43474d';
 
     graphics.fillStyle(fillColor, alpha);
-    graphics.lineStyle(2, 0x171b20, enabled ? 1 : 0.45);
+    graphics.lineStyle(2, borderColor, enabled ? 1 : 0.45);
     graphics.fillRoundedRect(0, 0, width, height, 10);
     graphics.strokeRoundedRect(0, 0, width, height, 10);
     container.add(graphics);
@@ -927,7 +974,7 @@ export class GameScene extends Phaser.Scene {
     const text = this.add.text(width / 2, height / 2, label, {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize,
-      color: enabled ? '#111315' : '#43474d',
+      color: textColor,
       fontStyle: 'bold'
     }).setOrigin(0.5);
     container.add(text);
@@ -1083,7 +1130,10 @@ export class GameScene extends Phaser.Scene {
 
     if (canFlipViewedSalads) {
       const playerFlipLabel = this.copy.flipMode;
-      const playerFlipColor = hasPendingPlayerFlip || this.playerAreaFlipMode ? palette.warning : 0xf5c451;
+      const flipModeActive = hasPendingPlayerFlip || this.playerAreaFlipMode;
+      const playerFlipColor = flipModeActive ? palette.warning : 0x3b4350;
+      const playerFlipBorderColor = flipModeActive ? 0xf6f1c7 : 0x56606d;
+      const playerFlipTextColor = flipModeActive ? '#111315' : palette.textPrimary;
 
       this.drawActionButton(
         regions.player.x + regions.player.width - 196,
@@ -1102,7 +1152,11 @@ export class GameScene extends Phaser.Scene {
           }
           this.renderDynamicUi();
         },
-        '13px'
+        '13px',
+        {
+          borderColor: playerFlipBorderColor,
+          textColor: playerFlipTextColor
+        }
       );
     }
 
