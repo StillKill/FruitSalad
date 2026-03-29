@@ -2,6 +2,8 @@ import * as Phaser from '../../node_modules/phaser/dist/phaser.esm.js';
 import { layoutConfig } from '../config/layoutConfig.js';
 import {
   buildDefaultPlayerNames,
+  createMenuSettingsDraft,
+  createSettingsDraft,
   defaultSessionOptions,
   normalizeSessionOptions,
   relocalizePlayerNames,
@@ -38,26 +40,6 @@ const SOUND_KEYS = {
   endGame: 'end_game'
 };
 
-function createSettingsDraft(options = defaultSessionOptions, locale = defaultSessionOptions.locale ?? 'ru') {
-  const draftLocale = normalizeLocale(locale);
-  const optionsLocale = normalizeLocale(options?.locale ?? draftLocale);
-  const requestedCount = Number.isInteger(options?.playerCount) ? options.playerCount : defaultSessionOptions.playerCount;
-  const playerCount = Math.min(MAX_PLAYER_COUNT, Math.max(MIN_PLAYER_COUNT, requestedCount));
-  const playerNames = optionsLocale === draftLocale
-    ? options?.playerNames
-    : relocalizePlayerNames(options?.playerNames ?? [], playerCount, optionsLocale, draftLocale);
-  const normalized = normalizeSessionOptions({
-    ...options,
-    locale: draftLocale,
-    playerNames
-  }, draftLocale);
-  return {
-    playerCount: normalized.playerCount,
-    playerNames: [...normalized.playerNames],
-    locale: normalized.locale
-  };
-}
-
 function buildDeckDebugSnapshot(deck) {
   return {
     id: deck.id,
@@ -87,7 +69,8 @@ export class GameScene extends Phaser.Scene {
     this.sessionRules = null;
     this.scoringCards = null;
     this.dynamicObjects = [];
-    this.settingsDraft = createSettingsDraft(defaultSessionOptions, this.locale);
+    this.settingsDraft = createMenuSettingsDraft(null, this.locale);
+    this.lastFairSessionOptions = null;
     this.activeSettingsField = 0;
     this.scrollState = {
       salads: 0,
@@ -156,7 +139,7 @@ export class GameScene extends Phaser.Scene {
   create() {
     this.sessionRules = this.cache.json.get('sessionRules');
     this.scoringCards = this.cache.json.get('scoringCards');
-    this.settingsDraft = createSettingsDraft(defaultSessionOptions, this.locale);
+    this.settingsDraft = createMenuSettingsDraft(this.lastFairSessionOptions, this.locale);
 
     this.input.on('wheel', this.handleWheel, this);
     this.input.keyboard?.on('keydown', this.handleKeyDown, this);
@@ -933,9 +916,25 @@ export class GameScene extends Phaser.Scene {
       results: 0
     };
     this.playerAreaFlipMode = false;
+    if (options.seedDemoProgress !== true) {
+      this.lastFairSessionOptions = normalizeSessionOptions(options, options?.locale ?? this.locale);
+    }
     this.session = buildSession(options, this.sessionRules, this.scoringCards);
     this.renderDynamicUi();
     this.playSound(SOUND_KEYS.gameStart);
+  }
+
+  returnToSettings() {
+    this.session = null;
+    this.activeSettingsField = 0;
+    this.scrollState = {
+      salads: 0,
+      debug: 0,
+      results: 0
+    };
+    this.playerAreaFlipMode = false;
+    this.settingsDraft = createMenuSettingsDraft(this.lastFairSessionOptions, this.locale);
+    this.renderDynamicUi();
   }
 
   drawControls() {
@@ -1428,6 +1427,18 @@ export class GameScene extends Phaser.Scene {
       color: palette.textMuted,
       fontStyle: 'bold'
     }));
+
+    this.drawActionButton(
+      popup.x + popup.width - 214,
+      popup.y + 28,
+      172,
+      42,
+      palette.accent,
+      this.copy.backToSettings,
+      true,
+      () => this.returnToSettings(),
+      '18px'
+    );
 
     this.track(this.add.text(rightX, popup.y + 76, this.copy.breakdown(viewedEntry.playerName), {
       fontFamily: '"Trebuchet MS", sans-serif',

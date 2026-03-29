@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 
 import {
   buildDefaultPlayerNames,
+  createMenuSettingsDraft,
+  createSettingsDraft,
   defaultSessionOptions,
   relocalizePlayerNames,
   normalizeSessionOptions,
@@ -56,4 +58,26 @@ test('defaultSessionOptions starts with a clean two-player ru setup', () => {
   assert.equal(defaultSessionOptions.locale, 'ru');
   assert.equal(defaultSessionOptions.seedDemoProgress, false);
   assert.equal(defaultSessionOptions.randomSeed, null);
+});
+test('createSettingsDraft preserves fair-session setup and relocalizes untouched default names', () => {
+  const result = createSettingsDraft({
+    playerCount: 4,
+    playerNames: ['Player 1', 'Mila', 'Player 3', 'Noah'],
+    locale: 'en',
+    seedDemoProgress: false
+  }, 'ru');
+  assert.equal(result.playerCount, 4);
+  assert.deepEqual(result.playerNames, ['\u0418\u0433\u0440\u043e\u043a 1', 'Mila', '\u0418\u0433\u0440\u043e\u043a 3', 'Noah']);
+  assert.equal(result.locale, 'ru');
+});
+test('createMenuSettingsDraft ignores demo-session setup and falls back to default menu names', () => {
+  const result = createMenuSettingsDraft({
+    playerCount: 2,
+    playerNames: ['Player 1 Demo', 'Player 2 Demo'],
+    locale: 'en',
+    seedDemoProgress: true
+  }, 'en');
+  assert.equal(result.playerCount, 2);
+  assert.deepEqual(result.playerNames, ['Player 1', 'Player 2']);
+  assert.equal(result.locale, 'en');
 });

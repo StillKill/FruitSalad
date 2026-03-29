@@ -42,7 +42,31 @@ export function normalizeSessionOptions(options = {}, locale = 'ru') {
     randomSeed: Number.isInteger(options.randomSeed) ? options.randomSeed : null
   };
 }
-
+export function createSettingsDraft(options = defaultSessionOptions, locale = defaultSessionOptions.locale ?? 'ru') {
+  const draftLocale = normalizeLocale(locale);
+  const optionsLocale = normalizeLocale(options?.locale ?? draftLocale);
+  const requestedCount = Number.isInteger(options?.playerCount) ? options.playerCount : defaultSessionOptions.playerCount;
+  const playerCount = Math.min(MAX_PLAYER_COUNT, Math.max(MIN_PLAYER_COUNT, requestedCount));
+  const playerNames = optionsLocale === draftLocale
+    ? options?.playerNames
+    : relocalizePlayerNames(options?.playerNames ?? [], playerCount, optionsLocale, draftLocale);
+  const normalized = normalizeSessionOptions({
+    ...options,
+    locale: draftLocale,
+    playerNames
+  }, draftLocale);
+  return {
+    playerCount: normalized.playerCount,
+    playerNames: [...normalized.playerNames],
+    locale: normalized.locale
+  };
+}
+export function createMenuSettingsDraft(lastFairSessionOptions = null, locale = defaultSessionOptions.locale ?? 'ru') {
+  const sourceOptions = lastFairSessionOptions && lastFairSessionOptions.seedDemoProgress !== true
+    ? lastFairSessionOptions
+    : defaultSessionOptions;
+  return createSettingsDraft(sourceOptions, locale);
+}
 export const defaultSessionOptions = normalizeSessionOptions({
   playerCount: MIN_PLAYER_COUNT,
   playerNames: buildDefaultPlayerNames(MIN_PLAYER_COUNT, 'ru'),

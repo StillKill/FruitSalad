@@ -1,6 +1,7 @@
 # Changes Log
 
 ## 2026-03-29
+- Added an end-game return path back to `settings`, and the menu now restores the last fair-session player count and names for quick rematches while explicitly ignoring demo-session setup.
 - Renamed audio assets with the `snd_` prefix and updated the Phaser preload paths to match.
 - Expanded the core UI sound hooks: card_select now plays on card clicks, end_game when the final popup opens, timer_ends replaces the usual round-change sound for skipped timeout turns, and the existing game_start / round_start / button_click / tab_select cues remain wired to their original events.
 - Improved control-panel readability and state feedback: the timer now uses a high-contrast badge, turns red and blinks at low time, settings panels are cleaned up when gameplay starts, and `Flip Mode` now has a clearly distinct active style.

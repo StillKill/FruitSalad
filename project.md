@@ -93,7 +93,7 @@ project-root/
 - `turn`: ожидание действий игрока, включая необязательный переворот 1 салатной карты в `backFruit` один раз за ход.
 - `end_turn`: игрок закончил основной выбор; pending flip не блокирует и не требует Confirm сам по себе.
 - `refresh`: пополнение рынка, восстановление пустой колоды по правилу split-the-thickest-deck, проверка конца игры.
-- `end_game`: замораживание финального snapshot, итоговый подсчет очков, места, breakdown по картам и popup результатов.
+- `end_game`: замораживание финального snapshot, итоговый подсчет очков, места, breakdown по картам, popup результатов и возврат в `settings`.
 - If the timer expires with a confirmable selection, the game auto-confirms it; otherwise pending selection and pending flip are cleared and the turn is skipped.
 
 ### 4. UI Shell
@@ -143,7 +143,10 @@ project-root/
   - победителя;
   - места всех игроков с учетом tie placements;
   - summary-метрики выбранного игрока;
-  - визуальный breakdown выбранного игрока по каждой салатной карте с мини-картой и явными очками за карту.
+  - визуальный breakdown выбранного игрока по каждой салатной карте с мини-картой и явными очками за карту;
+  - кнопку возврата в `settings`.
+- Возврат в `settings` после честной партии восстанавливает количество игроков и имена прошлой сессии, чтобы можно было быстро запустить rematch.
+- Возврат из demo-сессии не должен подставлять demo-имена и demo-настройки в `settings`.
 - Для breakdown каждая запись хранит:
   - `cardId` и `ruleType`;
   - очки за конкретную карту;
