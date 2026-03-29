@@ -799,9 +799,9 @@ export class GameScene extends Phaser.Scene {
   }
   getMobileUiRegions() {
     return {
-      topBar: { x: 24, y: 20, width: 1552, height: 94 },
-      nav: { x: 24, y: 132, width: 110, height: 744 },
-      content: { x: 152, y: 132, width: 1424, height: 744 }
+      topBar: { x: 20, y: 16, width: 1560, height: 82 },
+      nav: { x: 20, y: 110, width: 88, height: 770 },
+      content: { x: 122, y: 110, width: 1458, height: 770 }
     };
   }
   getMobileNavEntries() {
@@ -1661,48 +1661,48 @@ export class GameScene extends Phaser.Scene {
     const activePlayer = this.session.players[this.session.activePlayerIndex];
     const topBar = regions.topBar;
     const timerValue = this.formatTurnTimer(this.session.turnTimer?.remainingMs ?? 0);
-    const localeX = topBar.x + topBar.width - 150;
-    const resetX = localeX - 122;
-    const confirmX = resetX - 122;
-    const titleWidth = confirmX - (topBar.x + 210) - 16;
+    const localeX = topBar.x + topBar.width - 138;
+    const resetX = localeX - 114;
+    const confirmX = resetX - 114;
+    const titleWidth = confirmX - (topBar.x + 194) - 16;
     const timerVisualState = this.getTurnTimerVisualState(this.session.turnTimer?.remainingMs ?? 0);
     const timerBadge = this.track(this.add.graphics());
     timerBadge.fillStyle(0x1a1f25, 0.98);
     timerBadge.lineStyle(2, 0x343c46, 1);
-    timerBadge.fillRoundedRect(topBar.x + 18, topBar.y + 18, 162, 58, 14);
-    timerBadge.strokeRoundedRect(topBar.x + 18, topBar.y + 18, 162, 58, 14);
-    this.turnTimerLabel = this.track(this.add.text(topBar.x + 32, topBar.y + 28, this.copy.turnTimer(''), {
+    timerBadge.fillRoundedRect(topBar.x + 16, topBar.y + 16, 150, 50, 14);
+    timerBadge.strokeRoundedRect(topBar.x + 16, topBar.y + 16, 150, 50, 14);
+    this.turnTimerLabel = this.track(this.add.text(topBar.x + 28, topBar.y + 24, this.copy.turnTimer(''), {
       fontFamily: '"Trebuchet MS", sans-serif',
-      fontSize: '13px',
+      fontSize: '12px',
       color: timerVisualState.labelColor,
       fontStyle: 'bold'
     }).setAlpha(timerVisualState.alpha));
-    this.turnTimerText = this.track(this.add.text(topBar.x + 98, topBar.y + 46, timerValue, {
+    this.turnTimerText = this.track(this.add.text(topBar.x + 90, topBar.y + 41, timerValue, {
       fontFamily: 'Consolas, monospace',
-      fontSize: '23px',
+      fontSize: '21px',
       color: timerVisualState.color,
       fontStyle: 'bold',
       stroke: '#111315',
       strokeThickness: 3
     }).setOrigin(0.5).setAlpha(timerVisualState.alpha));
-    this.track(this.add.text(topBar.x + 210, topBar.y + 18, this.session.stateMachine.state === 'end_game' ? this.copy.endGameReached : this.copy.turn(activePlayer.name), {
+    this.track(this.add.text(topBar.x + 194, topBar.y + 16, this.session.stateMachine.state === 'end_game' ? this.copy.endGameReached : this.copy.turn(activePlayer.name), {
       fontFamily: '"Trebuchet MS", sans-serif',
-      fontSize: '22px',
+      fontSize: '21px',
       color: palette.textPrimary,
       fontStyle: 'bold',
       wordWrap: { width: titleWidth }
     }));
-    this.track(this.add.text(topBar.x + 210, topBar.y + 56, getTurnHint(this.session, this.locale), {
+    this.track(this.add.text(topBar.x + 194, topBar.y + 48, getTurnHint(this.session, this.locale), {
       fontFamily: '"Trebuchet MS", sans-serif',
-      fontSize: '12px',
+      fontSize: '11px',
       color: palette.textMuted,
       wordWrap: { width: titleWidth }
     }));
     this.drawActionButton(
       confirmX,
       topBar.y + 20,
-      106,
-      42,
+      98,
+      38,
       palette.accent,
       this.copy.confirm,
       canConfirmSelection(this.session),
@@ -1713,13 +1713,13 @@ export class GameScene extends Phaser.Scene {
           this.renderDynamicUi();
         }
       },
-      '17px'
+      '16px'
     );
     this.drawActionButton(
       resetX,
       topBar.y + 20,
-      106,
-      42,
+      98,
+      38,
       palette.warning,
       this.copy.reset,
       (this.session.pendingSelection.length > 0 || !!this.session.pendingFlip) && this.session.stateMachine.state !== 'end_game',
@@ -1729,42 +1729,43 @@ export class GameScene extends Phaser.Scene {
         this.playerAreaFlipMode = false;
         this.renderDynamicUi();
       },
-      '17px'
+      '16px'
     );
-    this.drawLocaleToggle(localeX, topBar.y + 28, 58, 24, false);
+    this.drawLocaleToggle(localeX, topBar.y + 27, 54, 22, false);
   }
   drawMobileMarket() {
     const { palette } = layoutConfig;
     const { content } = this.getMobileUiRegions();
-    const cardWidth = 154;
-    const cardHeight = 214;
-    const gap = Math.floor((content.width - 48 - cardWidth * 3) / 2);
-    const titleY = content.y + 18;
-    this.track(this.add.text(content.x + 24, titleY, this.copy.marketTitle, {
+    const cardWidth = 232;
+    const cardHeight = 210;
+    const sideInset = 20;
+    const titleY = content.y + 14;
+    const columnWidth = Math.floor((content.width - sideInset * 2) / 3);
+    this.track(this.add.text(content.x + sideInset, titleY, this.copy.marketTitle, {
       fontFamily: '"Trebuchet MS", sans-serif',
-      fontSize: '26px',
+      fontSize: '24px',
       color: palette.textPrimary,
       fontStyle: 'bold'
     }));
     this.session.decks.forEach((deck, index) => {
-      const columnX = content.x + 24 + index * (cardWidth + gap);
-      const labelY = content.y + 58;
+      const columnX = content.x + sideInset + index * columnWidth + Math.floor((columnWidth - cardWidth) / 2);
+      const labelY = content.y + 46;
       const topSalad = deck.cards[0] ?? null;
       const deckSelected = topSalad ? this.isDeckSelected(deck.id, topSalad.runtimeId) : false;
       const deckFlipQueued = topSalad ? this.isPendingDeckFlip(deck.id, topSalad.runtimeId) : false;
       const deckEnabled = topSalad && this.canInteractWithDeck(deck.id);
       this.track(this.add.text(columnX, labelY, this.copy.deckLabel(index + 1), {
         fontFamily: '"Trebuchet MS", sans-serif',
-        fontSize: '18px',
+        fontSize: '17px',
         color: palette.textMuted,
         fontStyle: 'bold'
       }));
       this.track(this.add.text(columnX, labelY + 20, this.copy.saladsLeft(deck.cards.length), {
         fontFamily: '"Trebuchet MS", sans-serif',
-        fontSize: '14px',
+        fontSize: '13px',
         color: palette.textMuted
       }));
-      const deckY = labelY + 50;
+      const deckY = labelY + 42;
       const deckVisual = topSalad
         ? drawSaladCard(this, columnX, deckY, cardWidth, cardHeight, topSalad)
         : drawCardPlaceholder(this, columnX, deckY, cardWidth, cardHeight, palette.deckBack, this.copy.deckEmpty);
@@ -1784,13 +1785,13 @@ export class GameScene extends Phaser.Scene {
           }
         });
       }
-      const flipButtonY = deckY + cardHeight + 8;
+      const flipButtonY = deckY + cardHeight + 6;
       if (deckSelected) {
         this.drawActionButton(
           columnX,
           flipButtonY,
           cardWidth,
-          24,
+          22,
           deckFlipQueued ? 0xc7b672 : 0xf5c451,
           deckFlipQueued ? this.copy.keepAsSalad : this.copy.flipToFruit,
           this.canToggleSelectedDeckFlip(deck.id),
@@ -1801,12 +1802,12 @@ export class GameScene extends Phaser.Scene {
               this.renderDynamicUi();
             }
           },
-          '13px'
+          '12px'
         );
       }
-      const marketStartY = flipButtonY + (deckSelected ? 34 : 8);
+      const marketStartY = flipButtonY + (deckSelected ? 26 : 8);
       deck.market.forEach((marketCard, marketIndex) => {
-        const slotY = marketStartY + marketIndex * (cardHeight + 14);
+        const slotY = marketStartY + marketIndex * (cardHeight + 12);
         const selected = this.isMarketSelected(deck.id, marketCard.id);
         const marketEnabled = this.canInteractWithMarketCard(deck.id, marketCard.id);
         const fruitCard = drawFruitCard(this, columnX, slotY, cardWidth, cardHeight, marketCard.fruit);
@@ -1838,46 +1839,43 @@ export class GameScene extends Phaser.Scene {
     const canFlipViewedSalads = this.canInteractWithOwnedSalads() && viewedPlayer.id === activePlayer.id;
     const hasPendingPlayerFlip = this.session.pendingFlip?.type === 'player-salad';
     const showPlayerFlipMode = canFlipViewedSalads && this.playerAreaFlipMode && !hasPendingPlayerFlip;
-    const counterColumns = 3;
-    const counterGapX = 18;
-    const counterGapY = 14;
+    const counterGapX = 12;
     const counterBlockWidth = 92;
-    const counterStartX = content.x + 24;
-    const counterStartY = content.y + 82;
-    const cardWidth = 154;
-    const cardHeight = 214;
+    const counterRowWidth = fruits.length * counterBlockWidth + Math.max(0, fruits.length - 1) * counterGapX;
+    const counterStartX = content.x + Math.max(24, Math.floor((content.width - counterRowWidth) / 2));
+    const counterStartY = content.y + 62;
+    const cardWidth = 210;
+    const cardHeight = 232;
     const saladColumns = 3;
-    const saladGapX = Math.floor((content.width - 48 - cardWidth * saladColumns) / (saladColumns - 1));
+    const saladGapX = Math.floor((content.width - 40 - cardWidth * saladColumns) / (saladColumns - 1));
     const saladGapY = 16;
     const saladViewport = {
-      x: content.x + 24,
-      y: content.y + 308,
-      width: content.width - 48,
-      height: content.height - 332
+      x: content.x + 20,
+      y: content.y + 232,
+      width: content.width - 40,
+      height: content.height - 252
     };
     if (!canFlipViewedSalads) {
       this.playerAreaFlipMode = false;
     }
-    this.track(this.add.text(content.x + 24, content.y + 18, this.copy.playerArea(viewedPlayer.name), {
+    this.track(this.add.text(content.x + 20, content.y + 18, this.copy.playerArea(viewedPlayer.name), {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '26px',
       color: palette.textPrimary,
       fontStyle: 'bold'
     }));
-    this.track(this.add.text(content.x + content.width - 24, content.y + 24, this.copy.activePlayer(activePlayer.name), {
+    this.track(this.add.text(content.x + content.width - 20, content.y + 22, this.copy.activePlayer(activePlayer.name), {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '16px',
       color: palette.textMuted,
       fontStyle: 'bold'
     }).setOrigin(1, 0));
     fruits.forEach(([fruit, count], index) => {
-      const column = index % counterColumns;
-      const row = Math.floor(index / counterColumns);
-      const x = counterStartX + column * (counterBlockWidth + counterGapX);
-      const y = counterStartY + row * (102 + counterGapY);
+      const x = counterStartX + index * (counterBlockWidth + counterGapX);
+      const y = counterStartY;
       this.track(drawFruitCounter(this, x, y, fruit, count));
     });
-    this.track(this.add.text(content.x + 24, content.y + 270, this.copy.saladCards(viewedPlayer.salads.length), {
+    this.track(this.add.text(content.x + 20, content.y + 188, this.copy.saladCards(viewedPlayer.salads.length), {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '18px',
       color: palette.textMuted,
@@ -1887,7 +1885,7 @@ export class GameScene extends Phaser.Scene {
       const flipModeActive = hasPendingPlayerFlip || this.playerAreaFlipMode;
       this.drawActionButton(
         content.x + content.width - 220,
-        content.y + 262,
+        content.y + 180,
         196,
         30,
         flipModeActive ? palette.warning : 0x3b4350,

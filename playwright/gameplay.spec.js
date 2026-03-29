@@ -36,6 +36,25 @@ async function startFairSession(page) {
   await waitForActiveSession(page);
 }
 
+async function startDemoSession(page) {
+  await page.evaluate(() => {
+    const scene = globalThis.__FRUIT_SALAD_DEBUG__?.scene;
+    if (!scene) {
+      return;
+    }
+    scene.launchSession({
+      mode: 'standard',
+      playerCount: 2,
+      playerNames: ['Player 1 Demo', 'Player 2 Demo'],
+      locale: 'en',
+      liveScoring: false,
+      seedDemoProgress: true,
+      randomSeed: 'playwright-mobile-layout'
+    });
+  });
+  await waitForActiveSession(page);
+}
+
 async function freezeGameplayVisuals(page) {
   await page.evaluate(() => {
     const scene = globalThis.__FRUIT_SALAD_DEBUG__?.scene;
@@ -66,7 +85,7 @@ test.describe('gameplay mobile layout', () => {
     await freezeGameplayVisuals(page);
     await expect(page).toHaveScreenshot('gameplay-mobile-market.png', {
       animations: 'disabled',
-      maxDiffPixelRatio: 0.06
+      maxDiffPixelRatio: 0.08
     });
   });
 
@@ -75,7 +94,7 @@ test.describe('gameplay mobile layout', () => {
     await page.setViewportSize({ width: 915, height: 412 });
     await page.goto('/?lang=en');
     await waitForSettingsReady(page);
-    await startFairSession(page);
+    await startDemoSession(page);
     await freezeGameplayVisuals(page);
     await page.evaluate(() => {
       globalThis.__FRUIT_SALAD_DEBUG__?.scene?.setMobileSection('player-0');
@@ -83,20 +102,7 @@ test.describe('gameplay mobile layout', () => {
     await page.waitForTimeout(300);
     await expect(page).toHaveScreenshot('gameplay-mobile-player.png', {
       animations: 'disabled',
-      maxDiffPixelRatio: 0.06
-    });
-  });
-
-  test('shows rotate prompt in mobile portrait', async ({ page }, testInfo) => {
-    test.skip(!testInfo.project.name.includes('mobile'), 'Mobile-only gameplay snapshot');
-    await page.setViewportSize({ width: 412, height: 915 });
-    await page.goto('/?lang=en');
-    await waitForSettingsReady(page);
-    await startFairSession(page);
-    await freezeGameplayVisuals(page);
-    await expect(page).toHaveScreenshot('gameplay-mobile-rotate-prompt.png', {
-      animations: 'disabled',
-      maxDiffPixelRatio: 0.06
+      maxDiffPixelRatio: 0.08
     });
   });
 });

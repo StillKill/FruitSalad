@@ -1,6 +1,8 @@
 # Changes Log
 
 ## 2026-03-29
+- Tightened the mobile gameplay composition: the left navigation is slimmer, the player fruit counters now stay in one horizontal row, the player view uses seeded demo salads for visual QA, and the mobile market/player cards were enlarged to claim more of the main play area.
+- Simplified gameplay Playwright coverage to the mobile market and player views, dropping the portrait rotate baseline so visual checks stay focused on the supported landscape flow.
 - Reworked the main gameplay scene for mobile landscape play: a persistent top control bar now stays visible across sections, portrait phones show a rotate-device prompt, and the mobile body switches between market, per-player, and debug views through a compact left navigation rail.
 - Added Playwright gameplay snapshot coverage for the new mobile session layout, including market, player-view, and rotate-prompt baselines so future responsive changes can be checked visually.
 - Renamed the main `Fair Game` user-facing copy to plain `Game`, kept `Demo Mode` as a separate launch path, and added a new `Freestyle` mode that uses the full deck regardless of player count.
