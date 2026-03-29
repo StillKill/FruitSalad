@@ -170,6 +170,7 @@ project-root/
 - Репозиторий подготовлен к shareable demo через GitHub Pages: workflow `.github/workflows/pages.yml` запускает тесты, собирает `dist/` и публикует статический артефакт из Actions на push в `main` или `master`.
 - `setup`: сейчас встроен в `buildSession()` и подготавливает колоды, рынок, игроков и state machine.
 - Для живого дебага в DevTools сцена экспортирует `window.__FRUIT_SALAD_DEBUG__` с доступом к текущим `game`, `scene`, `session`, `logs`, `seed`, а также helper-методами `snapshot()` и `deckSummary()`.
+- Playwright visual regression coverage can boot the local static build, wait for the Phaser settings shell through the debug bridge, and compare desktop/mobile screenshots against committed baselines.
 
 ## Полезные поля для debug overlay
 - `state`
@@ -193,5 +194,6 @@ project-root/
 - Honest online session как отдельный следующий этап после shareable demo.
 - Анимации.
 - Local scoreboard.
+- Expand Playwright screenshot coverage beyond the settings shell so mobile/tablet/desktop layout regressions are caught before UI polish work.
 - При необходимости расширить demo/simulation режим отдельными debug controls вместо простого seeded launch.
 - Пересобрать тексты salad-карт в полноценный icon-first/abbreviation layout для RU/EN, чтобы длинные правила не упирались в центральную область карты.

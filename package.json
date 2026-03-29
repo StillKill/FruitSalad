@@ -6,6 +6,8 @@
   "scripts": {
     "start": "python -m http.server 8080",
     "test": "node tests/run-tests.js",
+    "test:e2e": "playwright test",
+    "test:e2e:update": "playwright test --update-snapshots",
     "build:pages": "node scripts/build-pages.mjs",
     "text:check": "node scripts/text-file-policy.mjs --check",
     "text:fix": "node scripts/text-file-policy.mjs --write"
@@ -16,5 +18,8 @@
   "type": "module",
   "dependencies": {
     "phaser": "^3.90.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
   }
 }

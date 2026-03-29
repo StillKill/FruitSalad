@@ -12,6 +12,8 @@ Thumbs.db
 .idea/
 *.code-workspace
 *.tsbuildinfo
+playwright-report/
+test-results/
 
 # Source asset work files
 assets/**/*.aseprite-data.json

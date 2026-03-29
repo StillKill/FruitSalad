@@ -67,3 +67,4 @@
 - Tightened the settings form spacing so the 6-player localized name grid stays clear of the start buttons.
 - Localized market deck headers as ÐšÐ¾Ð»Ð¾Ð´Ð° N / Deck N instead of exposing runtime deck ids in the UI.
 - Shortened dense salad-card labels and slightly rebalanced card text/icon placement so localized rule text fits more reliably in the center oval.
+- Added Playwright visual regression scaffolding with desktop/mobile settings snapshots, a local static-server test config, and dedicated `test:e2e` scripts so UI layout changes can be checked outside the unit-test suite.
