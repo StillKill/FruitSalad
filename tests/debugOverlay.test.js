@@ -15,6 +15,7 @@ test('buildDebugSnapshot includes the active locale', () => {
     decks: [],
     stateMachine: { state: 'turn' },
     turnNumber: 1,
+    turnTimer: { remainingMs: 119000 },
     pendingSelection: [],
     pendingFlip: null,
     scorePreview: []
@@ -22,4 +23,27 @@ test('buildDebugSnapshot includes the active locale', () => {
 
   const lines = buildDebugSnapshot(session, 'en');
   assert.equal(lines[0], 'lang=en');
+});
+
+
+test('buildDebugSnapshot includes the turn timer', () => {
+  const session = {
+    options: { locale: 'en' },
+    players: [
+      { name: 'A', salads: [], score: 0 },
+      { name: 'B', salads: [], score: 0 }
+    ],
+    activePlayerIndex: 0,
+    viewedPlayerIndex: 0,
+    decks: [],
+    stateMachine: { state: 'turn' },
+    turnNumber: 1,
+    turnTimer: { remainingMs: 61000 },
+    pendingSelection: [],
+    pendingFlip: null,
+    scorePreview: []
+  };
+
+  const lines = buildDebugSnapshot(session, 'en');
+  assert.match(lines[1], /timer=01:01/);
 });

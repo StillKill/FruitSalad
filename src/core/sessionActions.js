@@ -31,7 +31,9 @@ const TURN_HINTS = {
     deselectedMarket: (fruit, deckId) => `\u0421\u043d\u044f\u0442 \u0432\u044b\u0431\u043e\u0440 ${fruit} \u0438\u0437 ${deckId}`,
     selectedMarket: (fruit, deckId) => `\u0412\u044b\u0431\u0440\u0430\u043d ${fruit} \u0438\u0437 ${deckId}`,
     selectedDeck: (deckId) => `\u0412\u044b\u0431\u0440\u0430\u043d \u0441\u0430\u043b\u0430\u0442 \u0438\u0437 ${deckId}`,
-    turnState: (name) => `\u0425\u043e\u0434: ${name}`
+    turnState: (name) => `\u0425\u043e\u0434: ${name}`,
+    timeoutAutoConfirm: (name) => `\u0412\u0440\u0435\u043c\u044f ${name} \u0438\u0441\u0442\u0435\u043a\u043b\u043e, \u0432\u044b\u0431\u043e\u0440 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043d \u0430\u0432\u0442\u043e\u043c\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u0438`,
+    timeoutSkipped: (name) => `\u0412\u0440\u0435\u043c\u044f ${name} \u0438\u0441\u0442\u0435\u043a\u043b\u043e, \u0445\u043e\u0434 \u043f\u0440\u043e\u043f\u0443\u0449\u0435\u043d`
   },
   en: {
     none: 'none',
@@ -62,7 +64,9 @@ const TURN_HINTS = {
     deselectedMarket: (fruit, deckId) => `Deselected market card ${fruit} from ${deckId}`,
     selectedMarket: (fruit, deckId) => `Selected market card ${fruit} from ${deckId}`,
     selectedDeck: (deckId) => `Selected top salad card from ${deckId}`,
-    turnState: (name) => `State changed to turn for ${name}`
+    turnState: (name) => `State changed to turn for ${name}`,
+    timeoutAutoConfirm: (name) => `${name} ran out of time, selection auto-confirmed`,
+    timeoutSkipped: (name) => `${name} ran out of time, turn skipped`
   }
 };
 
@@ -134,6 +138,14 @@ function clearSelectedDeckFlip(session) {
   if (session.pendingFlip?.type === 'selected-deck') {
     session.pendingFlip = null;
   }
+}
+
+function resetTurnTimer(session) {
+  if (!session.turnTimer) {
+    return;
+  }
+
+  session.turnTimer.remainingMs = session.turnTimer.limitMs;
 }
 
 function setTurnStateFromSelection(session) {
@@ -414,6 +426,38 @@ function advanceTurn(session) {
   session.activePlayerIndex = (session.activePlayerIndex + 1) % session.players.length;
   session.viewedPlayerIndex = session.activePlayerIndex;
   session.pendingFlip = null;
+  resetTurnTimer(session);
+}
+
+export function expireTurn(session) {
+  if (!['turn', 'end_turn'].includes(session.stateMachine.state)) {
+    return false;
+  }
+
+  if ((session.turnTimer?.limitMs ?? 0) <= 0) {
+    return false;
+  }
+
+  if (canConfirmSelection(session)) {
+    session.logs.push(getCopy(session).timeoutAutoConfirm(getActivePlayer(session).name));
+    return confirmSelection(session);
+  }
+
+  session.pendingSelection = [];
+  session.pendingFlip = null;
+  session.lastAction = getCopy(session).timeoutSkipped(getActivePlayer(session).name);
+  session.logs.push(session.lastAction);
+
+  if (!canContinuePlay(session)) {
+    session.stateMachine.transition('end_game');
+    session.logs.push('State changed to end_game');
+    return true;
+  }
+
+  advanceTurn(session);
+  session.stateMachine.transition('turn');
+  session.logs.push(getCopy(session).turnState(getActivePlayer(session).name));
+  return true;
 }
 
 export function confirmSelection(session) {

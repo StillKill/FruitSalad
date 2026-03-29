@@ -75,6 +75,7 @@ const UI_COPY = {
     startFairGame: 'Начать партию',
     typeName: 'Введите имя',
     turn: (name) => `Ход: ${name}`,
+    turnTimer: (value) => `\u0422\u0430\u0439\u043c\u0435\u0440: ${value}`,
     endGameReached: 'Игра завершена',
     confirm: 'Подтвердить',
     reset: 'Сброс',
@@ -105,8 +106,8 @@ const UI_COPY = {
     noScoredSalads: 'В этой партии не было зачтённых салатных карт.',
     playerLabel: (index) => `Игрок ${index}`,
     placementShort: (placement) => `${placement}-е`,
-    debugStateLine: ({ state, turnNumber, activePlayer, viewedPlayer }) =>
-      `сост=${state}  ход=${turnNumber}  активный=${activePlayer}  просмотр=${viewedPlayer}`,
+    debugStateLine: ({ state, turnNumber, activePlayer, viewedPlayer, timer }) =>
+      `\u0441\u043e\u0441\u0442=${state}  \u0445\u043e\u0434=${turnNumber}  \u0430\u043a\u0442\u0438\u0432\u043d\u044b\u0439=${activePlayer}  \u043f\u0440\u043e\u0441\u043c\u043e\u0442\u0440=${viewedPlayer}  \u0442\u0430\u0439\u043c\u0435\u0440=${timer}`,
     debugSelectedLine: ({ selected, pendingFlip, salads, score }) =>
       `выбор=${selected}  переворот=${pendingFlip}  салаты=${salads}  счёт=${score}`,
     debugLeaderLine: ({ leader, decks }) => `лидер=${leader}  колоды=${decks}`,
@@ -133,6 +134,7 @@ const UI_COPY = {
     startFairGame: 'Start Fair Game',
     typeName: 'Type a name',
     turn: (name) => `${name} turn`,
+    turnTimer: (value) => `Timer: ${value}`,
     endGameReached: 'End game reached',
     confirm: 'Confirm',
     reset: 'Reset',
@@ -166,8 +168,8 @@ const UI_COPY = {
       const suffix = placement === 1 ? 'st' : placement === 2 ? 'nd' : placement === 3 ? 'rd' : 'th';
       return `${placement}${suffix}`;
     },
-    debugStateLine: ({ state, turnNumber, activePlayer, viewedPlayer }) =>
-      `state=${state}  turn=${turnNumber}  active=${activePlayer}  view=${viewedPlayer}`,
+    debugStateLine: ({ state, turnNumber, activePlayer, viewedPlayer, timer }) =>
+      `state=${state}  turn=${turnNumber}  active=${activePlayer}  view=${viewedPlayer}  timer=${timer}`,
     debugSelectedLine: ({ selected, pendingFlip, salads, score }) =>
       `selected=${selected}  flip=${pendingFlip}  salads=${salads}  score=${score}`,
     debugLeaderLine: ({ leader, decks }) => `leader=${leader}  decks=${decks}`,

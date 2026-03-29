@@ -12,6 +12,7 @@ import { buildSession } from '../core/sessionSetup.js';
 import {
   canConfirmSelection,
   confirmSelection,
+  expireTurn,
   getPendingFlipSummary,
   getTurnHint,
   resetPendingSelection,
@@ -87,6 +88,33 @@ export class GameScene extends Phaser.Scene {
     };
     this.scrollMeta = {};
     this.playerAreaFlipMode = false;
+  }
+
+  update(time, delta) {
+    if (!this.session || !['turn', 'end_turn'].includes(this.session.stateMachine.state)) {
+      return;
+    }
+
+    const turnTimer = this.session.turnTimer;
+    if (!turnTimer || turnTimer.limitMs <= 0) {
+      return;
+    }
+
+    const previousLabel = this.formatTurnTimer(turnTimer.remainingMs);
+    turnTimer.remainingMs = Math.max(0, turnTimer.remainingMs - delta);
+    const nextLabel = this.formatTurnTimer(turnTimer.remainingMs);
+
+    if (turnTimer.remainingMs <= 0) {
+      if (expireTurn(this.session)) {
+        this.playerAreaFlipMode = false;
+        this.renderDynamicUi();
+      }
+      return;
+    }
+
+    if (nextLabel !== previousLabel) {
+      this.renderDynamicUi();
+    }
   }
 
   preload() {
@@ -198,6 +226,13 @@ export class GameScene extends Phaser.Scene {
 
   formatPlacement(placement) {
     return this.copy.placementShort(placement);
+  }
+
+  formatTurnTimer(remainingMs) {
+    const totalSeconds = Math.max(0, Math.ceil((remainingMs ?? 0) / 1000));
+    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+    const seconds = String(totalSeconds % 60).padStart(2, '0');
+    return `${minutes}:${seconds}`;
   }
 
   formatFruitSummary(fruitCounts) {
@@ -796,9 +831,10 @@ export class GameScene extends Phaser.Scene {
     const infoWidth = confirmX - contentX - 24;
     const activePlayer = this.session.players[this.session.activePlayerIndex];
     const leader = this.session.scorePreview?.[0] ?? null;
+    const timerText = this.copy.turnTimer(this.formatTurnTimer(this.session.turnTimer?.remainingMs ?? 0));
     const title = this.session.stateMachine.state === 'end_game'
       ? this.copy.endGameReached
-      : this.copy.turn(activePlayer.name);
+      : `${this.copy.turn(activePlayer.name)} | ${timerText}`;
     const leaderText = leader ? `${leader.playerName} (${leader.totalPoints})` : this.copy.none;
     const flipText = this.session.pendingFlip ? getPendingFlipSummary(this.session, this.locale) : this.copy.none;
 
@@ -866,7 +902,7 @@ export class GameScene extends Phaser.Scene {
     this.track(this.add.text(
       contentX,
       regions.controls.y + 82,
-      `${this.copy.leader}: ${leaderText}   ${this.copy.flip}: ${flipText}`,
+      `${this.copy.leader}: ${leaderText}   ${timerText}   ${this.copy.flip}: ${flipText}`,
       {
         fontFamily: '"Trebuchet MS", sans-serif',
         fontSize: '13px',

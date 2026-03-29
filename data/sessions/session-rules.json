@@ -12,6 +12,7 @@
   "turnRules": {
     "marketPickLimit": 2,
     "deckPickLimit": 1,
-    "confirmState": "end_turn"
+    "confirmState": "end_turn",
+    "timeLimitSeconds": 120
   }
 }

@@ -1,6 +1,8 @@
 # Changes Log
 
 ## 2026-03-29
+- Added a per-turn 2-minute timer from session rules, rendered the live countdown in the controls panel, and exposed the remaining time in the debug overlay.
+- Added timeout handling so a ready selection auto-confirms at 0:00, while incomplete picks are cleared and the turn is skipped; covered both flows with session tests.
 - Normalized the repo text-file workflow to reduce rejected patches on Windows: set the local clone back to LF-friendly git behavior, added `npm run text:check` / `npm run text:fix`, and documented `core.autocrlf=false` plus the recovery flow in the repo instructions.
 - Added a manual `RU/EN` language switch to the settings screen and in-game controls, synchronized default player names when the locale changes, and exposed the active language in the debug overlay to make mixed-locale state easy to spot.
 - Localized the playable UI, turn hints, debug labels, fruit counters, and end-game copy for `ru`/`en`; English fruit cards now reuse the same bilingual art by flipping the existing fruit image on both axes instead of duplicating assets.

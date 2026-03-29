@@ -185,6 +185,7 @@ export function buildSession(options, sessionRules, scoringCatalog) {
   const decks = splitIntoDecks(playableDeck, sessionRules.deckCount);
   const players = createPlayers(sessionOptions, scoringCatalog.fruits);
   const stateMachine = new TurnStateMachine('setup');
+  const turnTimeLimitMs = Math.max(0, Number(sessionRules?.turnRules?.timeLimitSeconds ?? 0)) * 1000;
   const logs = [
     'Session created',
     `Players: ${sessionOptions.playerCount}`,
@@ -202,6 +203,10 @@ export function buildSession(options, sessionRules, scoringCatalog) {
     turnNumber: 1,
     activePlayerIndex: 0,
     viewedPlayerIndex: 0,
+    turnTimer: {
+      limitMs: turnTimeLimitMs,
+      remainingMs: turnTimeLimitMs
+    },
     pendingSelection: [],
     pendingFlip: null,
     logs

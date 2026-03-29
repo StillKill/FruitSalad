@@ -84,6 +84,7 @@ project-root/
 - Перед раскладкой по 3 колодам выбранный пул карт перемешивается по seed, чтобы рынок не зависел от исходного порядка каталога.
 - Если при пополнении рынка колода пуста, она восстанавливается за счёт нижней половины самой толстой из оставшихся колод; при равенстве для детерминизма берётся первая подходящая колода по порядку.
 - Настройки партии и лимиты setup лежат в `data/sessions/session-rules.json`.
+- Turn timer defaults to `timeLimitSeconds` from `data/sessions/session-rules.json`; the current prototype value is 120 seconds per player.
 - Полный каталог scoring-карт уже загружен в `data/cards/scoring-cards.json`.
 
 ### 3. Gameplay States
@@ -93,6 +94,7 @@ project-root/
 - `end_turn`: игрок закончил основной выбор; pending flip не блокирует и не требует Confirm сам по себе.
 - `refresh`: пополнение рынка, восстановление пустой колоды по правилу split-the-thickest-deck, проверка конца игры.
 - `end_game`: замораживание финального snapshot, итоговый подсчет очков, места, breakdown по картам и popup результатов.
+- If the timer expires with a confirmable selection, the game auto-confirms it; otherwise pending selection and pending flip are cleared and the turn is skipped.
 
 ### 4. UI Shell
 - Settings dialog.
@@ -171,7 +173,6 @@ project-root/
 
 ## План
 - Языки: RU.
-- Таймер хода.
 - Улучшение дизайна под mid-res presentation.
 - Деплой и онлайн-сессия, чтобы игру можно было показать вне локальной машины.
 - Анимации.

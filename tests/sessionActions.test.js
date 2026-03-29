@@ -6,6 +6,7 @@ import { getFruitName } from '../src/i18n/locale.js';
 import {
   canConfirmSelection,
   confirmSelection,
+  expireTurn,
   getPendingFlipSummary,
   getPendingSelectionSummary,
   getTurnHint,
@@ -56,7 +57,8 @@ function makeSession() {
     turnRules: {
       marketPickLimit: 2,
       deckPickLimit: 1,
-      confirmState: 'end_turn'
+      confirmState: 'end_turn',
+      timeLimitSeconds: 120
     }
   };
   const options = {
@@ -213,4 +215,39 @@ test('confirmSelection reaches end_game when no deck and not enough market cards
   assert.equal(confirmSelection(session), true);
   assert.equal(session.stateMachine.state, 'end_game');
   assert.match(getTurnHint(session), /end game/i);
+});
+
+
+test('expireTurn skips an incomplete turn and resets the timer for the next player', () => {
+  const session = makeSession();
+
+  session.turnTimer.remainingMs = 0;
+  selectMarketCard(session, session.decks[0].id, session.decks[0].market[0].id);
+
+  assert.equal(expireTurn(session), true);
+  assert.equal(session.activePlayerIndex, 1);
+  assert.equal(session.viewedPlayerIndex, 1);
+  assert.equal(session.turnNumber, 2);
+  assert.equal(session.pendingSelection.length, 0);
+  assert.equal(session.pendingFlip, null);
+  assert.equal(session.turnTimer.remainingMs, session.turnTimer.limitMs);
+  assert.match(session.lastAction, /ran out of time/i);
+});
+
+test('expireTurn auto-confirms a ready selection', () => {
+  const session = makeSession();
+  const [firstDeck, secondDeck] = session.decks;
+  const firstFruit = firstDeck.market[0].fruit;
+  const secondFruit = secondDeck.market[0].fruit;
+
+  selectMarketCard(session, firstDeck.id, firstDeck.market[0].id);
+  selectMarketCard(session, secondDeck.id, secondDeck.market[0].id);
+  session.turnTimer.remainingMs = 0;
+
+  assert.equal(expireTurn(session), true);
+  assert.equal(session.players[0].fruitCounts[firstFruit], 1);
+  assert.equal(session.players[0].fruitCounts[secondFruit], 1);
+  assert.equal(session.activePlayerIndex, 1);
+  assert.equal(session.turnNumber, 2);
+  assert.equal(session.turnTimer.remainingMs, session.turnTimer.limitMs);
 });

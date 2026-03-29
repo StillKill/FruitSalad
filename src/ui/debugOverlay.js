@@ -15,6 +15,11 @@ export function buildDebugSnapshot(session, locale = session?.options?.locale) {
     })
     .join('  ');
   const previewLeader = session.scorePreview?.[0] ?? null;
+  const timerMs = Math.max(0, session.turnTimer?.remainingMs ?? 0);
+  const timerSeconds = Math.ceil(timerMs / 1000);
+  const timerMinutesLabel = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+  const timerSecondsLabel = String(timerSeconds % 60).padStart(2, '0');
+  const timer = `${timerMinutesLabel}:${timerSecondsLabel}`;
   const lastAction = session.lastAction ?? copy.none;
   const selected = session.pendingSelection.length > 0
     ? session.pendingSelection.map((selection) => selection.type === 'deck'
@@ -29,7 +34,7 @@ export function buildDebugSnapshot(session, locale = session?.options?.locale) {
 
   return [
     `lang=${resolvedLocale}`,
-    copy.debugStateLine({ state: session.stateMachine.state, turnNumber: session.turnNumber, activePlayer: activePlayer.name, viewedPlayer: viewedPlayer.name }),
+    copy.debugStateLine({ state: session.stateMachine.state, turnNumber: session.turnNumber, activePlayer: activePlayer.name, viewedPlayer: viewedPlayer.name, timer }),
     copy.debugSelectedLine({ selected, pendingFlip, salads: activePlayer.salads.length, score: activePlayer.score }),
     copy.debugLeaderLine({ leader: previewLeader ? `${previewLeader.playerName}:${previewLeader.totalPoints}` : copy.none, decks: deckSummary }),
     copy.debugLastLine({ lastAction })
