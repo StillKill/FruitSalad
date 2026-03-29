@@ -1,6 +1,8 @@
 ﻿# Changes Log
 
 ## 2026-03-29
+- Updated `project.md` planning: removed the completed `end_game` execution checklist, rewrote the End Game model section into a current-state spec, and added new follow-up items for spacing, end-game breakdown visuals, RU language, turn timer, design, deploy/online session, animations, sounds, and local scoreboard.
+- Verification: reviewed the updated `project.md` sections for consistency with the current codebase and existing roadmap.
 - Exposed a browser-side debug bridge as `window.__FRUIT_SALAD_DEBUG__` so the active Phaser scene, live session, seed, logs, and compact deck snapshots can be inspected from DevTools during a running match.
 - Cleaned up `changes.md` formatting and updated `AGENTS.md` plus `project.md` so the log stays a short record of completed work.
 
