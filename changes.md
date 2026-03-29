@@ -1,6 +1,7 @@
 # Changes Log
 
 ## 2026-03-29
+- Refined the turn-timer UX: moved the countdown into its own control-panel row, removed the duplicated Leader/Timer/Flip summary from the controls, and switched timer ticking to an absolute deadline so it no longer stalls when the scene redraw is heavy.
 - Added a per-turn 2-minute timer from session rules, rendered the live countdown in the controls panel, and exposed the remaining time in the debug overlay.
 - Added timeout handling so a ready selection auto-confirms at 0:00, while incomplete picks are cleared and the turn is skipped; covered both flows with session tests.
 - Normalized the repo text-file workflow to reduce rejected patches on Windows: set the local clone back to LF-friendly git behavior, added `npm run text:check` / `npm run text:fix`, and documented `core.autocrlf=false` plus the recovery flow in the repo instructions.

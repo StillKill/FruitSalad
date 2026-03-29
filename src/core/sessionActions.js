@@ -146,6 +146,7 @@ function resetTurnTimer(session) {
   }
 
   session.turnTimer.remainingMs = session.turnTimer.limitMs;
+  session.turnTimer.deadlineAt = session.turnTimer.limitMs > 0 ? Date.now() + session.turnTimer.limitMs : null;
 }
 
 function setTurnStateFromSelection(session) {

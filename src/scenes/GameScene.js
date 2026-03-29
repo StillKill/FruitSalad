@@ -13,7 +13,6 @@ import {
   canConfirmSelection,
   confirmSelection,
   expireTurn,
-  getPendingFlipSummary,
   getTurnHint,
   resetPendingSelection,
   selectDeckCard,
@@ -88,32 +87,32 @@ export class GameScene extends Phaser.Scene {
     };
     this.scrollMeta = {};
     this.playerAreaFlipMode = false;
+    this.turnTimerText = null;
   }
 
-  update(time, delta) {
+  update() {
     if (!this.session || !['turn', 'end_turn'].includes(this.session.stateMachine.state)) {
       return;
     }
 
     const turnTimer = this.session.turnTimer;
-    if (!turnTimer || turnTimer.limitMs <= 0) {
+    if (!turnTimer || turnTimer.limitMs <= 0 || !turnTimer.deadlineAt) {
       return;
     }
 
-    const previousLabel = this.formatTurnTimer(turnTimer.remainingMs);
-    turnTimer.remainingMs = Math.max(0, turnTimer.remainingMs - delta);
-    const nextLabel = this.formatTurnTimer(turnTimer.remainingMs);
+    const remainingMs = Math.max(0, turnTimer.deadlineAt - Date.now());
+    turnTimer.remainingMs = remainingMs;
+    const nextLabel = this.formatTurnTimer(remainingMs);
 
-    if (turnTimer.remainingMs <= 0) {
+    if (this.turnTimerText && this.turnTimerText.active && this.turnTimerText.text !== nextLabel) {
+      this.turnTimerText.setText(nextLabel);
+    }
+
+    if (remainingMs <= 0) {
       if (expireTurn(this.session)) {
         this.playerAreaFlipMode = false;
         this.renderDynamicUi();
       }
-      return;
-    }
-
-    if (nextLabel !== previousLabel) {
-      this.renderDynamicUi();
     }
   }
 
@@ -479,6 +478,7 @@ export class GameScene extends Phaser.Scene {
     this.dynamicObjects.forEach((object) => object.destroy());
     this.dynamicObjects = [];
     this.scrollMeta = {};
+    this.turnTimerText = null;
 
     if (!this.session) {
       this.drawSettingsScreen();
@@ -830,13 +830,10 @@ export class GameScene extends Phaser.Scene {
     const confirmX = resetX - buttonGap - buttonWidth;
     const infoWidth = confirmX - contentX - 24;
     const activePlayer = this.session.players[this.session.activePlayerIndex];
-    const leader = this.session.scorePreview?.[0] ?? null;
-    const timerText = this.copy.turnTimer(this.formatTurnTimer(this.session.turnTimer?.remainingMs ?? 0));
     const title = this.session.stateMachine.state === 'end_game'
       ? this.copy.endGameReached
-      : `${this.copy.turn(activePlayer.name)} | ${timerText}`;
-    const leaderText = leader ? `${leader.playerName} (${leader.totalPoints})` : this.copy.none;
-    const flipText = this.session.pendingFlip ? getPendingFlipSummary(this.session, this.locale) : this.copy.none;
+      : this.copy.turn(activePlayer.name);
+    const timerValue = this.formatTurnTimer(this.session.turnTimer?.remainingMs ?? 0);
 
     this.track(this.add.text(localeX, titleY + 2, this.getLanguageLabel(), {
       fontFamily: '"Trebuchet MS", sans-serif',
@@ -853,6 +850,22 @@ export class GameScene extends Phaser.Scene {
       fontStyle: 'bold',
       wordWrap: { width: infoWidth }
     }));
+
+    if (this.session.stateMachine.state !== 'end_game') {
+      this.track(this.add.text(contentX, regions.controls.y + 42, this.copy.turnTimer(''), {
+        fontFamily: '"Trebuchet MS", sans-serif',
+        fontSize: '13px',
+        color: palette.textMuted,
+        fontStyle: 'bold'
+      }));
+
+      this.turnTimerText = this.track(this.add.text(contentX + 76, regions.controls.y + 39, timerValue, {
+        fontFamily: 'Consolas, monospace',
+        fontSize: '24px',
+        color: palette.warning,
+        fontStyle: 'bold'
+      }));
+    }
 
     this.drawActionButton(
       confirmX,
@@ -889,26 +902,13 @@ export class GameScene extends Phaser.Scene {
 
     this.track(this.add.text(
       contentX,
-      regions.controls.y + 46,
+      regions.controls.y + 72,
       getTurnHint(this.session, this.locale),
       {
         fontFamily: '"Trebuchet MS", sans-serif',
         fontSize: '13px',
         color: palette.textMuted,
         wordWrap: { width: infoWidth }
-      }
-    ));
-
-    this.track(this.add.text(
-      contentX,
-      regions.controls.y + 82,
-      `${this.copy.leader}: ${leaderText}   ${timerText}   ${this.copy.flip}: ${flipText}`,
-      {
-        fontFamily: '"Trebuchet MS", sans-serif',
-        fontSize: '13px',
-        color: palette.textMuted,
-        fontStyle: 'bold',
-        wordWrap: { width: regions.controls.width - 48 }
       }
     ));
   }

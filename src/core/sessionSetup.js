@@ -205,7 +205,8 @@ export function buildSession(options, sessionRules, scoringCatalog) {
     viewedPlayerIndex: 0,
     turnTimer: {
       limitMs: turnTimeLimitMs,
-      remainingMs: turnTimeLimitMs
+      remainingMs: turnTimeLimitMs,
+      deadlineAt: turnTimeLimitMs > 0 ? Date.now() + turnTimeLimitMs : null
     },
     pendingSelection: [],
     pendingFlip: null,
