@@ -1,6 +1,7 @@
 # Changes Log
 
 ## 2026-03-29
+- Added a GitHub Pages deployment path: `npm run build:pages` now stages a clean static `dist/` bundle, and `.github/workflows/pages.yml` installs dependencies, runs tests, builds the bundle, and deploys it through GitHub Actions on `main` / `master`.
 - Added fair-session persistence in browser storage so reload can restore an in-progress honest match, while demo sessions remain unsaved and isolated from the fair-game flow.
 - Simplified the settings entry point around fair play: when a save exists the main CTA pair is now Continue / New Game, and Demo Mode is visually separated into its own block.
 - Clarified the patch workflow in `AGENTS.md`: after UTF-8/LF checks, rejected hunks should be treated as stale-context problems and retried from freshly read file contents in smaller `apply_patch` steps.

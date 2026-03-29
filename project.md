@@ -32,11 +32,16 @@
 ```text
 project-root/
 ├── AGENTS.md
+├── .github/
+│   └── workflows/
+│       └── pages.yml
 ├── index.html
 ├── index.js
 ├── changes.md
 ├── project.md
 ├── .gitattributes
+├── scripts/
+│   └── build-pages.mjs
 ├── .gitignore
 ├── assets/
 │   ├── audio/
@@ -100,6 +105,7 @@ project-root/
 
 ### 4. UI Shell
 - Settings dialog.
+- GitHub Pages deployment is built through `npm run build:pages`, which stages a static `dist/` artifact and copies the Phaser ESM runtime into the publishable folder for Actions-based deployment.
 - Для fair game settings-экран показывает `Continue` / `New Game`, если найден локальный fair-save; demo mode вынесен в отдельный визуальный блок и не смешивается с основными настройками партии.
 - Runtime localization supports `ru` and `en`. The scene resolves locale from `?lang=` first and browser language second, exposes a manual `RU/EN` switch in settings and during play, and English fruit cards reuse the same bilingual fruit asset by flipping the image on both axes instead of duplicating PNG files.
 - Settings and control-panel layout should stay resilient to localization: section spacing is driven by rendered text height, name fields scale to the available column width, and the in-game language toggle keeps its own reserved area instead of sharing button space with `Confirm` / `Reset`.
@@ -159,6 +165,7 @@ project-root/
 ## Базовая сцена
 - `preload`: грузит JSON-конфиги, полный каталог карт, reference layout image и базовые SFX (game_start, round_start, button_click, tab_select).
 - `create`: показывает `settings`, откуда можно запустить честную сессию, продолжить сохранённую fair-session или открыть demo/simulation режим.
+- Репозиторий подготовлен к shareable demo через GitHub Pages: workflow `.github/workflows/pages.yml` запускает тесты, собирает `dist/` и публикует статический артефакт из Actions на push в `main` или `master`.
 - `setup`: сейчас встроен в `buildSession()` и подготавливает колоды, рынок, игроков и state machine.
 - Для живого дебага в DevTools сцена экспортирует `window.__FRUIT_SALAD_DEBUG__` с доступом к текущим `game`, `scene`, `session`, `logs`, `seed`, а также helper-методами `snapshot()` и `deckSummary()`.
 
@@ -180,7 +187,7 @@ project-root/
 ## План
 - Языки: RU.
 - Улучшение дизайна под mid-res presentation.
-- Shareable demo deploy, чтобы игру можно было показать вне локальной машины.
+- Shareable demo deploy через GitHub Pages, чтобы игру можно было показать вне локальной машины.
 - Honest online session как отдельный следующий этап после shareable demo.
 - Анимации.
 - Local scoreboard.

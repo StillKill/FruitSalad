@@ -6,6 +6,7 @@
   "scripts": {
     "start": "python -m http.server 8080",
     "test": "node tests/run-tests.js",
+    "build:pages": "node scripts/build-pages.mjs",
     "text:check": "node scripts/text-file-policy.mjs --check",
     "text:fix": "node scripts/text-file-policy.mjs --write"
   },
