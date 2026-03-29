@@ -1627,11 +1627,6 @@ export class GameScene extends Phaser.Scene {
       color: textColor,
       fontStyle: 'bold'
     }).setOrigin(0.5));
-    if (state.activePlayer) {
-      const marker = this.track(this.add.graphics());
-      marker.fillStyle(state.selected ? 0x111315 : 0xf5c451, 1);
-      marker.fillCircle(x + width - 12, y + 12, 4);
-    }
     this.addClickZone(x, y, width, height, onClick);
   }
   drawMobileNavigation() {
@@ -1664,10 +1659,12 @@ export class GameScene extends Phaser.Scene {
     const activePlayer = this.session.players[this.session.activePlayerIndex];
     const topBar = regions.topBar;
     const timerValue = this.formatTurnTimer(this.session.turnTimer?.remainingMs ?? 0);
+    const helpX = topBar.x + topBar.width - 182;
     const localeX = topBar.x + topBar.width - 138;
-    const resetX = localeX - 114;
+    const resetX = helpX - 120;
     const confirmX = resetX - 114;
-    const titleWidth = confirmX - (topBar.x + 194) - 16;
+    const titleWidth = helpX - (topBar.x + 194) - 14;
+    const hintWidth = helpX - (topBar.x + 194) - 14;
     const timerVisualState = this.getTurnTimerVisualState(this.session.turnTimer?.remainingMs ?? 0);
     const timerBadge = this.track(this.add.graphics());
     timerBadge.fillStyle(0x1a1f25, 0.98);
@@ -1697,9 +1694,9 @@ export class GameScene extends Phaser.Scene {
     }));
     this.track(this.add.text(topBar.x + 194, topBar.y + 48, getTurnHint(this.session, this.locale), {
       fontFamily: '"Trebuchet MS", sans-serif',
-      fontSize: '11px',
-      color: palette.textMuted,
-      wordWrap: { width: titleWidth }
+      fontSize: '12px',
+      color: palette.textPrimary,
+      wordWrap: { width: hintWidth }
     }));
     this.drawActionButton(
       confirmX,
@@ -1733,6 +1730,24 @@ export class GameScene extends Phaser.Scene {
         this.renderDynamicUi();
       },
       '16px'
+    );
+    this.drawActionButton(
+      helpX,
+      topBar.y + 24,
+      34,
+      30,
+      0x3b4350,
+      '?',
+      true,
+      () => {
+        this.playSound(SOUND_KEYS.buttonClick);
+        this.openRulesHelp();
+      },
+      '18px',
+      {
+        borderColor: 0x56606d,
+        textColor: palette.textPrimary
+      }
     );
     this.drawLocaleToggle(localeX, topBar.y + 27, 54, 22, false);
   }
@@ -1997,6 +2012,12 @@ export class GameScene extends Phaser.Scene {
       ? this.copy.endGameReached
       : this.copy.turn(activePlayer.name);
     const timerValue = this.formatTurnTimer(this.session.turnTimer?.remainingMs ?? 0);
+    const helpX = topBar.x + topBar.width - 182;
+    const localeX = topBar.x + topBar.width - 138;
+    const resetX = helpX - 120;
+    const confirmX = resetX - 114;
+    const titleWidth = helpX - (topBar.x + 194) - 14;
+    const hintWidth = helpX - (topBar.x + 194) - 14;
 
     this.track(this.add.text(localeX, titleY + 2, this.getLanguageLabel(), {
       fontFamily: '"Trebuchet MS", sans-serif',
