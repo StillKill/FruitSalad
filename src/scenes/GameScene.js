@@ -35,6 +35,7 @@ import { buildEndGameResults } from '../core/endGameResults.js';
 import { detectGameLocale, getCardCopy, getFruitName, getLocaleCopy, getParityLabel, normalizeLocale } from '../i18n/locale.js';
 
 const SETTINGS_NAME_MAX_LENGTH = 18;
+const DEFAULT_SOUND_VOLUME = 0.8;
 const SOUND_KEYS = {
   gameStart: 'game_start',
   tabSelect: 'tab_select',
@@ -95,6 +96,10 @@ export class GameScene extends Phaser.Scene {
       turnNumber: null,
       state: null,
       nextTurnSound: null
+    };
+    this.audioSettings = {
+      volume: DEFAULT_SOUND_VOLUME,
+      muted: false
     };
   }
 
@@ -175,11 +180,44 @@ export class GameScene extends Phaser.Scene {
   }
 
   playSound(key, config = {}) {
-    if (!key || !this.cache.audio.exists(key)) {
+    if (!key || !this.cache.audio.exists(key) || this.audioSettings.muted) {
       return;
     }
 
-    this.sound.play(key, config);
+    const resolvedVolume = Phaser.Math.Clamp((config.volume ?? 1) * this.audioSettings.volume, 0, 1);
+    if (resolvedVolume <= 0) {
+      return;
+    }
+
+    this.sound.play(key, {
+      ...config,
+      volume: resolvedVolume
+    });
+  }
+
+  getAudioVolumePercent() {
+    return Math.round(this.audioSettings.volume * 100);
+  }
+
+  setAudioVolume(volume, { preview = true } = {}) {
+    const nextVolume = Phaser.Math.Clamp(volume, 0, 1);
+    if (nextVolume === this.audioSettings.volume) {
+      return;
+    }
+
+    this.audioSettings.volume = nextVolume;
+    if (preview && !this.audioSettings.muted) {
+      this.playSound(SOUND_KEYS.buttonClick);
+    }
+    this.renderDynamicUi();
+  }
+
+  toggleAudioMuted({ preview = true } = {}) {
+    this.audioSettings.muted = !this.audioSettings.muted;
+    if (!this.audioSettings.muted && preview) {
+      this.playSound(SOUND_KEYS.buttonClick);
+    }
+    this.renderDynamicUi();
   }
 
   syncTurnAudio() {
@@ -913,7 +951,10 @@ export class GameScene extends Phaser.Scene {
       fontStyle: 'bold'
     }));
     this.drawLocaleToggle(contentRight - 124, cursorY, 58, 28, false);
-    cursorY = localeLabel.y + localeLabel.height + 20;
+    cursorY = localeLabel.y + localeLabel.height + 18;
+
+    this.drawSettingsAudioPanel(contentX, cursorY, contentWidth);
+    cursorY += 78;
 
     const lead = this.track(this.add.text(contentX, cursorY, this.copy.setupLead, {
       fontFamily: '"Trebuchet MS", sans-serif',
@@ -1038,6 +1079,81 @@ export class GameScene extends Phaser.Scene {
       () => this.startDemoSession(),
       '18px',
       { soundKey: null }
+    );
+  }
+
+  drawSettingsAudioPanel(x, y, width) {
+    const { palette } = layoutConfig;
+    const panelHeight = 56;
+    const muteButtonWidth = 132;
+    const sliderGap = 8;
+    const sliderWidth = width - muteButtonWidth - 28;
+    const sliderX = x;
+    const sliderY = y + 26;
+    const segmentCount = 10;
+    const segmentGap = 6;
+    const segmentWidth = Math.floor((sliderWidth - segmentGap * (segmentCount - 1)) / segmentCount);
+    const activeSegments = Math.max(1, Math.round(this.audioSettings.volume * segmentCount));
+
+    this.track(this.add.text(x, y, this.copy.soundSettings, {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '16px',
+      color: palette.textMuted,
+      fontStyle: 'bold'
+    }));
+
+    const statusLabel = this.audioSettings.muted
+      ? this.copy.soundMuted
+      : this.copy.soundVolume(this.getAudioVolumePercent());
+    this.track(this.add.text(x + sliderWidth - 2, y, statusLabel, {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '16px',
+      color: palette.textPrimary,
+      fontStyle: 'bold'
+    }).setOrigin(1, 0));
+
+    for (let index = 0; index < segmentCount; index += 1) {
+      const segmentX = sliderX + index * (segmentWidth + segmentGap);
+      const isActive = index < activeSegments;
+      const fillColor = this.audioSettings.muted
+        ? (isActive ? 0x56606d : 0x242a31)
+        : (isActive ? palette.accent : 0x343a44);
+      const textColor = this.audioSettings.muted ? palette.textMuted : '#111315';
+      const segment = this.track(this.add.graphics());
+      segment.fillStyle(fillColor, 1);
+      segment.lineStyle(2, 0x171b20, 1);
+      segment.fillRoundedRect(segmentX, sliderY, segmentWidth, panelHeight - 18, 8);
+      segment.strokeRoundedRect(segmentX, sliderY, segmentWidth, panelHeight - 18, 8);
+
+      this.track(this.add.text(segmentX + segmentWidth / 2, sliderY + 10, String((index + 1) * 10), {
+        fontFamily: 'Consolas, monospace',
+        fontSize: '13px',
+        color: isActive ? textColor : palette.textMuted,
+        fontStyle: 'bold'
+      }).setOrigin(0.5, 0));
+
+      this.addClickZone(segmentX, sliderY, segmentWidth, panelHeight - 18, () => {
+        this.setAudioVolume((index + 1) / segmentCount);
+      });
+    }
+
+    this.drawActionButton(
+      x + width - muteButtonWidth,
+      y + 16,
+      muteButtonWidth,
+      36,
+      this.audioSettings.muted ? palette.warning : 0x3b4350,
+      this.audioSettings.muted ? this.copy.unmuteSound : this.copy.muteSound,
+      true,
+      () => {
+        this.toggleAudioMuted();
+      },
+      '16px',
+      {
+        soundKey: null,
+        textColor: this.audioSettings.muted ? '#111315' : palette.textPrimary,
+        borderColor: this.audioSettings.muted ? 0xf6f1c7 : 0x56606d
+      }
     );
   }
 

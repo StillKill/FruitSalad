@@ -104,7 +104,7 @@ project-root/
 - If the timer expires with a confirmable selection, the game auto-confirms it; otherwise pending selection and pending flip are cleared and the turn is skipped.
 
 ### 4. UI Shell
-- Settings dialog.
+- Settings dialog with player setup plus sound volume and mute controls.
 - GitHub Pages deployment is built through `npm run build:pages`, which stages a static `dist/` artifact and copies the Phaser ESM runtime into the publishable folder for Actions-based deployment.
 - Для fair game settings-экран показывает `Continue` / `New Game`, если найден локальный fair-save; demo mode вынесен в отдельный визуальный блок и не смешивается с основными настройками партии.
 - Runtime localization supports `ru` and `en`. The scene resolves locale from `?lang=` first and browser language second, exposes a manual `RU/EN` switch in settings and during play, and English fruit cards reuse the same bilingual fruit asset by flipping the image on both axes instead of duplicating PNG files.
