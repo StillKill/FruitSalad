@@ -49,7 +49,7 @@ export function getPerFruitMultiDisplayIcons(card) {
     .map(({ fruit, points }) => ({ fruit, label: scoreLabel(points) }));
 }
 
-function getSaladDescriptor(card, locale = 'ru') {
+export function getSaladDescriptor(card, locale = 'ru') {
   const copy = getCardCopy(locale);
   const distinctFruits = [...new Set(card.saladFruits ?? [])];
   const allKinds = usesAllFruitKinds(distinctFruits);
@@ -136,7 +136,7 @@ function addDescriptorIcons(scene, container, descriptor, width, height) {
 
   const hasSingleBasket = descriptor.icons.length === 1 && descriptor.icons[0].special === 'basket';
   if (hasSingleBasket) {
-    const basket = scene.add.image(width / 2, height * 0.58, getDescriptorIconTexture(descriptor.icons[0]));
+    const basket = scene.add.image(width / 2, height * 0.62, getDescriptorIconTexture(descriptor.icons[0]));
     const basketSize = Math.max(36, Math.floor(width * 0.26));
     basket.setDisplaySize(basketSize, basketSize);
     container.add(basket);
@@ -147,7 +147,7 @@ function addDescriptorIcons(scene, container, descriptor, width, height) {
   const rows = Math.ceil(descriptor.icons.length / iconsPerRow);
   const iconSize = descriptor.icons.length > 4 ? Math.max(20, Math.floor(width * 0.16)) : Math.max(24, Math.floor(width * 0.18));
   const rowGap = iconSize + 18;
-  const startY = height * 0.56 - ((rows - 1) * rowGap) / 2;
+  const startY = height * 0.6 - ((rows - 1) * rowGap) / 2;
 
   descriptor.icons.forEach((iconData, index) => {
     const row = Math.floor(index / iconsPerRow);
@@ -165,7 +165,7 @@ function addDescriptorIcons(scene, container, descriptor, width, height) {
     if (iconData.label) {
       const label = scene.add.text(iconX, iconY + iconSize / 2 + 4, iconData.label, {
         fontFamily: '"Trebuchet MS", sans-serif',
-        fontSize: `${Math.max(11, Math.round(width * 0.08))}px`,
+        fontSize: `${Math.max(10, Math.round(width * 0.074))}px`,
         color: '#111315',
         fontStyle: 'bold'
       }).setOrigin(0.5, 0);
@@ -207,26 +207,26 @@ export function drawSaladCard(scene, x, y, width, height, card) {
   addCardFrame(scene, container, width, height);
 
   if (!descriptor.hideTitle) {
-    const title = scene.add.text(width / 2, height * 0.325, descriptor.title, {
+    const title = scene.add.text(width / 2, height * 0.3, descriptor.title, {
       fontFamily: '"Trebuchet MS", sans-serif',
-      fontSize: `${Math.max(13, Math.round(width * 0.094))}px`,
+      fontSize: `${Math.max(11, Math.round(width * 0.086))}px`,
       color: '#111315',
       fontStyle: 'bold',
       align: 'center',
-      wordWrap: { width: width * 0.56 }
+      wordWrap: { width: width * 0.64 }
     }).setOrigin(0.5);
     container.add(title);
   }
 
   if (!descriptor.hideSubtitle) {
-    const subtitleY = descriptor.hideTitle ? height * 0.38 : height * 0.425;
+    const subtitleY = descriptor.hideTitle ? height * 0.38 : height * 0.395;
     const subtitle = scene.add.text(width / 2, subtitleY, descriptor.subtitle, {
       fontFamily: '"Trebuchet MS", sans-serif',
-      fontSize: `${Math.max(11, Math.round(width * 0.08))}px`,
+      fontSize: `${Math.max(10, Math.round(width * 0.074))}px`,
       color: '#2a3038',
       fontStyle: 'bold',
       align: 'center',
-      wordWrap: { width: width * 0.58 }
+      wordWrap: { width: width * 0.62 }
     }).setOrigin(0.5);
     container.add(subtitle);
   }

@@ -49,3 +49,7 @@
 
 - Fixed the first-start locale mismatch so default player names now initialize in the active UI language instead of inheriting Russian names from the base session defaults.
 - Reworked settings and in-session control layout to measure localized text flow, widen player-name fields, and reserve a dedicated language-toggle zone that no longer overlaps Confirm/Reset.
+
+- Tightened the settings form spacing so the 6-player localized name grid stays clear of the start buttons.
+- Localized market deck headers as Колода N / Deck N instead of exposing runtime deck ids in the UI.
+- Shortened dense salad-card labels and slightly rebalanced card text/icon placement so localized rule text fits more reliably in the center oval.

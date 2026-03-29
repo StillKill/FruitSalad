@@ -582,6 +582,7 @@ export class GameScene extends Phaser.Scene {
     const contentRight = contentX + contentWidth;
     const fieldGap = 28;
     const fieldWidth = Math.floor((contentWidth - fieldGap) / 2);
+    const nameRowGap = 86;
     let cursorY = panelY + 28;
 
     drawPanel(this, { x: panelX, y: panelY, width: panelWidth, height: panelHeight }, palette.panelAlt);
@@ -647,7 +648,7 @@ export class GameScene extends Phaser.Scene {
       const row = Math.floor(index / 2);
       const column = index % 2;
       const fieldX = contentX + column * (fieldWidth + fieldGap);
-      const fieldY = cursorY + row * 100;
+      const fieldY = cursorY + row * nameRowGap;
       this.drawSettingsNameField(fieldX, fieldY, fieldWidth, 62, index);
     }
 
@@ -922,7 +923,7 @@ export class GameScene extends Phaser.Scene {
       const deckFlipQueued = topSalad ? this.isPendingDeckFlip(deck.id, topSalad.runtimeId) : false;
       const deckEnabled = topSalad && this.canInteractWithDeck(deck.id);
 
-      this.track(this.add.text(columnX, titleY, `${deck.id} (${this.copy.saladsLeft(deck.cards.length)})`, {
+      this.track(this.add.text(columnX, titleY, `${this.copy.deckLabel(index + 1)} (${this.copy.saladsLeft(deck.cards.length)})`, {
         fontFamily: '"Trebuchet MS", sans-serif',
         fontSize: '17px',
         color: palette.textMuted
