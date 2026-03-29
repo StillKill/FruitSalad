@@ -4,5 +4,6 @@ import './cardRenderer.test.js';
 import './debugOverlay.test.js';
 import './endGameResults.test.js';
 import './sessionSetup.test.js';
+import './sessionPersistence.test.js';
 import './sessionActions.test.js';
 import './fullCatalogIntegration.test.js';

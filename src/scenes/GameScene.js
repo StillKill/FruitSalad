@@ -12,6 +12,11 @@ import {
 } from '../config/sessionDefaults.js';
 import { buildSession } from '../core/sessionSetup.js';
 import {
+  clearFairSessionState,
+  loadFairSessionState,
+  saveFairSessionState
+} from '../core/sessionPersistence.js';
+import {
   canConfirmSelection,
   confirmSelection,
   expireTurn,
@@ -71,6 +76,7 @@ export class GameScene extends Phaser.Scene {
     this.dynamicObjects = [];
     this.settingsDraft = createMenuSettingsDraft(null, this.locale);
     this.lastFairSessionOptions = null;
+    this.savedFairSessionState = null;
     this.activeSettingsField = 0;
     this.scrollState = {
       salads: 0,
@@ -123,6 +129,7 @@ export class GameScene extends Phaser.Scene {
         if (shouldUseTimerEnds && this.session.stateMachine.state !== 'end_game') {
           this.audioState.nextTurnSound = SOUND_KEYS.timerEnds;
         }
+        this.persistFairSession();
         this.playerAreaFlipMode = false;
         this.renderDynamicUi();
       }
@@ -139,6 +146,7 @@ export class GameScene extends Phaser.Scene {
   create() {
     this.sessionRules = this.cache.json.get('sessionRules');
     this.scoringCards = this.cache.json.get('scoringCards');
+    this.refreshSavedFairSessionState();
     this.settingsDraft = createMenuSettingsDraft(this.lastFairSessionOptions, this.locale);
 
     this.input.on('wheel', this.handleWheel, this);
@@ -654,6 +662,47 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  refreshSavedFairSessionState() {
+    this.savedFairSessionState = loadFairSessionState(this.sessionRules, this.scoringCards);
+    if (this.savedFairSessionState && !this.lastFairSessionOptions) {
+      this.lastFairSessionOptions = this.savedFairSessionState.lastFairSessionOptions;
+    }
+    return this.savedFairSessionState;
+  }
+
+  persistFairSession() {
+    if (!this.session || this.session.options?.seedDemoProgress === true) {
+      return false;
+    }
+
+    const saved = saveFairSessionState({
+      locale: this.locale,
+      lastFairSessionOptions: this.lastFairSessionOptions,
+      session: this.session
+    });
+
+    if (saved) {
+      this.refreshSavedFairSessionState();
+    }
+
+    return saved;
+  }
+
+  clearSavedFairSession() {
+    clearFairSessionState();
+    this.savedFairSessionState = null;
+  }
+
+  resetSessionViewState(activeSettingsField = null) {
+    this.activeSettingsField = activeSettingsField;
+    this.scrollState = {
+      salads: 0,
+      debug: 0,
+      results: 0
+    };
+    this.playerAreaFlipMode = false;
+  }
+
   setLocale(nextLocale) {
     const resolvedLocale = normalizeLocale(nextLocale);
     if (resolvedLocale === this.locale) {
@@ -666,6 +715,9 @@ export class GameScene extends Phaser.Scene {
     this.fruitSaladLocale = this.locale;
     this.syncSettingsDraftLocale(previousLocale, this.locale);
     this.syncSessionLocale(previousLocale, this.locale);
+    if (this.session && this.session.options?.seedDemoProgress !== true) {
+      this.persistFairSession();
+    }
     this.renderDynamicUi();
   }
 
@@ -717,6 +769,7 @@ export class GameScene extends Phaser.Scene {
     const fieldGap = 28;
     const fieldWidth = Math.floor((contentWidth - fieldGap) / 2);
     const nameRowGap = 86;
+    const hasSavedFairSession = !!this.savedFairSessionState;
     let cursorY = panelY + 28;
 
     drawPanel(this, { x: panelX, y: panelY, width: panelWidth, height: panelHeight }, palette.panelAlt);
@@ -744,15 +797,25 @@ export class GameScene extends Phaser.Scene {
       color: palette.textMuted,
       wordWrap: { width: contentWidth }
     }));
-    cursorY = lead.y + lead.height + 10;
+    cursorY = lead.y + lead.height + 24;
 
-    const demo = this.track(this.add.text(contentX, cursorY, this.copy.setupDemo, {
+    const fairHeading = this.track(this.add.text(contentX, cursorY, this.copy.fairGame, {
       fontFamily: '"Trebuchet MS", sans-serif',
-      fontSize: '16px',
-      color: palette.textMuted,
-      wordWrap: { width: contentWidth }
+      fontSize: '22px',
+      color: palette.textPrimary,
+      fontStyle: 'bold'
     }));
-    cursorY = demo.y + demo.height + 26;
+    cursorY = fairHeading.y + fairHeading.height + 12;
+
+    if (hasSavedFairSession) {
+      const savedLabel = this.track(this.add.text(contentX, cursorY, this.copy.savedFairSessionReady, {
+        fontFamily: '"Trebuchet MS", sans-serif',
+        fontSize: '15px',
+        color: palette.textMuted,
+        wordWrap: { width: contentWidth }
+      }));
+      cursorY = savedLabel.y + savedLabel.height + 18;
+    }
 
     const playersHeading = this.track(this.add.text(contentX, cursorY, this.copy.players, {
       fontFamily: '"Trebuchet MS", sans-serif',
@@ -786,29 +849,70 @@ export class GameScene extends Phaser.Scene {
       this.drawSettingsNameField(fieldX, fieldY, fieldWidth, 62, index);
     }
 
+    const actionButtonY = panelY + panelHeight - 86;
+    if (hasSavedFairSession) {
+      this.drawActionButton(
+        panelX + panelWidth - 406,
+        actionButtonY,
+        172,
+        48,
+        palette.accent,
+        this.copy.continueGame,
+        true,
+        () => this.continueSavedSession(),
+        '20px',
+        { soundKey: null }
+      );
+    }
+
     this.drawActionButton(
-      panelX + panelWidth - 406,
-      panelY + panelHeight - 86,
+      panelX + panelWidth - 214,
+      actionButtonY,
       172,
       48,
+      hasSavedFairSession ? 0x7f8a98 : palette.accent,
+      this.copy.newGame,
+      true,
+      () => this.startSessionFromSettings(),
+      '20px',
+      {
+        soundKey: null,
+        textColor: hasSavedFairSession ? palette.textPrimary : '#111315'
+      }
+    );
+
+    const demoPanel = {
+      x: contentX,
+      y: panelY + panelHeight - 154,
+      width: 430,
+      height: 108
+    };
+    drawPanel(this, demoPanel, 0x242a31);
+
+    this.track(this.add.text(demoPanel.x + 18, demoPanel.y + 16, this.copy.demoMode, {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '20px',
+      color: palette.textPrimary,
+      fontStyle: 'bold'
+    }));
+
+    this.track(this.add.text(demoPanel.x + 18, demoPanel.y + 44, this.copy.setupDemo, {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '14px',
+      color: palette.textMuted,
+      wordWrap: { width: demoPanel.width - 174 }
+    }));
+
+    this.drawActionButton(
+      demoPanel.x + demoPanel.width - 146,
+      demoPanel.y + 30,
+      128,
+      42,
       0x7f8a98,
       this.copy.openDemo,
       true,
       () => this.startDemoSession(),
-      '20px',
-      { soundKey: null }
-    );
-
-    this.drawActionButton(
-      panelX + panelWidth - 214,
-      panelY + panelHeight - 86,
-      172,
-      48,
-      palette.accent,
-      this.copy.startFairGame,
-      true,
-      () => this.startSessionFromSettings(),
-      '20px',
+      '18px',
       { soundKey: null }
     );
   }
@@ -892,6 +996,7 @@ export class GameScene extends Phaser.Scene {
       seedDemoProgress: false
     }, this.locale);
 
+    this.clearSavedFairSession();
     this.settingsDraft = createSettingsDraft(options, this.locale);
     this.launchSession(options);
   }
@@ -908,35 +1013,47 @@ export class GameScene extends Phaser.Scene {
     this.launchSession(options);
   }
 
+  continueSavedSession() {
+    const restoredState = this.savedFairSessionState ?? this.refreshSavedFairSessionState();
+    if (!restoredState?.session) {
+      return;
+    }
+
+    this.locale = normalizeLocale(restoredState.locale ?? this.locale);
+    this.copy = getLocaleCopy(this.locale);
+    this.fruitSaladLocale = this.locale;
+    this.lastFairSessionOptions = restoredState.lastFairSessionOptions;
+    this.session = restoredState.session;
+    this.settingsDraft = createMenuSettingsDraft(this.lastFairSessionOptions, this.locale);
+    this.resetSessionViewState(null);
+    this.renderDynamicUi();
+    this.playSound(SOUND_KEYS.gameStart);
+    this.persistFairSession();
+  }
+
   launchSession(options) {
-    this.activeSettingsField = null;
-    this.scrollState = {
-      salads: 0,
-      debug: 0,
-      results: 0
-    };
-    this.playerAreaFlipMode = false;
+    this.resetSessionViewState(null);
     if (options.seedDemoProgress !== true) {
       this.lastFairSessionOptions = normalizeSessionOptions(options, options?.locale ?? this.locale);
     }
     this.session = buildSession(options, this.sessionRules, this.scoringCards);
+    if (options.seedDemoProgress !== true) {
+      this.persistFairSession();
+    }
     this.renderDynamicUi();
     this.playSound(SOUND_KEYS.gameStart);
   }
 
   returnToSettings() {
+    if (this.session?.options?.seedDemoProgress !== true) {
+      this.clearSavedFairSession();
+    }
+
     this.session = null;
-    this.activeSettingsField = 0;
-    this.scrollState = {
-      salads: 0,
-      debug: 0,
-      results: 0
-    };
-    this.playerAreaFlipMode = false;
+    this.resetSessionViewState(0);
     this.settingsDraft = createMenuSettingsDraft(this.lastFairSessionOptions, this.locale);
     this.renderDynamicUi();
   }
-
   drawControls() {
     const { palette, regions } = layoutConfig;
     const contentX = regions.controls.x + 24;
@@ -1007,6 +1124,7 @@ export class GameScene extends Phaser.Scene {
       canConfirmSelection(this.session),
       () => {
         if (confirmSelection(this.session)) {
+          this.persistFairSession();
           this.playerAreaFlipMode = false;
           this.renderDynamicUi();
         }
@@ -1024,6 +1142,7 @@ export class GameScene extends Phaser.Scene {
       (this.session.pendingSelection.length > 0 || !!this.session.pendingFlip) && this.session.stateMachine.state !== 'end_game',
       () => {
         resetPendingSelection(this.session);
+        this.persistFairSession();
         this.playerAreaFlipMode = false;
         this.renderDynamicUi();
       },
@@ -1121,6 +1240,7 @@ export class GameScene extends Phaser.Scene {
       if (deckEnabled) {
         this.addClickZone(columnX, titleY + 24, card.width, card.height, () => {
           if (selectDeckCard(this.session, deck.id)) {
+            this.persistFairSession();
             this.playSound(SOUND_KEYS.cardSelect);
             this.renderDynamicUi();
           }
@@ -1138,6 +1258,7 @@ export class GameScene extends Phaser.Scene {
           this.canToggleSelectedDeckFlip(deck.id),
           () => {
             if (toggleSelectedDeckFlip(this.session, deck.id)) {
+              this.persistFairSession();
               this.playerAreaFlipMode = false;
               this.renderDynamicUi();
             }
@@ -1164,6 +1285,7 @@ export class GameScene extends Phaser.Scene {
         if (marketEnabled) {
           this.addClickZone(columnX, slotY, card.width, card.height, () => {
             if (selectMarketCard(this.session, deck.id, marketCard.id)) {
+              this.persistFairSession();
               this.playSound(SOUND_KEYS.cardSelect);
               this.renderDynamicUi();
             }
@@ -1241,6 +1363,7 @@ export class GameScene extends Phaser.Scene {
         () => {
           if (hasPendingPlayerFlip) {
             togglePlayerSaladFlip(this.session, this.session.pendingFlip.runtimeId);
+            this.persistFairSession();
             this.playerAreaFlipMode = false;
           } else {
             this.playerAreaFlipMode = !this.playerAreaFlipMode;
@@ -1279,6 +1402,7 @@ export class GameScene extends Phaser.Scene {
       if (showPlayerFlipMode && this.isVisibleInViewport(renderedY, saladCardHeight, saladViewport)) {
         this.addClickZone(x, renderedY, saladCardWidth, saladCardHeight, () => {
           if (togglePlayerSaladFlip(this.session, cardData.runtimeId)) {
+            this.persistFairSession();
             this.playSound(SOUND_KEYS.cardSelect);
             this.playerAreaFlipMode = false;
             this.renderDynamicUi();
@@ -1336,6 +1460,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.session.viewedPlayerIndex = nextIndex;
+    this.persistFairSession();
     this.playSound(SOUND_KEYS.tabSelect);
     this.playerAreaFlipMode = false;
     this.scrollState.salads = 0;

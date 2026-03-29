@@ -80,6 +80,8 @@ project-root/
 - Сессия поддерживает 2-6 игроков.
 - Количество игроков и имена задаются на этапе `settings`.
 - На старте доступны два режима запуска: честная партия через `settings` и demo/simulation с seeded progress для быстрой проверки UI.
+- Честная партия автосохраняется в browser storage и после reload может быть восстановлена через `Continue`; `New Game` начинает новую fair-session и стирает старый fair-save.
+- Demo-сессия не пишет runtime-save и не мешает fair-session persistence.
 - Количество карт для партии берется из `playerCardPoolByCount`, а при отсутствии записи — из `cardsPerPlayer * количество игроков`.
 - Перед раскладкой по 3 колодам выбранный пул карт перемешивается по seed, чтобы рынок не зависел от исходного порядка каталога.
 - Если при пополнении рынка колода пуста, она восстанавливается за счёт нижней половины самой толстой из оставшихся колод; при равенстве для детерминизма берётся первая подходящая колода по порядку.
@@ -98,6 +100,7 @@ project-root/
 
 ### 4. UI Shell
 - Settings dialog.
+- Для fair game settings-экран показывает `Continue` / `New Game`, если найден локальный fair-save; demo mode вынесен в отдельный визуальный блок и не смешивается с основными настройками партии.
 - Runtime localization supports `ru` and `en`. The scene resolves locale from `?lang=` first and browser language second, exposes a manual `RU/EN` switch in settings and during play, and English fruit cards reuse the same bilingual fruit asset by flipping the image on both axes instead of duplicating PNG files.
 - Settings and control-panel layout should stay resilient to localization: section spacing is driven by rendered text height, name fields scale to the available column width, and the in-game language toggle keeps its own reserved area instead of sharing button space with `Confirm` / `Reset`.
 - Market deck headers should use localized player-facing labels, and salad-card center copy should prefer compact localized phrasing so bilingual gameplay text stays legible before a later icon-first redesign.
@@ -155,7 +158,7 @@ project-root/
 
 ## Базовая сцена
 - `preload`: грузит JSON-конфиги, полный каталог карт, reference layout image и базовые SFX (game_start, round_start, button_click, tab_select).
-- `create`: показывает `settings`, откуда можно запустить честную сессию или demo/simulation режим.
+- `create`: показывает `settings`, откуда можно запустить честную сессию, продолжить сохранённую fair-session или открыть demo/simulation режим.
 - `setup`: сейчас встроен в `buildSession()` и подготавливает колоды, рынок, игроков и state machine.
 - Для живого дебага в DevTools сцена экспортирует `window.__FRUIT_SALAD_DEBUG__` с доступом к текущим `game`, `scene`, `session`, `logs`, `seed`, а также helper-методами `snapshot()` и `deckSummary()`.
 
@@ -177,7 +180,8 @@ project-root/
 ## План
 - Языки: RU.
 - Улучшение дизайна под mid-res presentation.
-- Деплой и онлайн-сессия, чтобы игру можно было показать вне локальной машины.
+- Shareable demo deploy, чтобы игру можно было показать вне локальной машины.
+- Honest online session как отдельный следующий этап после shareable demo.
 - Анимации.
 - Local scoreboard.
 - При необходимости расширить demo/simulation режим отдельными debug controls вместо простого seeded launch.
