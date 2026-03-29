@@ -19,6 +19,7 @@
 - Any edit to files with Cyrillic or other non-ASCII text must preserve readable UTF-8 content in both the file and `git diff`.
 - If an edit tool produces mojibake, restore the file from git immediately and redo the change with explicit UTF-8 handling.
 - If patch-based edits begin rejecting hunks, use `npm run text:check` and `npm run text:fix` before retrying.
+- If `apply_patch` fails at the sandbox refresh stage, continue with explicit UTF-8 without BOM PowerShell writes and review the resulting `git diff` for readable text before proceeding.
 
 ## Routing по skills
 - Папка `skills/` не участвует в runtime, но используется как слой task-routing и дополнительного контекста для агентов.

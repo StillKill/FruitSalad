@@ -1,6 +1,7 @@
 # Changes Log
 
 ## 2026-03-29
+- Added a workflow fallback for tool-level `apply_patch` failures: if the patch tool dies during sandbox refresh, agents should switch to explicit UTF-8 without BOM PowerShell edits and review `git diff` readability before continuing.
 - Added a master sound volume set to 80% by default and a settings-screen sound control block with volume steps plus mute / unmute.
 - Replaced the settings name-entry flow with a browser-native input bridge over the Phaser UI, so mobile devices can open the keyboard, edit player names, and paste from the clipboard in fair-game setup.
 - Added a GitHub Pages deployment path: `npm run build:pages` now stages a clean static `dist/` bundle, and `.github/workflows/pages.yml` installs dependencies, runs tests, builds the bundle, and deploys it through GitHub Actions on `main` / `master`.
