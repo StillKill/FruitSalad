@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "python -m http.server 8080",
-    "test": "node tests/run-tests.js"
+    "test": "node tests/run-tests.js",
+    "text:check": "node scripts/text-file-policy.mjs --check",
+    "text:fix": "node scripts/text-file-policy.mjs --write"
   },
   "keywords": [],
   "author": "",

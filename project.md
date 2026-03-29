@@ -15,8 +15,10 @@
 ## Text Encoding Policy
 - Canonical text encoding for project files is UTF-8 without BOM.
 - Canonical line ending for project text files is LF.
+- Repository-local git config should keep `core.autocrlf=false` so Windows checkouts do not reintroduce CRLF into tracked text files.
 - Any edit to files with Cyrillic or other non-ASCII text must preserve readable UTF-8 content in both the file and `git diff`.
 - If an edit tool produces mojibake, restore the file from git immediately and redo the change with explicit UTF-8 handling.
+- If patch-based edits begin rejecting hunks, use `npm run text:check` and `npm run text:fix` before retrying.
 
 ## Routing по skills
 - Папка `skills/` не участвует в runtime, но используется как слой task-routing и дополнительного контекста для агентов.

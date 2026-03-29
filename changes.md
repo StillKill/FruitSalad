@@ -1,6 +1,7 @@
 # Changes Log
 
 ## 2026-03-29
+- Normalized the repo text-file workflow to reduce rejected patches on Windows: set the local clone back to LF-friendly git behavior, added `npm run text:check` / `npm run text:fix`, and documented `core.autocrlf=false` plus the recovery flow in the repo instructions.
 - Added a manual `RU/EN` language switch to the settings screen and in-game controls, synchronized default player names when the locale changes, and exposed the active language in the debug overlay to make mixed-locale state easy to spot.
 - Localized the playable UI, turn hints, debug labels, fruit counters, and end-game copy for `ru`/`en`; English fruit cards now reuse the same bilingual art by flipping the existing fruit image on both axes instead of duplicating assets.
 - Reworked the end_game overlay into a visual card-by-card breakdown with mini salad cards, per-card point pills, and stronger summary metrics for the viewed player.
@@ -45,4 +46,3 @@
 - Added a generated fruit-basket icon, switched all-6-fruit scoring cards to use it, made salad cards larger again, added wheel-scrollable salad/debug panels, and changed `per-fruit-multi` cards to a vertical icon-plus-points layout.
 - Tuned panel spacing and typography so the title, player tabs, market header, and control hints stay inside their frames; updated prototype seeding so Player 2 now shows one sample of each salad rule type for visual QA.
 - Lowered short vertical icon lists on salad cards and changed `per-fruit-flat` to an `icon / points` presentation.
-
