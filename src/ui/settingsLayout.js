@@ -1,7 +1,10 @@
 import { MAX_PLAYER_COUNT, MIN_PLAYER_COUNT } from '../config/sessionDefaults.js';
 
 const SETTINGS_STYLE_ID = 'fruit-salad-settings-style';
-export const SETTINGS_RULES_PDF_PATH = 'assets/rules/fruit-salad-rules.pdf';
+export const SETTINGS_RULES_PDF_PATHS = {
+  ru: 'assets/rules/fruit-salad-rules-ru.pdf',
+  en: 'assets/rules/fruit-salad-rules-en.pdf'
+};
 
 function escapeHtml(value) {
   return String(value ?? '')

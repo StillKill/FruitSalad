@@ -71,3 +71,4 @@
 - Expanded the Playwright settings coverage with RU locale, saved-session, and six-player snapshot scenarios across both desktop and mobile baselines.
 
 - Rebuilt the settings screen as a responsive DOM overlay above Phaser: language buttons no longer need a label, sound collapses behind an icon-triggered slider, demo lives inside the mode section, mobile uses a compact player-count select, and the updated desktop/mobile layouts are covered by refreshed Playwright snapshots.
+- Moved the localized rulebooks into `assets/rules/` with stable EN/RU filenames and wired the settings help action to open the locale-specific PDF.

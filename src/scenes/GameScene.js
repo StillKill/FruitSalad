@@ -28,7 +28,7 @@ import {
   toggleSelectedDeckFlip
 } from '../core/sessionActions.js';
 import { drawPanel, drawCardPlaceholder } from '../ui/boardLayout.js';
-import { buildSettingsOverlayMarkup, ensureSettingsOverlayStyles, SETTINGS_RULES_PDF_PATH } from '../ui/settingsLayout.js';
+import { buildSettingsOverlayMarkup, ensureSettingsOverlayStyles, SETTINGS_RULES_PDF_PATHS } from '../ui/settingsLayout.js';
 import { preloadCardTextures, drawFruitCard, drawFruitCounter, drawSaladCard } from '../ui/cardRenderer.js';
 import { buildDebugSnapshot } from '../ui/debugOverlay.js';
 import { scoreTable } from '../core/scoring/scoringEngine.js';
@@ -993,15 +993,18 @@ export class GameScene extends Phaser.Scene {
     if (typeof globalThis.fetch !== 'function' || typeof globalThis.open !== 'function') {
       return;
     }
+    const rulesPdfPath = SETTINGS_RULES_PDF_PATHS[this.locale] ?? SETTINGS_RULES_PDF_PATHS.en;
     try {
-      const response = await globalThis.fetch(SETTINGS_RULES_PDF_PATH, { method: 'HEAD' });
+      const response = await globalThis.fetch(rulesPdfPath, { method: 'HEAD' });
       if (response.ok) {
-        globalThis.open(SETTINGS_RULES_PDF_PATH, '_blank', 'noopener');
+        globalThis.open(rulesPdfPath, '_blank', 'noopener');
         return;
       }
     } catch {}
     globalThis.alert?.('Rules PDF is not attached to the project yet.');
-  }  drawLocaleToggle(x, y, width = 58, height = 28, showLabel = false) {
+  }
+
+  drawLocaleToggle(x, y, width = 58, height = 28, showLabel = false) {
     const { palette } = layoutConfig;
 
     if (showLabel) {
