@@ -1,6 +1,7 @@
 # Changes Log
 
 ## 2026-03-29
+- Localized the playable UI, turn hints, debug labels, fruit counters, and end-game copy for `ru`/`en`; English fruit cards now reuse the same bilingual art by flipping the existing fruit image on both axes instead of duplicating assets.
 - Reworked the end_game overlay into a visual card-by-card breakdown with mini salad cards, per-card point pills, and stronger summary metrics for the viewed player.
 - Documented a repo-wide UTF-8/LF policy in AGENTS.md, project.md, .gitattributes, and .editorconfig to prevent recurring mojibake when editing Cyrillic text.
 - Updated `project.md` planning: removed the completed `end_game` execution checklist, rewrote the End Game model section into a current-state spec, and added new follow-up items for spacing, end-game breakdown visuals, RU language, turn timer, design, deploy/online session, animations, sounds, and local scoreboard.

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { buildSession } from '../src/core/sessionSetup.js';
+import { getFruitName } from '../src/i18n/locale.js';
 import {
   canConfirmSelection,
   confirmSelection,
@@ -62,6 +63,7 @@ function makeSession() {
     playerCount: 2,
     playerNames: ['A', 'B'],
     liveScoring: false,
+    locale: 'en',
     randomSeed: 11
   };
 
@@ -87,7 +89,7 @@ test('market selection requires exactly two fruit cards before confirm', () => {
 
   assert.equal(selectMarketCard(session, 'deck-2', secondCard.id), true);
   assert.equal(canConfirmSelection(session), true);
-  assert.equal(getPendingSelectionSummary(session), `deck-1:${firstCard.fruit}, deck-2:${secondCard.fruit}`);
+  assert.equal(getPendingSelectionSummary(session), `deck-1:${getFruitName(firstCard.fruit, 'en')}, deck-2:${getFruitName(secondCard.fruit, 'en')}`);
 });
 
 test('confirmSelection applies market fruits, refills slots, and advances the active player', () => {
@@ -138,7 +140,7 @@ test('player-area salad flip is optional and resolves together with a market pic
   player.salads.push(ownedSalad);
 
   assert.equal(togglePlayerSaladFlip(session, ownedSalad.runtimeId), true);
-  assert.equal(getPendingFlipSummary(session), `area:${ownedSalad.backFruit}`);
+  assert.equal(getPendingFlipSummary(session), `area:${getFruitName(ownedSalad.backFruit, 'en')}`);
   assert.equal(canConfirmSelection(session), false);
 
   selectMarketCard(session, session.decks[0].id, session.decks[0].market[0].id);
@@ -159,7 +161,7 @@ test('selected deck card can be flipped into its back fruit before confirm', () 
 
   assert.equal(selectDeckCard(session, 'deck-1'), true);
   assert.equal(toggleSelectedDeckFlip(session, 'deck-1'), true);
-  assert.equal(getPendingFlipSummary(session), `deck-1:${topCard.backFruit}`);
+  assert.equal(getPendingFlipSummary(session), `deck-1:${getFruitName(topCard.backFruit, 'en')}`);
   assert.equal(canConfirmSelection(session), true);
 
   assert.equal(confirmSelection(session), true);

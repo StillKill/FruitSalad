@@ -24,11 +24,12 @@ import { preloadCardTextures, drawFruitCard, drawFruitCounter, drawSaladCard } f
 import { buildDebugSnapshot } from '../ui/debugOverlay.js';
 import { scoreTable } from '../core/scoring/scoringEngine.js';
 import { buildEndGameResults } from '../core/endGameResults.js';
+import { detectGameLocale, getCardCopy, getFruitName, getLocaleCopy, getParityLabel } from '../i18n/locale.js';
 
 const SETTINGS_NAME_MAX_LENGTH = 18;
 
-function createSettingsDraft(options = defaultSessionOptions) {
-  const normalized = normalizeSessionOptions(options);
+function createSettingsDraft(options = defaultSessionOptions, locale = defaultSessionOptions.locale ?? 'ru') {
+  const normalized = normalizeSessionOptions(options, locale);
   return {
     playerCount: normalized.playerCount,
     playerNames: [...normalized.playerNames]
@@ -57,6 +58,9 @@ function buildDeckDebugSnapshot(deck) {
 export class GameScene extends Phaser.Scene {
   constructor() {
     super('GameScene');
+    this.locale = detectGameLocale();
+    this.copy = getLocaleCopy(this.locale);
+    this.fruitSaladLocale = this.locale;
     this.session = null;
     this.sessionRules = null;
     this.scoringCards = null;
@@ -81,7 +85,7 @@ export class GameScene extends Phaser.Scene {
   create() {
     this.sessionRules = this.cache.json.get('sessionRules');
     this.scoringCards = this.cache.json.get('scoringCards');
-    this.settingsDraft = createSettingsDraft(defaultSessionOptions);
+    this.settingsDraft = createSettingsDraft(defaultSessionOptions, this.locale);
 
     this.input.on('wheel', this.handleWheel, this);
     this.input.keyboard?.on('keydown', this.handleKeyDown, this);
@@ -180,14 +184,44 @@ export class GameScene extends Phaser.Scene {
   }
 
   formatPlacement(placement) {
-    const suffix = placement === 1 ? 'st' : placement === 2 ? 'nd' : placement === 3 ? 'rd' : 'th';
-    return `${placement}${suffix}`;
+    return this.copy.placementShort(placement);
   }
 
   formatFruitSummary(fruitCounts) {
     return Object.entries(fruitCounts)
-      .map(([fruit, count]) => `${fruit}:${count}`)
+      .map(([fruit, count]) => `${getFruitName(fruit, this.locale)}:${count}`)
       .join('  ');
+  }
+
+  formatRuleType(ruleType) {
+    const cardCopy = getCardCopy(this.locale);
+
+    switch (ruleType) {
+      case 'compare-majority':
+        return cardCopy.compareMajority;
+      case 'compare-minority':
+        return cardCopy.compareMinority;
+      case 'compare-wealth':
+        return cardCopy.compareWealth;
+      case 'compare-poverty':
+        return cardCopy.comparePoverty;
+      case 'parity-fruit':
+        return cardCopy.parity;
+      case 'threshold-per-kind':
+        return this.locale === 'ru' ? '\u041f\u043e\u0440\u043e\u0433 \u043f\u043e \u0432\u0438\u0434\u0430\u043c' : 'Threshold per kind';
+      case 'missing-kind':
+        return this.locale === 'ru' ? '\u041e\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u044e\u0449\u0438\u0435 \u0432\u0438\u0434\u044b' : 'Missing kind';
+      case 'set-same-kind':
+        return this.locale === 'ru' ? '\u041d\u0430\u0431\u043e\u0440 \u043e\u0434\u0438\u043d\u0430\u043a\u043e\u0432\u044b\u0445' : 'Same-kind set';
+      case 'set-distinct-kind':
+        return this.locale === 'ru' ? '\u041d\u0430\u0431\u043e\u0440 \u0440\u0430\u0437\u043d\u044b\u0445' : 'Distinct-kind set';
+      case 'per-fruit-flat':
+        return this.locale === 'ru' ? '\u041e\u0447\u043a\u0438 \u0437\u0430 \u0444\u0440\u0443\u043a\u0442' : 'Per-fruit flat';
+      case 'per-fruit-multi':
+        return this.locale === 'ru' ? '\u041e\u0447\u043a\u0438 \u0437\u0430 \u0444\u0440\u0443\u043a\u0442\u044b' : 'Per-fruit multi';
+      default:
+        return ruleType;
+    }
   }
 
   formatBreakdownLine(cardScore) {
@@ -195,25 +229,25 @@ export class GameScene extends Phaser.Scene {
 
     switch (breakdown.kind) {
       case 'compare':
-        return `${cardScore.ruleType} -> metric ${breakdown.metric}, card ${cardScore.points}`;
+        return this.copy.breakdownCompare(this.formatRuleType(cardScore.ruleType), breakdown.metric, cardScore.points);
       case 'parity':
-        return `${breakdown.targetFruit} ${breakdown.parity} (${breakdown.count}) -> ${cardScore.points}`;
+        return this.copy.breakdownParity(getFruitName(breakdown.targetFruit, this.locale), getParityLabel(breakdown.parity, this.locale), breakdown.count, cardScore.points);
       case 'threshold':
-        return `${breakdown.qualifiedKinds} kinds at ${breakdown.threshold}+ -> ${cardScore.points}`;
+        return this.copy.breakdownThreshold(breakdown.qualifiedKinds, breakdown.threshold, cardScore.points);
       case 'missing':
-        return `${breakdown.missingKinds} missing kinds -> ${cardScore.points}`;
+        return this.copy.breakdownMissing(breakdown.missingKinds, cardScore.points);
       case 'same-kind-set':
-        return `${breakdown.targetFruit} x${breakdown.count}, ${breakdown.completedSets} sets -> ${cardScore.points}`;
+        return this.copy.breakdownSameKind(getFruitName(breakdown.targetFruit, this.locale), breakdown.count, breakdown.completedSets, cardScore.points);
       case 'distinct-kind-set':
-        return `${breakdown.completedSets} distinct sets of ${breakdown.setSize} -> ${cardScore.points}`;
+        return this.copy.breakdownDistinct(breakdown.completedSets, breakdown.setSize, cardScore.points);
       case 'per-fruit-flat':
-        return `${breakdown.targetFruit} x${breakdown.count} @ ${breakdown.pointsPerFruit} -> ${cardScore.points}`;
+        return this.copy.breakdownPerFruitFlat(getFruitName(breakdown.targetFruit, this.locale), breakdown.count, breakdown.pointsPerFruit, cardScore.points);
       case 'per-fruit-multi':
         return breakdown.contributions
-          .map((item) => `${item.fruit} ${item.count}x${item.pointsPerFruit}=${item.subtotal}`)
+          .map((item) => `${getFruitName(item.fruit, this.locale)} ${item.count}x${item.pointsPerFruit}=${item.subtotal}`)
           .join('  ');
       default:
-        return `${cardScore.ruleType} -> ${cardScore.points}`;
+        return `${this.formatRuleType(cardScore.ruleType)} -> ${cardScore.points}`;
     }
   }
 
@@ -274,7 +308,7 @@ export class GameScene extends Phaser.Scene {
     container.add(pointsLabel);
     this.track(pointsLabel);
 
-    const title = this.add.text(viewport.x + 122, y + 18, `#${cardScore.cardId}  ${cardScore.ruleType}`, {
+    const title = this.add.text(viewport.x + 122, y + 18, `#${cardScore.cardId}  ${this.formatRuleType(cardScore.ruleType)}`, {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '17px',
       color: palette.textPrimary,
@@ -435,7 +469,7 @@ export class GameScene extends Phaser.Scene {
     drawPanel(this, regions.scoreTabs, palette.panelAlt);
     drawPanel(this, regions.debug, palette.panelAlt);
 
-    this.track(this.add.text(30, 10, 'Fruit Salad Prototype', {
+    this.track(this.add.text(30, 10, this.copy.gameTitle, {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '22px',
       color: palette.textPrimary,
@@ -454,28 +488,28 @@ export class GameScene extends Phaser.Scene {
 
     drawPanel(this, { x: panelX, y: panelY, width: panelWidth, height: panelHeight }, palette.panelAlt);
 
-    this.track(this.add.text(panelX + 42, panelY + 28, 'Fruit Salad Setup', {
+    this.track(this.add.text(panelX + 42, panelY + 28, this.copy.setupTitle, {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '34px',
       color: palette.textPrimary,
       fontStyle: 'bold'
     }));
 
-    this.track(this.add.text(panelX + 42, panelY + 78, 'Choose the player count, then click a name field to type. Press Enter to start a fair session.', {
+    this.track(this.add.text(panelX + 42, panelY + 78, this.copy.setupLead, {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '18px',
       color: palette.textMuted,
       wordWrap: { width: panelWidth - 84 }
     }));
 
-    this.track(this.add.text(panelX + 42, panelY + 108, 'Need a fast UI/scoring preview instead? Launch the demo session with seeded progress.', {
+    this.track(this.add.text(panelX + 42, panelY + 108, this.copy.setupDemo, {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '16px',
       color: palette.textMuted,
       wordWrap: { width: panelWidth - 84 }
     }));
 
-    this.track(this.add.text(panelX + 42, panelY + 142, 'Players', {
+    this.track(this.add.text(panelX + 42, panelY + 142, this.copy.players, {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '22px',
       color: palette.textPrimary,
@@ -489,7 +523,7 @@ export class GameScene extends Phaser.Scene {
       this.drawSettingsCountButton(buttonX, countY, 72, 48, playerCount, isSelected);
     }
 
-    this.track(this.add.text(panelX + 42, panelY + 246, 'Names', {
+    this.track(this.add.text(panelX + 42, panelY + 246, this.copy.names, {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '22px',
       color: palette.textPrimary,
@@ -510,7 +544,7 @@ export class GameScene extends Phaser.Scene {
       172,
       48,
       0x7f8a98,
-      'Open Demo',
+      this.copy.openDemo,
       true,
       () => this.startDemoSession()
     );
@@ -521,7 +555,7 @@ export class GameScene extends Phaser.Scene {
       172,
       48,
       palette.accent,
-      'Start Fair Game',
+      this.copy.startFairGame,
       true,
       () => this.startSessionFromSettings()
     );
@@ -553,7 +587,7 @@ export class GameScene extends Phaser.Scene {
   drawSettingsNameField(x, y, width, height, index) {
     const { palette } = layoutConfig;
     const isActive = this.activeSettingsField === index;
-    const label = `Player ${index + 1}`;
+    const label = this.copy.playerLabel(index + 1);
     const value = this.settingsDraft.playerNames[index] ?? '';
     const graphics = this.track(this.add.graphics());
 
@@ -569,7 +603,7 @@ export class GameScene extends Phaser.Scene {
       fontStyle: 'bold'
     }));
 
-    const displayValue = value || 'Type a name';
+    const displayValue = value || this.copy.typeName;
     const suffix = isActive ? '|' : '';
     this.track(this.add.text(x + 16, y + 18, `${displayValue}${suffix}`, {
       fontFamily: '"Trebuchet MS", sans-serif',
@@ -585,7 +619,7 @@ export class GameScene extends Phaser.Scene {
 
   updateSettingsPlayerCount(playerCount) {
     const previousNames = [...this.settingsDraft.playerNames];
-    const defaultNames = buildDefaultPlayerNames(playerCount);
+    const defaultNames = buildDefaultPlayerNames(playerCount, this.locale);
 
     this.settingsDraft.playerCount = playerCount;
     this.settingsDraft.playerNames = defaultNames.map((fallbackName, index) => {
@@ -600,9 +634,10 @@ export class GameScene extends Phaser.Scene {
     const options = normalizeSessionOptions({
       playerCount: this.settingsDraft.playerCount,
       playerNames: this.settingsDraft.playerNames,
+      locale: this.locale,
       liveScoring: false,
       seedDemoProgress: false
-    });
+    }, this.locale);
 
     this.settingsDraft = createSettingsDraft(options);
     this.launchSession(options);
@@ -611,10 +646,11 @@ export class GameScene extends Phaser.Scene {
   startDemoSession() {
     const options = normalizeSessionOptions({
       playerCount: 2,
-      playerNames: ['Demo 1', 'Demo 2'],
+      playerNames: [`${this.copy.playerLabel(1)} Demo`, `${this.copy.playerLabel(2)} Demo`],
+      locale: this.locale,
       liveScoring: false,
       seedDemoProgress: true
-    });
+    }, this.locale);
 
     this.launchSession(options);
   }
@@ -637,10 +673,10 @@ export class GameScene extends Phaser.Scene {
     const activePlayer = this.session.players[this.session.activePlayerIndex];
     const leader = this.session.scorePreview?.[0] ?? null;
     const title = this.session.stateMachine.state === 'end_game'
-      ? 'End game reached'
-      : `${activePlayer.name} turn`;
-    const leaderText = leader ? `${leader.playerName} (${leader.totalPoints})` : 'n/a';
-    const flipText = this.session.pendingFlip ? getPendingFlipSummary(this.session) : 'none';
+      ? this.copy.endGameReached
+      : this.copy.turn(activePlayer.name);
+    const leaderText = leader ? `${leader.playerName} (${leader.totalPoints})` : this.copy.none;
+    const flipText = this.session.pendingFlip ? getPendingFlipSummary(this.session, this.locale) : this.copy.none;
 
     this.track(this.add.text(regions.controls.x + 24, buttonY, title, {
       fontFamily: '"Trebuchet MS", sans-serif',
@@ -655,7 +691,7 @@ export class GameScene extends Phaser.Scene {
       136,
       42,
       palette.accent,
-      'Confirm',
+      this.copy.confirm,
       canConfirmSelection(this.session),
       () => {
         if (confirmSelection(this.session)) {
@@ -671,7 +707,7 @@ export class GameScene extends Phaser.Scene {
       136,
       42,
       palette.warning,
-      'Reset',
+      this.copy.reset,
       (this.session.pendingSelection.length > 0 || !!this.session.pendingFlip) && this.session.stateMachine.state !== 'end_game',
       () => {
         resetPendingSelection(this.session);
@@ -683,7 +719,7 @@ export class GameScene extends Phaser.Scene {
     this.track(this.add.text(
       regions.controls.x + 24,
       regions.controls.y + 56,
-      getTurnHint(this.session),
+      getTurnHint(this.session, this.locale),
       {
         fontFamily: '"Trebuchet MS", sans-serif',
         fontSize: '13px',
@@ -695,7 +731,7 @@ export class GameScene extends Phaser.Scene {
     this.track(this.add.text(
       regions.controls.x + 24,
       regions.controls.y + 92,
-      `Leader: ${leaderText}   Flip: ${flipText}`,
+      `${this.copy.leader}: ${leaderText}   ${this.copy.flip}: ${flipText}`,
       {
         fontFamily: '"Trebuchet MS", sans-serif',
         fontSize: '13px',
@@ -736,7 +772,7 @@ export class GameScene extends Phaser.Scene {
     const deckX = regions.market.x + 24;
     const deckY = regions.market.y + 26;
 
-    this.track(this.add.text(deckX, deckY - 6, 'Decks & Market', {
+    this.track(this.add.text(deckX, deckY - 6, this.copy.marketTitle, {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '22px',
       color: palette.textPrimary,
@@ -751,7 +787,7 @@ export class GameScene extends Phaser.Scene {
       const deckFlipQueued = topSalad ? this.isPendingDeckFlip(deck.id, topSalad.runtimeId) : false;
       const deckEnabled = topSalad && this.canInteractWithDeck(deck.id);
 
-      this.track(this.add.text(columnX, titleY, `${deck.id} (${deck.cards.length} salads left)`, {
+      this.track(this.add.text(columnX, titleY, `${deck.id} (${this.copy.saladsLeft(deck.cards.length)})`, {
         fontFamily: '"Trebuchet MS", sans-serif',
         fontSize: '17px',
         color: palette.textMuted
@@ -759,7 +795,7 @@ export class GameScene extends Phaser.Scene {
 
       const deckVisual = topSalad
         ? drawSaladCard(this, columnX, titleY + 24, card.width, card.height, topSalad)
-        : drawCardPlaceholder(this, columnX, titleY + 24, card.width, card.height, palette.deckBack, 'Deck empty');
+        : drawCardPlaceholder(this, columnX, titleY + 24, card.width, card.height, palette.deckBack, this.copy.deckEmpty);
       this.track(deckVisual);
 
       if (!deckEnabled && topSalad) {
@@ -785,7 +821,7 @@ export class GameScene extends Phaser.Scene {
           card.width,
           18,
           deckFlipQueued ? 0xc7b672 : 0xf5c451,
-          deckFlipQueued ? 'Keep as Salad' : 'Flip to Fruit',
+          deckFlipQueued ? this.copy.keepAsSalad : this.copy.flipToFruit,
           this.canToggleSelectedDeckFlip(deck.id),
           () => {
             if (toggleSelectedDeckFlip(this.session, deck.id)) {
@@ -847,14 +883,14 @@ export class GameScene extends Phaser.Scene {
       this.playerAreaFlipMode = false;
     }
 
-    this.track(this.add.text(regions.player.x + 24, regions.player.y + 18, `${viewedPlayer.name} area`, {
+    this.track(this.add.text(regions.player.x + 24, regions.player.y + 18, this.copy.playerArea(viewedPlayer.name), {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '24px',
       color: palette.textPrimary,
       fontStyle: 'bold'
     }));
 
-    this.track(this.add.text(regions.player.x + regions.player.width - 24, regions.player.y + 24, `Active: ${activePlayer.name}`, {
+    this.track(this.add.text(regions.player.x + regions.player.width - 24, regions.player.y + 24, this.copy.activePlayer(activePlayer.name), {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '14px',
       color: palette.textMuted,
@@ -867,14 +903,14 @@ export class GameScene extends Phaser.Scene {
       this.track(drawFruitCounter(this, x, y, fruit, count));
     });
 
-    this.track(this.add.text(regions.player.x + 24, regions.player.y + 196, `Salad cards (${viewedPlayer.salads.length})`, {
+    this.track(this.add.text(regions.player.x + 24, regions.player.y + 196, this.copy.saladCards(viewedPlayer.salads.length), {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '18px',
       color: palette.textMuted
     }));
 
     if (canFlipViewedSalads) {
-      const playerFlipLabel = 'Flip Mode';
+      const playerFlipLabel = this.copy.flipMode;
       const playerFlipColor = hasPendingPlayerFlip || this.playerAreaFlipMode ? palette.warning : 0xf5c451;
 
       this.drawActionButton(
@@ -955,7 +991,7 @@ export class GameScene extends Phaser.Scene {
         fontStyle: 'bold'
       }));
 
-      this.track(this.add.text(x + 12, y + 44, `Preview: ${player.score}`, {
+      this.track(this.add.text(x + 12, y + 44, this.copy.preview(player.score), {
         fontFamily: '"Trebuchet MS", sans-serif',
         fontSize: '12px',
         color: palette.textMuted
@@ -985,7 +1021,7 @@ export class GameScene extends Phaser.Scene {
 
   drawDebugPanel() {
     const { palette, regions } = layoutConfig;
-    const debugLines = buildDebugSnapshot(this.session);
+    const debugLines = buildDebugSnapshot(this.session, this.locale);
     const debugViewport = {
       x: regions.debug.x + 18,
       y: regions.debug.y + 30,
@@ -998,7 +1034,7 @@ export class GameScene extends Phaser.Scene {
     const debugContent = this.track(this.add.container(0, -debugOffset));
     debugContent.setMask(this.createViewportMask(debugViewport));
 
-    this.track(this.add.text(regions.debug.x + 18, regions.debug.y + 10, 'Debug overlay', {
+    this.track(this.add.text(regions.debug.x + 18, regions.debug.y + 10, this.copy.debugOverlay, {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '17px',
       color: palette.textPrimary,
@@ -1055,40 +1091,40 @@ export class GameScene extends Phaser.Scene {
       height: popup.height - 250
     };
 
-    this.track(this.add.text(leftX, topY, 'Final Results', {
+    this.track(this.add.text(leftX, topY, this.copy.finalResults, {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '34px',
       color: palette.textPrimary,
       fontStyle: 'bold'
     }));
 
-    this.track(this.add.text(leftX, topY + 46, winner ? `${winner.playerName} wins with ${winner.totalPoints} points` : 'Game finished', {
+    this.track(this.add.text(leftX, topY + 46, winner ? this.copy.winner(winner.playerName, winner.totalPoints) : this.copy.gameFinished, {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '18px',
       color: palette.textMuted,
       fontStyle: 'bold'
     }));
 
-    this.track(this.add.text(rightX, popup.y + 76, `${viewedEntry.playerName} Breakdown`, {
+    this.track(this.add.text(rightX, popup.y + 76, this.copy.breakdown(viewedEntry.playerName), {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '24px',
       color: palette.textPrimary,
       fontStyle: 'bold'
     }));
 
-    this.drawSummaryMetricPill(rightX, popup.y + 104, 156, 'Placement', this.formatPlacement(viewedEntry.placement), 0x343a44);
-    this.drawSummaryMetricPill(rightX + 170, popup.y + 104, 156, 'Total', String(viewedEntry.totalPoints), 0x37553a);
-    this.drawSummaryMetricPill(rightX + 340, popup.y + 104, 186, 'Scoring cards', String(viewedEntry.cardScores.length), 0x3a4658);
+    this.drawSummaryMetricPill(rightX, popup.y + 104, 156, this.copy.placement, this.formatPlacement(viewedEntry.placement), 0x343a44);
+    this.drawSummaryMetricPill(rightX + 170, popup.y + 104, 156, this.copy.total, String(viewedEntry.totalPoints), 0x37553a);
+    this.drawSummaryMetricPill(rightX + 340, popup.y + 104, 186, this.copy.scoringCards, String(viewedEntry.cardScores.length), 0x3a4658);
 
     if (viewedState) {
-      this.track(this.add.text(rightX, popup.y + 190, `Fruits: ${this.formatFruitSummary(viewedState.fruitCounts)}`, {
+      this.track(this.add.text(rightX, popup.y + 190, `${this.copy.fruits}: ${this.formatFruitSummary(viewedState.fruitCounts)}`, {
         fontFamily: 'Consolas, monospace',
         fontSize: '13px',
         color: palette.textMuted
       }));
     }
 
-    this.track(this.add.text(leftX, popup.y + 108, 'Standings', {
+    this.track(this.add.text(leftX, popup.y + 108, this.copy.standings, {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '22px',
       color: palette.textPrimary,
@@ -1132,7 +1168,7 @@ export class GameScene extends Phaser.Scene {
     breakdownContent.setMask(this.createViewportMask(breakdownViewport));
 
     if (viewedEntry.cardScores.length === 0) {
-      const emptyState = this.add.text(breakdownViewport.x, breakdownViewport.y, 'No salad cards scored in this game.', {
+      const emptyState = this.add.text(breakdownViewport.x, breakdownViewport.y, this.copy.noScoredSalads, {
         fontFamily: '"Trebuchet MS", sans-serif',
         fontSize: '16px',
         color: palette.textMuted

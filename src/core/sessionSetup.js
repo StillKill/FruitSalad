@@ -1,6 +1,7 @@
 import { TurnStateMachine } from './stateMachine.js';
 import { createSeededRandom, expandCardTemplates, shuffleCards } from '../data/cardCatalog.js';
 import { normalizeSessionOptions } from '../config/sessionDefaults.js';
+import { buildPlayerName } from '../i18n/locale.js';
 
 function createMarketFruitCard(card) {
   return {
@@ -107,7 +108,7 @@ function splitIntoDecks(cards, count) {
 
 function createPlayers(options, fruits) {
   return Array.from({ length: options.playerCount }, (_, index) => {
-    const name = options.playerNames[index] || `Player ${index + 1}`;
+    const name = options.playerNames[index] || buildPlayerName(index + 1, options.locale);
 
     return {
       id: `player-${index + 1}`,
@@ -169,7 +170,7 @@ function seedPrototypeProgress(session) {
 }
 
 export function buildSession(options, sessionRules, scoringCatalog) {
-  const normalizedOptions = normalizeSessionOptions(options);
+  const normalizedOptions = normalizeSessionOptions(options, options?.locale ?? 'ru');
   const sessionSeed = normalizedOptions.randomSeed ?? generateSessionSeed();
   const selectedCardCount =
     sessionRules.playerCardPoolByCount[String(normalizedOptions.playerCount)]?.selectedCards ??

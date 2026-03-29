@@ -1,4 +1,15 @@
+import {
+  getCardCopy,
+  getFruitCounterLabel,
+  normalizeLocale,
+  shouldFlipFruitCard
+} from '../i18n/locale.js';
+
 export const FRUIT_TYPES = ['kiwi', 'orange', 'apple', 'banana', 'lime', 'mango'];
+
+function getSceneLocale(scene) {
+  return normalizeLocale(scene?.fruitSaladLocale ?? scene?.session?.options?.locale ?? 'ru');
+}
 
 function getFruitCardTexture(fruit) {
   return `card_fruit_${fruit}`;
@@ -33,116 +44,58 @@ function makeBasketIcon() {
 
 export function getPerFruitMultiDisplayIcons(card) {
   return (card.saladFruits ?? [])
-    .map((fruit, index) => ({
-      fruit,
-      points: card.scoring.points[index] ?? 0,
-      index
-    }))
-    .sort((left, right) => {
-      if (right.points !== left.points) {
-        return right.points - left.points;
-      }
-
-      return left.index - right.index;
-    })
-    .map(({ fruit, points }) => ({
-      fruit,
-      label: scoreLabel(points)
-    }));
+    .map((fruit, index) => ({ fruit, points: card.scoring.points[index] ?? 0, index }))
+    .sort((left, right) => right.points !== left.points ? right.points - left.points : left.index - right.index)
+    .map(({ fruit, points }) => ({ fruit, label: scoreLabel(points) }));
 }
 
-function getSaladDescriptor(card) {
+function getSaladDescriptor(card, locale = 'ru') {
+  const copy = getCardCopy(locale);
   const distinctFruits = [...new Set(card.saladFruits ?? [])];
   const allKinds = usesAllFruitKinds(distinctFruits);
 
   switch (card.ruleType) {
     case 'compare-majority':
-      return {
-        title: 'Most wins',
-        subtitle: `${scoreLabel(card.scoring.points)}`,
-        icons: distinctFruits.map((fruit) => ({ fruit }))
-      };
+      return { title: copy.compareMajority, subtitle: `${scoreLabel(card.scoring.points)}`, icons: distinctFruits.map((fruit) => ({ fruit })) };
     case 'compare-minority':
-      return {
-        title: 'Least wins',
-        subtitle: `${scoreLabel(card.scoring.points)}`,
-        icons: distinctFruits.map((fruit) => ({ fruit }))
-      };
+      return { title: copy.compareMinority, subtitle: `${scoreLabel(card.scoring.points)}`, icons: distinctFruits.map((fruit) => ({ fruit })) };
     case 'compare-wealth':
-      return {
-        title: 'Most fruit',
-        subtitle: `${scoreLabel(card.scoring.points)}`,
-        icons: makeBasketIcon()
-      };
+      return { title: copy.compareWealth, subtitle: `${scoreLabel(card.scoring.points)}`, icons: makeBasketIcon() };
     case 'compare-poverty':
-      return {
-        title: 'Least fruit',
-        subtitle: `${scoreLabel(card.scoring.points)}`,
-        icons: makeBasketIcon()
-      };
+      return { title: copy.comparePoverty, subtitle: `${scoreLabel(card.scoring.points)}`, icons: makeBasketIcon() };
     case 'parity-fruit':
-      return {
-        title: 'Even / Odd',
-        subtitle: `${card.scoring.evenPoints} / ${card.scoring.oddPoints}`,
-        icons: distinctFruits.map((fruit) => ({ fruit }))
-      };
+      return { title: copy.parity, subtitle: `${card.scoring.evenPoints} / ${card.scoring.oddPoints}`, icons: distinctFruits.map((fruit) => ({ fruit })) };
     case 'threshold-per-kind':
       return {
-        title: allKinds ? `${card.scoring.threshold}+ kinds` : `${card.scoring.threshold}+ each kind`,
-        subtitle: `${scoreLabel(card.scoring.pointsPerQualifiedKind)} each`,
+        title: allKinds ? copy.thresholdKinds(card.scoring.threshold) : copy.thresholdEachKind(card.scoring.threshold),
+        subtitle: `${scoreLabel(card.scoring.pointsPerQualifiedKind)} ${copy.each}`,
         icons: allKinds ? makeBasketIcon() : distinctFruits.map((fruit) => ({ fruit }))
       };
     case 'missing-kind':
       return {
-        title: allKinds ? 'Missing kinds' : 'Missing kind',
-        subtitle: `${scoreLabel(card.scoring.pointsPerMissingKind)} each`,
+        title: allKinds ? copy.missingKinds : copy.missingKind,
+        subtitle: `${scoreLabel(card.scoring.pointsPerMissingKind)} ${copy.each}`,
         icons: allKinds ? makeBasketIcon() : distinctFruits.map((fruit) => ({ fruit }))
       };
     case 'set-same-kind':
-      return {
-        title: `Set of ${card.scoring.setSize}`,
-        subtitle: `${scoreLabel(card.scoring.pointsPerSet)}`,
-        icons: distinctFruits.map((fruit) => ({ fruit }))
-      };
+      return { title: copy.setOf(card.scoring.setSize), subtitle: `${scoreLabel(card.scoring.pointsPerSet)}`, icons: distinctFruits.map((fruit) => ({ fruit })) };
     case 'set-distinct-kind':
       return {
-        title: `${card.scoring.setSize} kinds`,
+        title: copy.kinds(card.scoring.setSize),
         subtitle: `${scoreLabel(card.scoring.pointsPerSet)}`,
         icons: allKinds ? makeBasketIcon() : distinctFruits.slice(0, card.scoring.setSize).map((fruit) => ({ fruit }))
       };
     case 'per-fruit-flat':
-      return {
-        title: '',
-        subtitle: '',
-        hideTitle: true,
-        hideSubtitle: true,
-        layout: 'vertical-list',
-        icons: distinctFruits.map((fruit) => ({ fruit, label: `/ ${scoreLabel(card.scoring.pointsPerFruit)}` }))
-      };
+      return { title: '', subtitle: '', hideTitle: true, hideSubtitle: true, layout: 'vertical-list', icons: distinctFruits.map((fruit) => ({ fruit, label: `/ ${scoreLabel(card.scoring.pointsPerFruit)}` })) };
     case 'per-fruit-multi':
-      return {
-        title: '',
-        subtitle: '',
-        hideTitle: true,
-        hideSubtitle: true,
-        layout: 'vertical-list',
-        icons: getPerFruitMultiDisplayIcons(card)
-      };
+      return { title: '', subtitle: '', hideTitle: true, hideSubtitle: true, layout: 'vertical-list', icons: getPerFruitMultiDisplayIcons(card) };
     default:
-      return {
-        title: card.ruleType,
-        subtitle: `#${card.id}`,
-        icons: distinctFruits.map((fruit) => ({ fruit }))
-      };
+      return { title: card.ruleType, subtitle: `#${card.id}`, icons: distinctFruits.map((fruit) => ({ fruit })) };
   }
 }
 
 function getDescriptorIconTexture(iconData) {
-  if (iconData.special === 'basket') {
-    return 'icon_fruit_basket';
-  }
-
-  return getFruitIconTexture(iconData.fruit);
+  return iconData.special === 'basket' ? 'icon_fruit_basket' : getFruitIconTexture(iconData.fruit);
 }
 
 function addVerticalList(scene, container, descriptor, width, height) {
@@ -232,18 +185,22 @@ export function preloadCardTextures(scene) {
 }
 
 export function drawFruitCard(scene, x, y, width, height, fruit) {
+  const locale = getSceneLocale(scene);
   const container = scene.add.container(x, y);
   const image = scene.add.image(0, 0, getFruitCardTexture(fruit)).setOrigin(0, 0);
   image.setDisplaySize(width, height);
+  image.setFlipX(shouldFlipFruitCard(locale));
+  image.setFlipY(shouldFlipFruitCard(locale));
   container.add(image);
   addCardFrame(scene, container, width, height);
   return container;
 }
 
 export function drawSaladCard(scene, x, y, width, height, card) {
+  const locale = getSceneLocale(scene);
   const container = scene.add.container(x, y);
   const image = scene.add.image(0, 0, getSaladCardTexture(card)).setOrigin(0, 0);
-  const descriptor = getSaladDescriptor(card);
+  const descriptor = getSaladDescriptor(card, locale);
 
   image.setDisplaySize(width, height);
   container.add(image);
@@ -279,6 +236,7 @@ export function drawSaladCard(scene, x, y, width, height, card) {
 }
 
 export function drawFruitCounter(scene, x, y, fruit, count) {
+  const locale = getSceneLocale(scene);
   const container = scene.add.container(x, y);
   const background = scene.add.graphics();
   background.fillStyle(0x2a3038, 1);
@@ -291,7 +249,7 @@ export function drawFruitCounter(scene, x, y, fruit, count) {
   icon.setDisplaySize(44, 44);
   container.add(icon);
 
-  const fruitLabel = scene.add.text(46, 69, fruit.toUpperCase(), {
+  const fruitLabel = scene.add.text(46, 69, getFruitCounterLabel(fruit, locale), {
     fontFamily: '"Trebuchet MS", sans-serif',
     fontSize: '13px',
     color: '#c7c2b8',

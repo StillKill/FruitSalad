@@ -9,8 +9,9 @@ import {
   MIN_PLAYER_COUNT
 } from '../src/config/sessionDefaults.js';
 
-test('buildDefaultPlayerNames creates sequential fallback names', () => {
-  assert.deepEqual(buildDefaultPlayerNames(4), ['Player 1', 'Player 2', 'Player 3', 'Player 4']);
+test('buildDefaultPlayerNames creates sequential localized fallback names', () => {
+  assert.deepEqual(buildDefaultPlayerNames(4, 'en'), ['Player 1', 'Player 2', 'Player 3', 'Player 4']);
+  assert.deepEqual(buildDefaultPlayerNames(2, 'ru'), ['\u0418\u0433\u0440\u043e\u043a 1', '\u0418\u0433\u0440\u043e\u043a 2']);
 });
 
 test('normalizeSessionOptions clamps player count and fills missing names', () => {
@@ -19,18 +20,20 @@ test('normalizeSessionOptions clamps player count and fills missing names', () =
     playerNames: ['Ana', '  ', null, 'Drew'],
     liveScoring: true,
     seedDemoProgress: false,
-    randomSeed: 77
-  });
+    randomSeed: 77,
+    locale: 'en'
+  }, 'en');
 
   assert.equal(result.playerCount, MAX_PLAYER_COUNT);
   assert.deepEqual(result.playerNames, ['Ana', 'Player 2', 'Player 3', 'Drew', 'Player 5', 'Player 6']);
+  assert.equal(result.locale, 'en');
   assert.equal(result.liveScoring, true);
   assert.equal(result.seedDemoProgress, false);
   assert.equal(result.randomSeed, 77);
 });
 
 test('normalizeSessionOptions enforces minimum player count and default options', () => {
-  const result = normalizeSessionOptions({ playerCount: 1, playerNames: ['Solo'] });
+  const result = normalizeSessionOptions({ playerCount: 1, playerNames: ['Solo'], locale: 'en' }, 'en');
 
   assert.equal(result.playerCount, MIN_PLAYER_COUNT);
   assert.deepEqual(result.playerNames, ['Solo', 'Player 2']);
@@ -39,9 +42,10 @@ test('normalizeSessionOptions enforces minimum player count and default options'
   assert.equal(result.randomSeed, null);
 });
 
-test('defaultSessionOptions starts with a clean two-player setup', () => {
+test('defaultSessionOptions starts with a clean two-player ru setup', () => {
   assert.equal(defaultSessionOptions.playerCount, 2);
-  assert.deepEqual(defaultSessionOptions.playerNames, ['Player 1', 'Player 2']);
+  assert.deepEqual(defaultSessionOptions.playerNames, ['\u0418\u0433\u0440\u043e\u043a 1', '\u0418\u0433\u0440\u043e\u043a 2']);
+  assert.equal(defaultSessionOptions.locale, 'ru');
   assert.equal(defaultSessionOptions.seedDemoProgress, false);
   assert.equal(defaultSessionOptions.randomSeed, null);
 });
