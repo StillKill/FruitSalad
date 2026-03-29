@@ -151,7 +151,7 @@ project-root/
 - Выбор игрока в итогах переиспользует `viewedPlayerIndex`, поэтому детализацию можно переключать по существующим tabs или по строкам standings в popup.
 
 ## Базовая сцена
-- `preload`: грузит JSON-конфиги, полный каталог карт и reference layout image.
+- `preload`: грузит JSON-конфиги, полный каталог карт, reference layout image и базовые SFX (game_start, round_start, button_click, tab_select).
 - `create`: показывает `settings`, откуда можно запустить честную сессию или demo/simulation режим.
 - `setup`: сейчас встроен в `buildSession()` и подготавливает колоды, рынок, игроков и state machine.
 - Для живого дебага в DevTools сцена экспортирует `window.__FRUIT_SALAD_DEBUG__` с доступом к текущим `game`, `scene`, `session`, `logs`, `seed`, а также helper-методами `snapshot()` и `deckSummary()`.
@@ -176,7 +176,6 @@ project-root/
 - Улучшение дизайна под mid-res presentation.
 - Деплой и онлайн-сессия, чтобы игру можно было показать вне локальной машины.
 - Анимации.
-- Звуки.
 - Local scoreboard.
 - При необходимости расширить demo/simulation режим отдельными debug controls вместо простого seeded launch.
 - Пересобрать тексты salad-карт в полноценный icon-first/abbreviation layout для RU/EN, чтобы длинные правила не упирались в центральную область карты.

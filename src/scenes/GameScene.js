@@ -28,6 +28,12 @@ import { buildEndGameResults } from '../core/endGameResults.js';
 import { detectGameLocale, getCardCopy, getFruitName, getLocaleCopy, getParityLabel, normalizeLocale } from '../i18n/locale.js';
 
 const SETTINGS_NAME_MAX_LENGTH = 18;
+const SOUND_KEYS = {
+  gameStart: 'game_start',
+  tabSelect: 'tab_select',
+  buttonClick: 'button_click',
+  roundStart: 'round_start'
+};
 
 function createSettingsDraft(options = defaultSessionOptions, locale = defaultSessionOptions.locale ?? 'ru') {
   const draftLocale = normalizeLocale(locale);
@@ -89,6 +95,10 @@ export class GameScene extends Phaser.Scene {
     this.playerAreaFlipMode = false;
     this.turnTimerText = null;
     this.turnTimerLabel = null;
+    this.audioState = {
+      session: null,
+      turnNumber: null
+    };
   }
 
   update() {
@@ -131,6 +141,7 @@ export class GameScene extends Phaser.Scene {
     this.load.json('sessionRules', 'data/sessions/session-rules.json');
     this.load.json('scoringCards', 'data/cards/scoring-cards.json');
     preloadCardTextures(this);
+    this.preloadAudioAssets();
   }
 
   create() {
@@ -144,6 +155,44 @@ export class GameScene extends Phaser.Scene {
     this.installDebugBridge();
     this.drawBackground();
     this.renderDynamicUi();
+  }
+
+  preloadAudioAssets() {
+    this.load.audio(SOUND_KEYS.gameStart, 'assets/audio/game_start.wav');
+    this.load.audio(SOUND_KEYS.tabSelect, 'assets/audio/tab_select.wav');
+    this.load.audio(SOUND_KEYS.buttonClick, 'assets/audio/button_click.wav');
+    this.load.audio(SOUND_KEYS.roundStart, 'assets/audio/round_start.wav');
+  }
+
+  playSound(key, config = {}) {
+    if (!key || !this.cache.audio.exists(key)) {
+      return;
+    }
+
+    this.sound.play(key, config);
+  }
+
+  syncTurnAudio() {
+    if (!this.session) {
+      this.audioState.session = null;
+      this.audioState.turnNumber = null;
+      return;
+    }
+
+    if (this.audioState.session !== this.session) {
+      this.audioState.session = this.session;
+      this.audioState.turnNumber = this.session.turnNumber;
+      return;
+    }
+
+    if (this.audioState.turnNumber === this.session.turnNumber) {
+      return;
+    }
+
+    this.audioState.turnNumber = this.session.turnNumber;
+    if (this.session.turnNumber > 1 && this.session.stateMachine.state !== 'end_game') {
+      this.playSound(SOUND_KEYS.roundStart);
+    }
   }
 
   installDebugBridge() {
@@ -532,6 +581,8 @@ export class GameScene extends Phaser.Scene {
     if (this.session.stateMachine.state === 'end_game') {
       this.drawEndGameOverlay();
     }
+
+    this.syncTurnAudio();
   }
 
   track(object) {
@@ -637,6 +688,7 @@ export class GameScene extends Phaser.Scene {
       }).setOrigin(0.5));
 
       this.addClickZone(buttonX, buttonY, width, height, () => {
+        this.playSound(SOUND_KEYS.buttonClick);
         this.setLocale(localeKey);
       });
     });
@@ -731,7 +783,9 @@ export class GameScene extends Phaser.Scene {
       0x7f8a98,
       this.copy.openDemo,
       true,
-      () => this.startDemoSession()
+      () => this.startDemoSession(),
+      '20px',
+      { soundKey: null }
     );
 
     this.drawActionButton(
@@ -742,7 +796,9 @@ export class GameScene extends Phaser.Scene {
       palette.accent,
       this.copy.startFairGame,
       true,
-      () => this.startSessionFromSettings()
+      () => this.startSessionFromSettings(),
+      '20px',
+      { soundKey: null }
     );
   }
 
@@ -765,6 +821,7 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0.5));
 
     this.addClickZone(x, y, width, height, () => {
+      this.playSound(SOUND_KEYS.buttonClick);
       this.updateSettingsPlayerCount(playerCount);
     });
   }
@@ -850,6 +907,7 @@ export class GameScene extends Phaser.Scene {
     this.playerAreaFlipMode = false;
     this.session = buildSession(options, this.sessionRules, this.scoringCards);
     this.renderDynamicUi();
+    this.playSound(SOUND_KEYS.gameStart);
   }
 
   drawControls() {
@@ -981,7 +1039,15 @@ export class GameScene extends Phaser.Scene {
 
     if (enabled) {
       const hitArea = this.add.zone(x + width / 2, y + height / 2, width, height).setInteractive({ useHandCursor: true });
-      hitArea.on('pointerup', onClick);
+      hitArea.on('pointerup', () => {
+        const soundKey = Object.prototype.hasOwnProperty.call(options, 'soundKey')
+          ? options.soundKey
+          : SOUND_KEYS.buttonClick;
+        if (soundKey) {
+          this.playSound(soundKey);
+        }
+        onClick();
+      });
       this.track(hitArea);
     }
   }
@@ -1240,6 +1306,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.session.viewedPlayerIndex = nextIndex;
+    this.playSound(SOUND_KEYS.tabSelect);
     this.playerAreaFlipMode = false;
     this.scrollState.salads = 0;
     this.renderDynamicUi();
