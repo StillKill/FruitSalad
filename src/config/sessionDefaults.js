@@ -2,6 +2,11 @@ import { buildPlayerName, normalizeLocale } from '../i18n/locale.js';
 
 export const MIN_PLAYER_COUNT = 2;
 export const MAX_PLAYER_COUNT = 6;
+export const SESSION_MODES = ['standard', 'freestyle'];
+
+export function normalizeSessionMode(mode) {
+  return SESSION_MODES.includes(mode) ? mode : 'standard';
+}
 
 export function buildDefaultPlayerNames(playerCount, locale = 'ru') {
   const resolvedLocale = normalizeLocale(locale);
@@ -26,6 +31,7 @@ export function normalizeSessionOptions(options = {}, locale = 'ru') {
   const requestedCount = Number.isInteger(options.playerCount) ? options.playerCount : MIN_PLAYER_COUNT;
   const playerCount = Math.min(MAX_PLAYER_COUNT, Math.max(MIN_PLAYER_COUNT, requestedCount));
   const resolvedLocale = normalizeLocale(options.locale ?? locale);
+  const sessionMode = normalizeSessionMode(options.mode);
   const fallbackNames = buildDefaultPlayerNames(playerCount, resolvedLocale);
   const providedNames = Array.isArray(options.playerNames) ? options.playerNames : [];
   const playerNames = fallbackNames.map((fallbackName, index) => {
@@ -34,6 +40,7 @@ export function normalizeSessionOptions(options = {}, locale = 'ru') {
   });
 
   return {
+    mode: sessionMode,
     playerCount,
     playerNames,
     locale: resolvedLocale,
@@ -56,6 +63,7 @@ export function createSettingsDraft(options = defaultSessionOptions, locale = de
     playerNames
   }, draftLocale);
   return {
+    mode: normalized.mode,
     playerCount: normalized.playerCount,
     playerNames: [...normalized.playerNames],
     locale: normalized.locale
@@ -68,6 +76,7 @@ export function createMenuSettingsDraft(lastFairSessionOptions = null, locale = 
   return createSettingsDraft(sourceOptions, locale);
 }
 export const defaultSessionOptions = normalizeSessionOptions({
+  mode: 'standard',
   playerCount: MIN_PLAYER_COUNT,
   playerNames: buildDefaultPlayerNames(MIN_PLAYER_COUNT, 'ru'),
   locale: 'ru',

@@ -47,8 +47,8 @@ test('buildSession fills market by flipping top salad cards after seeded shuffle
     }
   };
 
-  const firstSession = buildSession({ playerCount: 2, playerNames: ['A', 'B'], randomSeed: 17 }, sessionRules, scoringCatalog);
-  const secondSession = buildSession({ playerCount: 2, playerNames: ['A', 'B'], randomSeed: 17 }, sessionRules, scoringCatalog);
+  const firstSession = buildSession({ mode: 'standard', playerCount: 2, playerNames: ['A', 'B'], randomSeed: 17 }, sessionRules, scoringCatalog);
+  const secondSession = buildSession({ mode: 'standard', playerCount: 2, playerNames: ['A', 'B'], randomSeed: 17 }, sessionRules, scoringCatalog);
 
   assert.deepEqual(
     firstSession.decks.map((deck) => deck.market.map((card) => card.fruit)),
@@ -57,6 +57,30 @@ test('buildSession fills market by flipping top salad cards after seeded shuffle
   assert.equal(firstSession.decks.reduce((sum, deck) => sum + deck.market.length + deck.cards.length, 0), 9);
   assert.ok(firstSession.decks.every((deck) => deck.market.length === 2));
   assert.ok(new Set(firstSession.decks.flatMap((deck) => deck.market.map((card) => card.sourceRuntimeId))).size === 6);
+});
+
+test('buildSession uses the full deck in freestyle mode regardless of player count', () => {
+  const scoringCatalog = {
+    fruits,
+    cards: Array.from({ length: 12 }, (_, index) => makeCard(String(index + 1).padStart(3, '0'), fruits[index % fruits.length]))
+  };
+  const sessionRules = {
+    deckCount: 3,
+    marketSlotsPerDeck: 2,
+    cardsPerPlayer: 18,
+    playerCardPoolByCount: {
+      '2': { selectedCards: 9 }
+    }
+  };
+
+  const standardSession = buildSession({ mode: 'standard', playerCount: 2, playerNames: ['A', 'B'], randomSeed: 17 }, sessionRules, scoringCatalog);
+  const freestyleSession = buildSession({ mode: 'freestyle', playerCount: 2, playerNames: ['A', 'B'], randomSeed: 17 }, sessionRules, scoringCatalog);
+
+  const countCards = (session) => session.decks.reduce((sum, deck) => sum + deck.market.length + deck.cards.length, 0);
+
+  assert.equal(countCards(standardSession), 9);
+  assert.equal(countCards(freestyleSession), scoringCatalog.cards.length);
+  assert.equal(freestyleSession.options.mode, 'freestyle');
 });
 
 test('buildSession starts with empty player progress unless demo seeding is enabled', () => {
@@ -70,7 +94,7 @@ test('buildSession starts with empty player progress unless demo seeding is enab
     }
   };
 
-  const cleanSession = buildSession({ playerCount: 2, playerNames: ['A', 'B'], randomSeed: 22 }, sessionRules, scoringCatalog);
+  const cleanSession = buildSession({ mode: 'standard', playerCount: 2, playerNames: ['A', 'B'], randomSeed: 22 }, sessionRules, scoringCatalog);
 
   assert.deepEqual(cleanSession.players[0].fruitCounts, {
     kiwi: 0,
@@ -83,14 +107,13 @@ test('buildSession starts with empty player progress unless demo seeding is enab
   assert.equal(cleanSession.players[0].salads.length, 0);
   assert.equal(cleanSession.players[1].salads.length, 0);
 
-  const seededSession = buildSession({ playerCount: 2, playerNames: ['A', 'B'], seedDemoProgress: true, randomSeed: 22 }, sessionRules, scoringCatalog);
+  const seededSession = buildSession({ mode: 'standard', playerCount: 2, playerNames: ['A', 'B'], seedDemoProgress: true, randomSeed: 22 }, sessionRules, scoringCatalog);
 
   assert.notDeepEqual(seededSession.players[0].fruitCounts, cleanSession.players[0].fruitCounts);
   assert.ok(seededSession.players[0].salads.length > 0);
   assert.ok(seededSession.players[1].salads.length > 0);
   assert.ok(seededSession.logs.includes('Prototype scoring preview seeded'));
 });
-
 
 test('rebalanceEmptyDeck restores an empty deck from the thickest remaining deck', () => {
   const logs = [];
@@ -172,7 +195,6 @@ test('refillSessionMarkets restores empty decks before filling their market slot
   assert.match(logs.join(' | '), /deck-1 refilled market with banana, lime/);
 });
 
-
 test('buildSession assigns runtime ids to seeded demo salads', () => {
   const scoringCatalog = makeSeededCatalog();
   const sessionRules = {
@@ -184,7 +206,7 @@ test('buildSession assigns runtime ids to seeded demo salads', () => {
     }
   };
 
-  const seededSession = buildSession({ playerCount: 2, playerNames: ['A', 'B'], seedDemoProgress: true, randomSeed: 22 }, sessionRules, scoringCatalog);
+  const seededSession = buildSession({ mode: 'standard', playerCount: 2, playerNames: ['A', 'B'], seedDemoProgress: true, randomSeed: 22 }, sessionRules, scoringCatalog);
   const runtimeIds = seededSession.players.flatMap((player) => player.salads.map((card) => card.runtimeId));
 
   assert.ok(runtimeIds.every(Boolean));

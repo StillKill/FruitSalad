@@ -61,6 +61,7 @@ function makeScoringCatalog() {
 
 function makeSession(seedDemoProgress = false) {
   return buildSession({
+    mode: 'standard',
     playerCount: 2,
     playerNames: ['A', 'B'],
     locale: 'en',
@@ -110,13 +111,14 @@ test('restoreFairSessionSnapshot rebuilds fair session state and adjusts the tim
 
   const snapshot = buildFairSessionSnapshot({
     locale: 'en',
-    lastFairSessionOptions: { playerCount: 2, playerNames: ['A', 'B'], locale: 'en' },
+    lastFairSessionOptions: { mode: 'freestyle', playerCount: 2, playerNames: ['A', 'B'], locale: 'en' },
     session
   }, savedAt);
   const restored = restoreFairSessionSnapshot(snapshot, makeSessionRules(), makeScoringCatalog(), savedAt + 5000);
 
   assert.ok(restored);
   assert.equal(restored.locale, 'en');
+  assert.equal(restored.lastFairSessionOptions.mode, 'freestyle');
   assert.equal(restored.session.stateMachine.state, session.stateMachine.state);
   assert.equal(restored.session.pendingSelection.length, 1);
   assert.equal(restored.session.pendingFlip.runtimeId, ownedSalad.runtimeId);
@@ -129,6 +131,7 @@ test('saveFairSessionState and loadFairSessionState round-trip the last fair ses
   const session = makeSession(false);
   const storage = makeStorage();
   const lastFairSessionOptions = {
+    mode: 'standard',
     playerCount: 2,
     playerNames: ['A', 'B'],
     locale: 'en',
@@ -149,6 +152,7 @@ test('saveFairSessionState and loadFairSessionState round-trip the last fair ses
   const restored = loadFairSessionState(makeSessionRules(), makeScoringCatalog(), storage, 9000);
 
   assert.ok(restored);
+  assert.equal(restored.lastFairSessionOptions.mode, 'standard');
   assert.deepEqual(restored.lastFairSessionOptions.playerNames, ['A', 'B']);
   assert.equal(restored.session.options.randomSeed, 11);
   assert.equal(restored.session.turnTimer.remainingMs, 16000);

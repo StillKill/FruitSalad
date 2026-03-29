@@ -85,11 +85,11 @@ project-root/
 ### 2. Session Config
 - Сессия поддерживает 2-6 игроков.
 - Количество игроков и имена задаются на этапе `settings`.
-- На старте доступны два режима запуска: честная партия через `settings` и demo/simulation с seeded progress для быстрой проверки UI.
-- Честная партия автосохраняется в browser storage и после reload может быть восстановлена через `Continue`; `New Game` начинает новую fair-session и стирает старый fair-save.
+- На старте доступны три режима запуска: игра через `settings`, `freestyle` через `settings` и demo/simulation с seeded progress для быстрой проверки UI.
+- Игра и `freestyle` автосохраняются в browser storage и после reload могут быть восстановлены через `Continue`; `New Game` начинает новую сохранённую сессию и стирает старый save.
 - Demo-сессия не пишет runtime-save и не мешает fair-session persistence.
-- Количество карт для партии берется из `playerCardPoolByCount`, а при отсутствии записи — из `cardsPerPlayer * количество игроков`.
-- Перед раскладкой по 3 колодам выбранный пул карт перемешивается по seed, чтобы рынок не зависел от исходного порядка каталога.
+- Для обычной игры количество карт для партии берется из `playerCardPoolByCount`, а при отсутствии записи — из `cardsPerPlayer * количество игроков`.
+- Для `freestyle` независимо от числа игроков используется вся колода карт. Перед раскладкой по 3 колодам выбранный пул карт перемешивается по seed, чтобы рынок не зависел от исходного порядка каталога.
 - Если при пополнении рынка колода пуста, она восстанавливается за счёт нижней половины самой толстой из оставшихся колод; при равенстве для детерминизма берётся первая подходящая колода по порядку.
 - Настройки партии и лимиты setup лежат в `data/sessions/session-rules.json`.
 - Turn timer defaults to `timeLimitSeconds` from `data/sessions/session-rules.json`; the current prototype value is 120 seconds per player.
@@ -107,7 +107,7 @@ project-root/
 ### 4. UI Shell
 - Settings dialog with player setup plus sound volume and mute controls.
 - GitHub Pages deployment is built through `npm run build:pages`, which stages a static `dist/` artifact and copies the Phaser ESM runtime into the publishable folder for Actions-based deployment.
-- Для fair game settings-экран показывает `Continue` / `New Game`, если найден локальный fair-save; demo mode вынесен в отдельный визуальный блок и не смешивается с основными настройками партии.
+- Settings-экран показывает `Continue` / `New Game`, если найден локальный save, позволяет выбрать режим `Игра` / `Freestyle`, а demo mode вынесен в отдельный визуальный блок и не смешивается с основными настройками партии.
 - Runtime localization supports `ru` and `en`. The scene resolves locale from `?lang=` first and browser language second, exposes a manual `RU/EN` switch in settings and during play, and English fruit cards reuse the same bilingual fruit asset by flipping the image on both axes instead of duplicating PNG files.
 - Settings and control-panel layout should stay resilient to localization: section spacing is driven by rendered text height, name fields scale to the available column width, and the in-game language toggle keeps its own reserved area instead of sharing button space with `Confirm` / `Reset`.
 - Player name fields should use browser-native text input bridging over the Phaser scene so mobile keyboards, paste, and standard text editing work in `settings` on touch devices.
@@ -156,7 +156,7 @@ project-root/
   - summary-метрики выбранного игрока;
   - визуальный breakdown выбранного игрока по каждой салатной карте с мини-картой и явными очками за карту;
   - кнопку возврата в `settings`.
-- Возврат в `settings` после честной партии восстанавливает количество игроков и имена прошлой сессии, чтобы можно было быстро запустить rematch.
+- Возврат в `settings` после обычной игры или `freestyle` восстанавливает режим, количество игроков и имена прошлой сессии, чтобы можно было быстро запустить rematch.
 - Возврат из demo-сессии не должен подставлять demo-имена и demo-настройки в `settings`.
 - Для breakdown каждая запись хранит:
   - `cardId` и `ruleType`;
@@ -166,7 +166,7 @@ project-root/
 
 ## Базовая сцена
 - `preload`: грузит JSON-конфиги, полный каталог карт, reference layout image и базовые SFX (game_start, round_start, button_click, tab_select).
-- `create`: показывает `settings`, откуда можно запустить честную сессию, продолжить сохранённую fair-session или открыть demo/simulation режим.
+- `create`: показывает `settings`, откуда можно запустить игру или `freestyle`, продолжить сохранённую сессию или открыть demo/simulation режим.
 - Репозиторий подготовлен к shareable demo через GitHub Pages: workflow `.github/workflows/pages.yml` запускает тесты, собирает `dist/` и публикует статический артефакт из Actions на push в `main` или `master`.
 - `setup`: сейчас встроен в `buildSession()` и подготавливает колоды, рынок, игроков и state machine.
 - Для живого дебага в DevTools сцена экспортирует `window.__FRUIT_SALAD_DEBUG__` с доступом к текущим `game`, `scene`, `session`, `logs`, `seed`, а также helper-методами `snapshot()` и `deckSummary()`.

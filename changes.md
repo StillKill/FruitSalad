@@ -1,7 +1,7 @@
 # Changes Log
 
 ## 2026-03-29
-- Added a workflow fallback for tool-level `apply_patch` failures: if the patch tool dies during sandbox refresh, agents should switch to explicit UTF-8 without BOM PowerShell edits and review `git diff` readability before continuing.
+- Renamed the main `Fair Game` user-facing copy to plain `Game`, kept `Demo Mode` as a separate launch path, and added a new `Freestyle` mode that uses the full deck regardless of player count.
 - Added a master sound volume set to 80% by default and a settings-screen sound control block with volume steps plus mute / unmute.
 - Replaced the settings name-entry flow with a browser-native input bridge over the Phaser UI, so mobile devices can open the keyboard, edit player names, and paste from the clipboard in fair-game setup.
 - Added a GitHub Pages deployment path: `npm run build:pages` now stages a clean static `dist/` bundle, and `.github/workflows/pages.yml` installs dependencies, runs tests, builds the bundle, and deploys it through GitHub Actions on `main` / `master`.
@@ -65,5 +65,5 @@
 - Reworked settings and in-session control layout to measure localized text flow, widen player-name fields, and reserve a dedicated language-toggle zone that no longer overlaps Confirm/Reset.
 
 - Tightened the settings form spacing so the 6-player localized name grid stays clear of the start buttons.
-- Localized market deck headers as Колода N / Deck N instead of exposing runtime deck ids in the UI.
+- Localized market deck headers as ÐšÐ¾Ð»Ð¾Ð´Ð° N / Deck N instead of exposing runtime deck ids in the UI.
 - Shortened dense salad-card labels and slightly rebalanced card text/icon placement so localized rule text fits more reliably in the center oval.

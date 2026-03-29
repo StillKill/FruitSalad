@@ -800,6 +800,7 @@ export class GameScene extends Phaser.Scene {
   syncSettingsDraftLocale(previousLocale, nextLocale) {
     const playerCount = this.settingsDraft.playerCount ?? defaultSessionOptions.playerCount;
     this.settingsDraft = {
+      mode: this.settingsDraft.mode ?? defaultSessionOptions.mode,
       playerCount,
       playerNames: relocalizePlayerNames(this.settingsDraft.playerNames ?? [], playerCount, previousLocale, nextLocale),
       locale: nextLocale
@@ -964,13 +965,13 @@ export class GameScene extends Phaser.Scene {
     }));
     cursorY = lead.y + lead.height + 24;
 
-    const fairHeading = this.track(this.add.text(contentX, cursorY, this.copy.fairGame, {
+    const modeHeading = this.track(this.add.text(contentX, cursorY, this.copy.mode, {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '22px',
       color: palette.textPrimary,
       fontStyle: 'bold'
     }));
-    cursorY = fairHeading.y + fairHeading.height + 12;
+    cursorY = modeHeading.y + modeHeading.height + 12;
 
     if (hasSavedFairSession) {
       const savedLabel = this.track(this.add.text(contentX, cursorY, this.copy.savedFairSessionReady, {
@@ -982,6 +983,61 @@ export class GameScene extends Phaser.Scene {
       cursorY = savedLabel.y + savedLabel.height + 18;
     }
 
+    const modeButtonY = cursorY;
+    const modeButtonWidth = Math.floor((contentWidth - 18) / 2);
+    const standardSelected = (this.settingsDraft.mode ?? defaultSessionOptions.mode) === 'standard';
+    const freestyleSelected = (this.settingsDraft.mode ?? defaultSessionOptions.mode) === 'freestyle';
+    this.drawActionButton(
+      contentX,
+      modeButtonY,
+      modeButtonWidth,
+      44,
+      standardSelected ? palette.accent : 0x343a44,
+      this.copy.modeGame,
+      true,
+      () => {
+        this.playSound(SOUND_KEYS.buttonClick);
+        this.updateSettingsMode('standard');
+      },
+      '18px',
+      {
+        soundKey: null,
+        textColor: standardSelected ? '#111315' : palette.textPrimary,
+        borderColor: standardSelected ? 0xf6f1c7 : 0x171b20
+      }
+    );
+    this.drawActionButton(
+      contentX + modeButtonWidth + 18,
+      modeButtonY,
+      modeButtonWidth,
+      44,
+      freestyleSelected ? palette.accent : 0x343a44,
+      this.copy.modeFreestyle,
+      true,
+      () => {
+        this.playSound(SOUND_KEYS.buttonClick);
+        this.updateSettingsMode('freestyle');
+      },
+      '18px',
+      {
+        soundKey: null,
+        textColor: freestyleSelected ? '#111315' : palette.textPrimary,
+        borderColor: freestyleSelected ? 0xf6f1c7 : 0x171b20
+      }
+    );
+    this.track(this.add.text(contentX, modeButtonY + 50, this.copy.modeGameHint, {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '12px',
+      color: standardSelected ? '#dbe6ef' : palette.textMuted,
+      wordWrap: { width: modeButtonWidth - 6 }
+    }));
+    this.track(this.add.text(contentX + modeButtonWidth + 18, modeButtonY + 50, this.copy.modeFreestyleHint, {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '12px',
+      color: freestyleSelected ? '#dbe6ef' : palette.textMuted,
+      wordWrap: { width: modeButtonWidth - 6 }
+    }));
+    cursorY += 94;
     const playersHeading = this.track(this.add.text(contentX, cursorY, this.copy.players, {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '22px',
@@ -1217,6 +1273,15 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  updateSettingsMode(mode) {
+    if (this.settingsDraft.mode === mode) {
+      return;
+    }
+
+    this.settingsDraft.mode = mode;
+    this.renderDynamicUi();
+  }
+
   updateSettingsPlayerCount(playerCount) {
     const previousNames = [...this.settingsDraft.playerNames];
     const defaultNames = buildDefaultPlayerNames(playerCount, this.locale);
@@ -1232,6 +1297,7 @@ export class GameScene extends Phaser.Scene {
 
   startSessionFromSettings() {
     const options = normalizeSessionOptions({
+      mode: this.settingsDraft.mode,
       playerCount: this.settingsDraft.playerCount,
       playerNames: this.settingsDraft.playerNames,
       locale: this.locale,
@@ -1246,6 +1312,7 @@ export class GameScene extends Phaser.Scene {
 
   startDemoSession() {
     const options = normalizeSessionOptions({
+      mode: 'standard',
       playerCount: 2,
       playerNames: [`${this.copy.playerLabel(1)} Demo`, `${this.copy.playerLabel(2)} Demo`],
       locale: this.locale,

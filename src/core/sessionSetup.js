@@ -106,6 +106,15 @@ function splitIntoDecks(cards, count) {
   return decks;
 }
 
+function resolveSelectedCardCount(options, sessionRules, scoringCatalog) {
+  if (options.mode === 'freestyle') {
+    return scoringCatalog.cards.length;
+  }
+
+  return sessionRules.playerCardPoolByCount[String(options.playerCount)]?.selectedCards
+    ?? sessionRules.cardsPerPlayer * options.playerCount;
+}
+
 function createPlayers(options, fruits) {
   return Array.from({ length: options.playerCount }, (_, index) => {
     const name = options.playerNames[index] || buildPlayerName(index + 1, options.locale);
@@ -172,9 +181,7 @@ function seedPrototypeProgress(session) {
 export function buildSession(options, sessionRules, scoringCatalog) {
   const normalizedOptions = normalizeSessionOptions(options, options?.locale ?? 'ru');
   const sessionSeed = normalizedOptions.randomSeed ?? generateSessionSeed();
-  const selectedCardCount =
-    sessionRules.playerCardPoolByCount[String(normalizedOptions.playerCount)]?.selectedCards ??
-    sessionRules.cardsPerPlayer * normalizedOptions.playerCount;
+  const selectedCardCount = resolveSelectedCardCount(normalizedOptions, sessionRules, scoringCatalog);
 
   const expandedDeck = expandCardTemplates(scoringCatalog, selectedCardCount);
   const playableDeck = shuffleCards(expandedDeck, createSeededRandom(sessionSeed));
