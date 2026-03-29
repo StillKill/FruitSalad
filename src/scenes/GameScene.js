@@ -217,6 +217,83 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  drawSummaryMetricPill(x, y, width, label, value, accentColor = 0x343a44) {
+    const { palette } = layoutConfig;
+    const pill = this.track(this.add.graphics());
+    pill.fillStyle(accentColor, 0.96);
+    pill.lineStyle(2, 0x171b20, 1);
+    pill.fillRoundedRect(x, y, width, 66, 14);
+    pill.strokeRoundedRect(x, y, width, 66, 14);
+
+    this.track(this.add.text(x + 14, y + 12, label, {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '13px',
+      color: palette.textMuted,
+      fontStyle: 'bold'
+    }));
+
+    this.track(this.add.text(x + 14, y + 35, value, {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '24px',
+      color: palette.textPrimary,
+      fontStyle: 'bold'
+    }));
+  }
+
+  drawEndGameBreakdownEntry(container, viewport, y, cardScore, rowWidth) {
+    const { palette } = layoutConfig;
+    const row = this.add.graphics();
+    row.fillStyle(0x20262d, 0.98);
+    row.lineStyle(2, 0x171b20, 1);
+    row.fillRoundedRect(viewport.x, y, rowWidth, 134, 16);
+    row.strokeRoundedRect(viewport.x, y, rowWidth, 134, 16);
+    container.add(row);
+    this.track(row);
+
+    const card = drawSaladCard(this, viewport.x + 18, y + 14, 86, 106, {
+      ...cardScore.cardSnapshot,
+      runtimeId: cardScore.cardSnapshot.runtimeId ?? `endgame-${cardScore.cardId}`
+    });
+    container.add(card);
+    this.track(card);
+
+    const pointsPill = this.add.graphics();
+    pointsPill.fillStyle(cardScore.points >= 0 ? 0x37553a : 0x6c3a3a, 1);
+    pointsPill.lineStyle(2, 0x171b20, 1);
+    pointsPill.fillRoundedRect(viewport.x + rowWidth - 112, y + 16, 92, 34, 12);
+    pointsPill.strokeRoundedRect(viewport.x + rowWidth - 112, y + 16, 92, 34, 12);
+    container.add(pointsPill);
+    this.track(pointsPill);
+
+    const pointsLabel = this.add.text(viewport.x + rowWidth - 66, y + 33, `${cardScore.points >= 0 ? '+' : ''}${cardScore.points}`, {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '20px',
+      color: palette.textPrimary,
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    container.add(pointsLabel);
+    this.track(pointsLabel);
+
+    const title = this.add.text(viewport.x + 122, y + 18, `#${cardScore.cardId}  ${cardScore.ruleType}`, {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '17px',
+      color: palette.textPrimary,
+      fontStyle: 'bold',
+      wordWrap: { width: rowWidth - 258 }
+    });
+    container.add(title);
+    this.track(title);
+
+    const subtitle = this.add.text(viewport.x + 122, y + 50, this.formatBreakdownLine(cardScore), {
+      fontFamily: 'Consolas, monospace',
+      fontSize: '13px',
+      color: palette.textMuted,
+      wordWrap: { width: rowWidth - 160 }
+    });
+    container.add(subtitle);
+    this.track(subtitle);
+  }
+
   handleKeyDown(event) {
     if (this.session) {
       return;
@@ -968,14 +1045,14 @@ export class GameScene extends Phaser.Scene {
     const viewedState = results.playerStates.find((player) => player.playerId === viewedEntry.playerId) ?? null;
     const winner = results.winner;
     const leftX = popup.x + 28;
-    const rightX = popup.x + 530;
+    const rightX = popup.x + 528;
     const topY = popup.y + 28;
-    const standingsRowHeight = 54;
+    const standingsRowHeight = 56;
     const breakdownViewport = {
       x: rightX,
-      y: popup.y + 146,
-      width: popup.width - 560,
-      height: popup.height - 178
+      y: popup.y + 224,
+      width: popup.width - 574,
+      height: popup.height - 250
     };
 
     this.track(this.add.text(leftX, topY, 'Final Results', {
@@ -992,6 +1069,25 @@ export class GameScene extends Phaser.Scene {
       fontStyle: 'bold'
     }));
 
+    this.track(this.add.text(rightX, popup.y + 76, `${viewedEntry.playerName} Breakdown`, {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '24px',
+      color: palette.textPrimary,
+      fontStyle: 'bold'
+    }));
+
+    this.drawSummaryMetricPill(rightX, popup.y + 104, 156, 'Placement', this.formatPlacement(viewedEntry.placement), 0x343a44);
+    this.drawSummaryMetricPill(rightX + 170, popup.y + 104, 156, 'Total', String(viewedEntry.totalPoints), 0x37553a);
+    this.drawSummaryMetricPill(rightX + 340, popup.y + 104, 186, 'Scoring cards', String(viewedEntry.cardScores.length), 0x3a4658);
+
+    if (viewedState) {
+      this.track(this.add.text(rightX, popup.y + 190, `Fruits: ${this.formatFruitSummary(viewedState.fruitCounts)}`, {
+        fontFamily: 'Consolas, monospace',
+        fontSize: '13px',
+        color: palette.textMuted
+      }));
+    }
+
     this.track(this.add.text(leftX, popup.y + 108, 'Standings', {
       fontFamily: '"Trebuchet MS", sans-serif',
       fontSize: '22px',
@@ -1005,8 +1101,8 @@ export class GameScene extends Phaser.Scene {
       const row = this.track(this.add.graphics());
       row.fillStyle(isViewed ? 0x343a44 : 0x242a31, 0.96);
       row.lineStyle(2, isViewed ? palette.accent : 0x171b20, 1);
-      row.fillRoundedRect(leftX, rowY, 360, 42, 12);
-      row.strokeRoundedRect(leftX, rowY, 360, 42, 12);
+      row.fillRoundedRect(leftX, rowY, 384, 44, 12);
+      row.strokeRoundedRect(leftX, rowY, 384, 44, 12);
 
       this.track(this.add.text(leftX + 14, rowY + 8, `${this.formatPlacement(entry.placement)}  ${entry.playerName}`, {
         fontFamily: '"Trebuchet MS", sans-serif',
@@ -1015,58 +1111,40 @@ export class GameScene extends Phaser.Scene {
         fontStyle: 'bold'
       }));
 
-      this.track(this.add.text(leftX + 286, rowY + 10, String(entry.totalPoints), {
+      this.track(this.add.text(leftX + 334, rowY + 10, String(entry.totalPoints), {
         fontFamily: '"Trebuchet MS", sans-serif',
         fontSize: '20px',
         color: palette.textPrimary,
         fontStyle: 'bold'
       }).setOrigin(1, 0));
 
-      this.addClickZone(leftX, rowY, 360, 42, () => {
+      this.addClickZone(leftX, rowY, 384, 44, () => {
         this.setViewedPlayerIndex(results.playerStates.findIndex((player) => player.playerId === entry.playerId));
       });
     });
 
-    this.track(this.add.text(rightX, popup.y + 108, `${viewedEntry.playerName} Breakdown`, {
-      fontFamily: '"Trebuchet MS", sans-serif',
-      fontSize: '22px',
-      color: palette.textPrimary,
-      fontStyle: 'bold'
-    }));
-
-    if (viewedState) {
-      this.track(this.add.text(rightX, popup.y + 138, `Fruits: ${this.formatFruitSummary(viewedState.fruitCounts)}`, {
-        fontFamily: 'Consolas, monospace',
-        fontSize: '13px',
-        color: palette.textMuted
-      }));
-    }
-
-    const breakdownLines = viewedEntry.cardScores.length > 0
-      ? viewedEntry.cardScores.flatMap((cardScore) => [
-        `#${cardScore.cardId} ${cardScore.ruleType}  =>  ${cardScore.points}`,
-        this.formatBreakdownLine(cardScore)
-      ])
-      : ['No salad cards scored in this game.'];
-
-    const lineHeight = 24;
-    const breakdownContentHeight = breakdownLines.length * lineHeight;
+    const breakdownRowHeight = 148;
+    const breakdownContentHeight = viewedEntry.cardScores.length > 0
+      ? viewedEntry.cardScores.length * breakdownRowHeight
+      : 40;
     const breakdownOffset = this.registerScrollRegion('results', breakdownViewport, breakdownContentHeight);
     const breakdownContent = this.track(this.add.container(0, -breakdownOffset));
     breakdownContent.setMask(this.createViewportMask(breakdownViewport));
 
-    breakdownLines.forEach((line, index) => {
-      const isHeader = index % 2 === 0 || viewedEntry.cardScores.length === 0;
-      const text = this.add.text(breakdownViewport.x, breakdownViewport.y + index * lineHeight, line, {
-        fontFamily: isHeader ? '"Trebuchet MS", sans-serif' : 'Consolas, monospace',
-        fontSize: isHeader ? '16px' : '13px',
-        color: isHeader ? palette.textPrimary : palette.textMuted,
-        fontStyle: isHeader ? 'bold' : 'normal',
-        wordWrap: { width: breakdownViewport.width - 18 }
+    if (viewedEntry.cardScores.length === 0) {
+      const emptyState = this.add.text(breakdownViewport.x, breakdownViewport.y, 'No salad cards scored in this game.', {
+        fontFamily: '"Trebuchet MS", sans-serif',
+        fontSize: '16px',
+        color: palette.textMuted
       });
-      breakdownContent.add(text);
-      this.track(text);
-    });
+      breakdownContent.add(emptyState);
+      this.track(emptyState);
+    } else {
+      viewedEntry.cardScores.forEach((cardScore, index) => {
+        const rowY = breakdownViewport.y + index * breakdownRowHeight;
+        this.drawEndGameBreakdownEntry(breakdownContent, breakdownViewport, rowY, cardScore, breakdownViewport.width - 14);
+      });
+    }
 
     this.drawScrollBar('results');
   }

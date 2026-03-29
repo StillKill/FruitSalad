@@ -78,4 +78,6 @@ test('buildEndGameResults freezes cloned player state for the popup', () => {
 
   assert.equal(results.playerStates[0].fruitCounts.mango, 3);
   assert.equal(results.playerStates[0].salads.length, 1);
+  assert.equal(results.standings[0].cardScores[0].cardSnapshot.id, '071');
+  assert.equal(results.standings[0].cardScores[0].cardSnapshot.scoring.pointsPerFruit, 2);
 });

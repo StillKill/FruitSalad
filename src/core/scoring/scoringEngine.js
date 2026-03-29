@@ -224,6 +224,7 @@ export function scorePlayerTotal(saladCards, fruitCounts, tableSnapshot = [], fr
 
     return {
       cardId: card.id,
+      cardSnapshot: structuredClone(card),
       ruleType: card.ruleType,
       points: result.points,
       breakdown: result.breakdown
