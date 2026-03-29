@@ -106,6 +106,7 @@ project-root/
 
 ### 4. UI Shell
 - Settings dialog with player setup plus sound volume and mute controls.
+- Settings now uses a browser-DOM overlay above the Phaser canvas, with a responsive mobile-first layout, browser-native name inputs, compact toolbar controls, and scrollable content that no longer depends on scaling the full canvas frame.
 - GitHub Pages deployment is built through `npm run build:pages`, which stages a static `dist/` artifact and copies the Phaser ESM runtime into the publishable folder for Actions-based deployment.
 - Settings-экран показывает `Continue` / `New Game`, если найден локальный save, позволяет выбрать режим `Игра` / `Freestyle`, а demo mode вынесен в отдельный визуальный блок и не смешивается с основными настройками партии.
 - Runtime localization supports `ru` and `en`. The scene resolves locale from `?lang=` first and browser language second, exposes a manual `RU/EN` switch in settings and during play, and English fruit cards reuse the same bilingual fruit asset by flipping the image on both axes instead of duplicating PNG files.
@@ -195,5 +196,6 @@ project-root/
 - Анимации.
 - Local scoreboard.
 - Expand Playwright screenshot coverage beyond the settings shell so mobile/tablet/desktop layout regressions are caught before UI polish work.
+- Carry the same responsive treatment into the main gameplay scene so mobile and desktop no longer rely on a single FIT-scaled board composition.
 - При необходимости расширить demo/simulation режим отдельными debug controls вместо простого seeded launch.
 - Пересобрать тексты salad-карт в полноценный icon-first/abbreviation layout для RU/EN, чтобы длинные правила не упирались в центральную область карты.

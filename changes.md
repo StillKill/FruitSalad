@@ -69,3 +69,5 @@
 - Shortened dense salad-card labels and slightly rebalanced card text/icon placement so localized rule text fits more reliably in the center oval.
 - Added Playwright visual regression scaffolding with desktop/mobile settings snapshots, a local static-server test config, and dedicated `test:e2e` scripts so UI layout changes can be checked outside the unit-test suite.
 - Expanded the Playwright settings coverage with RU locale, saved-session, and six-player snapshot scenarios across both desktop and mobile baselines.
+
+- Rebuilt the settings screen as a responsive DOM overlay above Phaser: language buttons no longer need a label, sound collapses behind an icon-triggered slider, demo lives inside the mode section, mobile uses a compact player-count select, and the updated desktop/mobile layouts are covered by refreshed Playwright snapshots.

@@ -28,6 +28,7 @@ import {
   toggleSelectedDeckFlip
 } from '../core/sessionActions.js';
 import { drawPanel, drawCardPlaceholder } from '../ui/boardLayout.js';
+import { buildSettingsOverlayMarkup, ensureSettingsOverlayStyles, SETTINGS_RULES_PDF_PATH } from '../ui/settingsLayout.js';
 import { preloadCardTextures, drawFruitCard, drawFruitCounter, drawSaladCard } from '../ui/cardRenderer.js';
 import { buildDebugSnapshot } from '../ui/debugOverlay.js';
 import { scoreTable } from '../core/scoring/scoringEngine.js';
@@ -80,6 +81,8 @@ export class GameScene extends Phaser.Scene {
     this.savedFairSessionState = null;
     this.activeSettingsField = 0;
     this.settingsInput = null;
+    this.settingsOverlay = null;
+    this.settingsAudioExpanded = false;
     this.settingsFieldBounds = new Map();
     this.pendingSettingsInputFocus = false;
     this.scrollState = {
@@ -159,10 +162,10 @@ export class GameScene extends Phaser.Scene {
 
     this.input.on('wheel', this.handleWheel, this);
     this.input.keyboard?.on('keydown', this.handleKeyDown, this);
-    this.scale.on('resize', this.syncSettingsDomInput, this);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.destroySettingsDomInput, this);
-    this.events.once(Phaser.Scenes.Events.DESTROY, this.destroySettingsDomInput, this);
-    this.ensureSettingsDomInput();
+    this.scale.on('resize', this.syncSettingsOverlay, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.destroySettingsOverlay, this);
+    this.events.once(Phaser.Scenes.Events.DESTROY, this.destroySettingsOverlay, this);
+    this.ensureSettingsOverlay();
 
     this.installDebugBridge();
     this.drawBackground();
@@ -528,55 +531,20 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    const settingsInputFocused = !!this.settingsInput && globalThis.document?.activeElement === this.settingsInput;
-
-    if (event.key === 'Tab') {
-      event.preventDefault();
-      const direction = event.shiftKey ? -1 : 1;
-      const nextIndex = Phaser.Math.Wrap(this.activeSettingsField + direction, 0, this.settingsDraft.playerCount);
-      this.activeSettingsField = nextIndex;
-      this.pendingSettingsInputFocus = true;
-      this.renderDynamicUi();
-      return;
-    }
-
-    if (event.key === 'Enter') {
-      this.startSessionFromSettings();
-      return;
-    }
+    const activeElement = globalThis.document?.activeElement ?? null;
+    const overlayFocused = !!this.settingsOverlay && !!activeElement && this.settingsOverlay.contains(activeElement);
 
     if (event.key === 'Escape') {
-      this.activeSettingsField = null;
-      this.pendingSettingsInputFocus = false;
-      this.settingsInput?.blur();
-      this.renderDynamicUi();
-      return;
-    }
-
-    if (settingsInputFocused) {
-      return;
-    }
-
-    if (this.activeSettingsField === null) {
-      return;
-    }
-
-    const currentName = this.settingsDraft.playerNames[this.activeSettingsField] ?? '';
-
-    if (event.key === 'Backspace') {
-      this.settingsDraft.playerNames[this.activeSettingsField] = currentName.slice(0, -1);
-      this.renderDynamicUi();
-      return;
-    }
-
-    if (event.key === ' ' || event.key.length === 1) {
-      if (currentName.length >= SETTINGS_NAME_MAX_LENGTH) {
-        return;
+      if (this.settingsAudioExpanded) {
+        this.settingsAudioExpanded = false;
+        this.renderSettingsOverlay();
       }
+      activeElement?.blur?.();
+      return;
+    }
 
-      const nextName = `${currentName}${event.key}`;
-      this.settingsDraft.playerNames[this.activeSettingsField] = nextName;
-      this.renderDynamicUi();
+    if (event.key === 'Enter' && !overlayFocused) {
+      this.startSessionFromSettings();
     }
   }
 
@@ -633,6 +601,8 @@ export class GameScene extends Phaser.Scene {
       this.settingsInput.parentNode.removeChild(this.settingsInput);
     }
     this.settingsInput = null;
+    this.settingsOverlay = null;
+    this.settingsAudioExpanded = false;
   }
 
   syncSettingsDomInput() {
@@ -745,10 +715,11 @@ export class GameScene extends Phaser.Scene {
     this.turnTimerLabel = null;
 
     if (!this.session) {
-      this.drawSettingsScreen();
-      this.syncSettingsDomInput();
+      this.renderSettingsOverlay();
       return;
     }
+
+    this.hideSettingsOverlay();
 
     this.applyScoringPreview();
     this.drawShell();
@@ -762,7 +733,6 @@ export class GameScene extends Phaser.Scene {
       this.drawEndGameOverlay();
     }
 
-    this.syncSettingsDomInput();
     this.syncTurnAudio();
   }
 
@@ -884,7 +854,154 @@ export class GameScene extends Phaser.Scene {
     this.renderDynamicUi();
   }
 
-  drawLocaleToggle(x, y, width = 58, height = 28, showLabel = false) {
+  ensureSettingsOverlay() {
+    if (this.settingsOverlay || typeof document === 'undefined') {
+      return;
+    }
+    ensureSettingsOverlayStyles(document);
+    const overlay = document.createElement('div');
+    overlay.className = 'fs-settings-overlay';
+    overlay.hidden = true;
+    overlay.addEventListener('click', (event) => this.handleSettingsOverlayClick(event));
+    overlay.addEventListener('input', (event) => this.handleSettingsOverlayInput(event));
+    overlay.addEventListener('change', (event) => this.handleSettingsOverlayChange(event));
+    document.body.appendChild(overlay);
+    this.settingsOverlay = overlay;
+  }
+  destroySettingsOverlay() {
+    this.scale?.off('resize', this.syncSettingsOverlay, this);
+    if (this.settingsOverlay?.parentNode) {
+      this.settingsOverlay.parentNode.removeChild(this.settingsOverlay);
+    }
+    this.settingsOverlay = null;
+  }
+  syncSettingsOverlay() {
+    if (this.session) {
+      this.hideSettingsOverlay();
+      return;
+    }
+    this.renderSettingsOverlay();
+  }
+  hideSettingsOverlay() {
+    if (!this.settingsOverlay) {
+      return;
+    }
+    this.settingsOverlay.hidden = true;
+    this.settingsOverlay.innerHTML = '';
+  }
+  renderSettingsOverlay() {
+    this.ensureSettingsOverlay();
+    if (!this.settingsOverlay) {
+      return;
+    }
+    this.settingsOverlay.hidden = false;
+    this.settingsOverlay.innerHTML = buildSettingsOverlayMarkup({
+      copy: this.copy,
+      locale: this.locale,
+      settingsDraft: this.settingsDraft,
+      hasSavedFairSession: !!this.savedFairSessionState,
+      audioSettings: this.audioSettings,
+      audioExpanded: this.settingsAudioExpanded,
+      volumePercent: this.getAudioVolumePercent()
+    });
+  }
+  handleSettingsOverlayClick(event) {
+    if (this.session) {
+      return;
+    }
+    const target = event.target.closest('[data-action]');
+    if (!target) {
+      return;
+    }
+    const action = target.dataset.action;
+    switch (action) {
+      case 'set-locale':
+        this.playSound(SOUND_KEYS.buttonClick);
+        this.setLocale(target.dataset.locale);
+        return;
+      case 'toggle-audio-panel':
+        this.playSound(SOUND_KEYS.buttonClick);
+        this.settingsAudioExpanded = !this.settingsAudioExpanded;
+        this.renderSettingsOverlay();
+        return;
+      case 'toggle-mute':
+        this.toggleAudioMuted();
+        return;
+      case 'open-rules-help':
+        this.playSound(SOUND_KEYS.buttonClick);
+        this.openRulesHelp();
+        return;
+      case 'set-mode':
+        this.playSound(SOUND_KEYS.buttonClick);
+        this.updateSettingsMode(target.dataset.mode);
+        return;
+      case 'start-demo':
+        this.playSound(SOUND_KEYS.buttonClick);
+        this.startDemoSession();
+        return;
+      case 'set-player-count':
+        this.playSound(SOUND_KEYS.buttonClick);
+        this.updateSettingsPlayerCount(Number(target.dataset.playerCount));
+        return;
+      case 'continue-game':
+        this.playSound(SOUND_KEYS.buttonClick);
+        this.continueSavedSession();
+        return;
+      case 'new-game':
+        this.playSound(SOUND_KEYS.buttonClick);
+        this.startSessionFromSettings();
+        return;
+      default:
+        return;
+    }
+  }
+  handleSettingsOverlayInput(event) {
+    if (this.session) {
+      return;
+    }
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+    if (target.dataset.role === 'player-name') {
+      const playerIndex = Number(target.dataset.playerIndex);
+      this.settingsDraft.playerNames[playerIndex] = target.value.slice(0, SETTINGS_NAME_MAX_LENGTH);
+      return;
+    }
+    if (target.dataset.role === 'volume-range') {
+      this.setAudioVolume(Number(target.value) / 100, { preview: false });
+    }
+  }
+  handleSettingsOverlayChange(event) {
+    if (this.session) {
+      return;
+    }
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+    if (target.dataset.role === 'player-count-select') {
+      this.playSound(SOUND_KEYS.buttonClick);
+      this.updateSettingsPlayerCount(Number(target.value));
+      return;
+    }
+    if (target.dataset.role === 'volume-range') {
+      this.setAudioVolume(Number(target.value) / 100);
+    }
+  }
+  async openRulesHelp() {
+    if (typeof globalThis.fetch !== 'function' || typeof globalThis.open !== 'function') {
+      return;
+    }
+    try {
+      const response = await globalThis.fetch(SETTINGS_RULES_PDF_PATH, { method: 'HEAD' });
+      if (response.ok) {
+        globalThis.open(SETTINGS_RULES_PDF_PATH, '_blank', 'noopener');
+        return;
+      }
+    } catch {}
+    globalThis.alert?.('Rules PDF is not attached to the project yet.');
+  }  drawLocaleToggle(x, y, width = 58, height = 28, showLabel = false) {
     const { palette } = layoutConfig;
 
     if (showLabel) {
