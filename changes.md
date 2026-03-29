@@ -1,6 +1,7 @@
 # Changes Log
 
 ## 2026-03-29
+- Clarified the patch workflow in `AGENTS.md`: after UTF-8/LF checks, rejected hunks should be treated as stale-context problems and retried from freshly read file contents in smaller `apply_patch` steps.
 - Added an end-game return path back to `settings`, and the menu now restores the last fair-session player count and names for quick rematches while explicitly ignoring demo-session setup.
 - Renamed audio assets with the `snd_` prefix and updated the Phaser preload paths to match.
 - Expanded the core UI sound hooks: card_select now plays on card clicks, end_game when the final popup opens, timer_ends replaces the usual round-change sound for skipped timeout turns, and the existing game_start / round_start / button_click / tab_select cues remain wired to their original events.
