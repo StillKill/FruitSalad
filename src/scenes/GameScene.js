@@ -36,7 +36,7 @@ import { buildEndGameResults } from '../core/endGameResults.js';
 import { detectGameLocale, getCardCopy, getFruitName, getLocaleCopy, getParityLabel, normalizeLocale } from '../i18n/locale.js';
 
 const SETTINGS_NAME_MAX_LENGTH = 18;
-const DEFAULT_SOUND_VOLUME = 0.8;
+const DEFAULT_SOUND_VOLUME = 0.5;
 const SOUND_KEYS = {
   gameStart: 'game_start',
   tabSelect: 'tab_select',
