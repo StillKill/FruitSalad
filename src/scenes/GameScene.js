@@ -32,7 +32,10 @@ const SOUND_KEYS = {
   gameStart: 'game_start',
   tabSelect: 'tab_select',
   buttonClick: 'button_click',
-  roundStart: 'round_start'
+  cardSelect: 'card_select',
+  roundStart: 'round_start',
+  timerEnds: 'timer_ends',
+  endGame: 'end_game'
 };
 
 function createSettingsDraft(options = defaultSessionOptions, locale = defaultSessionOptions.locale ?? 'ru') {
@@ -97,7 +100,9 @@ export class GameScene extends Phaser.Scene {
     this.turnTimerLabel = null;
     this.audioState = {
       session: null,
-      turnNumber: null
+      turnNumber: null,
+      state: null,
+      nextTurnSound: null
     };
   }
 
@@ -130,7 +135,11 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (remainingMs <= 0) {
+      const shouldUseTimerEnds = !canConfirmSelection(this.session);
       if (expireTurn(this.session)) {
+        if (shouldUseTimerEnds && this.session.stateMachine.state !== 'end_game') {
+          this.audioState.nextTurnSound = SOUND_KEYS.timerEnds;
+        }
         this.playerAreaFlipMode = false;
         this.renderDynamicUi();
       }
@@ -158,10 +167,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   preloadAudioAssets() {
-    this.load.audio(SOUND_KEYS.gameStart, 'assets/audio/game_start.wav');
-    this.load.audio(SOUND_KEYS.tabSelect, 'assets/audio/tab_select.wav');
-    this.load.audio(SOUND_KEYS.buttonClick, 'assets/audio/button_click.wav');
-    this.load.audio(SOUND_KEYS.roundStart, 'assets/audio/round_start.wav');
+    this.load.audio(SOUND_KEYS.gameStart, 'assets/audio/snd_game_start.wav');
+    this.load.audio(SOUND_KEYS.tabSelect, 'assets/audio/snd_tab_select.wav');
+    this.load.audio(SOUND_KEYS.buttonClick, 'assets/audio/snd_button_click.wav');
+    this.load.audio(SOUND_KEYS.cardSelect, 'assets/audio/snd_card_select.WAV');
+    this.load.audio(SOUND_KEYS.roundStart, 'assets/audio/snd_round_start.wav');
+    this.load.audio(SOUND_KEYS.timerEnds, 'assets/audio/snd_timer_ends.wav');
+    this.load.audio(SOUND_KEYS.endGame, 'assets/audio/snd_end_game.wav');
   }
 
   playSound(key, config = {}) {
@@ -176,13 +188,27 @@ export class GameScene extends Phaser.Scene {
     if (!this.session) {
       this.audioState.session = null;
       this.audioState.turnNumber = null;
+      this.audioState.state = null;
+      this.audioState.nextTurnSound = null;
       return;
     }
 
     if (this.audioState.session !== this.session) {
       this.audioState.session = this.session;
       this.audioState.turnNumber = this.session.turnNumber;
+      this.audioState.state = this.session.stateMachine.state;
+      this.audioState.nextTurnSound = null;
       return;
+    }
+
+    const currentState = this.session.stateMachine.state;
+    if (this.audioState.state !== currentState) {
+      this.audioState.state = currentState;
+      if (currentState === 'end_game') {
+        this.playSound(SOUND_KEYS.endGame);
+        this.audioState.nextTurnSound = null;
+        return;
+      }
     }
 
     if (this.audioState.turnNumber === this.session.turnNumber) {
@@ -190,8 +216,10 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.audioState.turnNumber = this.session.turnNumber;
-    if (this.session.turnNumber > 1 && this.session.stateMachine.state !== 'end_game') {
-      this.playSound(SOUND_KEYS.roundStart);
+    if (this.session.turnNumber > 1 && currentState !== 'end_game') {
+      const nextTurnSound = this.audioState.nextTurnSound ?? SOUND_KEYS.roundStart;
+      this.audioState.nextTurnSound = null;
+      this.playSound(nextTurnSound);
     }
   }
 
@@ -1094,6 +1122,7 @@ export class GameScene extends Phaser.Scene {
       if (deckEnabled) {
         this.addClickZone(columnX, titleY + 24, card.width, card.height, () => {
           if (selectDeckCard(this.session, deck.id)) {
+            this.playSound(SOUND_KEYS.cardSelect);
             this.renderDynamicUi();
           }
         });
@@ -1136,6 +1165,7 @@ export class GameScene extends Phaser.Scene {
         if (marketEnabled) {
           this.addClickZone(columnX, slotY, card.width, card.height, () => {
             if (selectMarketCard(this.session, deck.id, marketCard.id)) {
+              this.playSound(SOUND_KEYS.cardSelect);
               this.renderDynamicUi();
             }
           });
@@ -1250,6 +1280,7 @@ export class GameScene extends Phaser.Scene {
       if (showPlayerFlipMode && this.isVisibleInViewport(renderedY, saladCardHeight, saladViewport)) {
         this.addClickZone(x, renderedY, saladCardWidth, saladCardHeight, () => {
           if (togglePlayerSaladFlip(this.session, cardData.runtimeId)) {
+            this.playSound(SOUND_KEYS.cardSelect);
             this.playerAreaFlipMode = false;
             this.renderDynamicUi();
           }

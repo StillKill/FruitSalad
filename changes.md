@@ -1,7 +1,8 @@
 # Changes Log
 
 ## 2026-03-29
-- Added core UI sound hooks: game_start now plays when a session begins, round_start on each new turn after the first, button_click on button presses, and tab_select when switching the viewed player tab.
+- Renamed audio assets with the `snd_` prefix and updated the Phaser preload paths to match.
+- Expanded the core UI sound hooks: card_select now plays on card clicks, end_game when the final popup opens, timer_ends replaces the usual round-change sound for skipped timeout turns, and the existing game_start / round_start / button_click / tab_select cues remain wired to their original events.
 - Improved control-panel readability and state feedback: the timer now uses a high-contrast badge, turns red and blinks at low time, settings panels are cleaned up when gameplay starts, and `Flip Mode` now has a clearly distinct active style.
 - Refined the turn-timer UX: moved the countdown into its own control-panel row, removed the duplicated Leader/Timer/Flip summary from the controls, and switched timer ticking to an absolute deadline so it no longer stalls when the scene redraw is heavy.
 - Added a per-turn 2-minute timer from session rules, rendered the live countdown in the controls panel, and exposed the remaining time in the debug overlay.
