@@ -60,6 +60,8 @@
 - Added `changes.md` to the documented project structure and aligned deferred work with the final `Plan` section in `project.md`.
 - Refined the persistent rules in `project.md`: removed mandatory approval for `project.md` and `skills` edits, and compressed the wording without losing the workflow intent.
 - Added a PowerShell fallback rule to `project.md` for creating new files when `apply_patch` rejects them.
+- Fixed a duplicated `localeX` declaration that had been pasted into the desktop `drawControls()` block, so `GameScene` no longer throws a syntax error before startup.
+
 - Implemented fruit-card rendering and salad-card overlays with fruit icons, and changed deck setup so market slots are filled by flipping the top salad cards into their `backFruit` side.
 - Added session tests for market refill and a shared test runner in `package.json`.
 - Implemented interactive turn flow: market cards and deck tops are clickable, selections are highlighted, `Confirm` and `Reset` change state, and turns advance through `turn -> end_turn -> refresh -> turn/end_game`.

@@ -2012,12 +2012,6 @@ export class GameScene extends Phaser.Scene {
       ? this.copy.endGameReached
       : this.copy.turn(activePlayer.name);
     const timerValue = this.formatTurnTimer(this.session.turnTimer?.remainingMs ?? 0);
-    const helpX = topBar.x + topBar.width - 182;
-    const localeX = topBar.x + topBar.width - 138;
-    const resetX = helpX - 120;
-    const confirmX = resetX - 114;
-    const titleWidth = helpX - (topBar.x + 194) - 14;
-    const hintWidth = helpX - (topBar.x + 194) - 14;
 
     this.track(this.add.text(localeX, titleY + 2, this.getLanguageLabel(), {
       fontFamily: '"Trebuchet MS", sans-serif',
@@ -2735,5 +2729,4 @@ export class GameScene extends Phaser.Scene {
     return this.session.pendingSelection.length < this.session.rules.turnRules.marketPickLimit;
   }
 }
-
 
