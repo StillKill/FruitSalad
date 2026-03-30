@@ -28,6 +28,8 @@
 - Если задача связана с каталогом карт, rule schema или scoring rules, сначала смотреть `skills/scoring-data/`.
 - Если задача связана с настройками сессии и setup limits, сначала смотреть `skills/session-config/`.
 - Если задача связана с интерфейсом, контролами, tabs, overlay, popup или settings dialog, сначала смотреть `skills/ui-shell/`.
+- When a task touches `GameScene`, start with `src/scenes/gameScene/README.md` and then open only the helper module that matches the task.
+- `src/scenes/GameScene.js` should stay a thin shell; new scene logic belongs in `src/scenes/gameScene/*.js` unless the change is only about lifecycle wiring.
 
 ## Актуальная структура проекта
 ```text
@@ -67,6 +69,17 @@ project-root/
     ├── scenes/
     └── ui/
 ```
+
+## GameScene module routing
+- `src/scenes/GameScene.js`: keep only constructor, update, preload/create wiring, and helper registration.
+- `src/scenes/gameScene/runtimeMethods.js`: audio, debug bridge, scoring preview, result-format helpers, and top-level redraw flow.
+- `src/scenes/gameScene/settingsOverlayMethods.js`: settings overlay DOM bridge, locale switching, saved-session menu state, and settings-screen rendering.
+- `src/scenes/gameScene/sessionFlowMethods.js`: player-count updates, new game/demo/continue flow, and session launch/return behavior.
+- `src/scenes/gameScene/viewportMethods.js`: viewport checks, mobile section routing, rotate prompt, and shell switching.
+- `src/scenes/gameScene/mobileLayoutMethods.js`: mobile-only gameplay rendering.
+- `src/scenes/gameScene/boardLayoutMethods.js`: desktop board rendering plus the end-game overlay.
+- `src/scenes/gameScene/sharedUiMethods.js`: shared controls, click zones, scrollbars, and selection/interactivity helpers.
+- `src/scenes/gameScene/constants.js`: sound keys and other scene-wide constants.
 
 ## Модель карты
 - Каждая физическая карта двусторонняя.
@@ -209,3 +222,4 @@ project-root/
 - Improve salad-card readability on gameplay mobile views with a more compact icon-first text treatment tuned for three cards per row.
 - При необходимости расширить demo/simulation режим отдельными debug controls вместо простого seeded launch.
 - Пересобрать тексты salad-карт в полноценный icon-first/abbreviation layout для RU/EN, чтобы длинные правила не упирались в центральную область карты.
+- If any helper under `src/scenes/gameScene/` grows past roughly 500-700 lines again, split it by task boundary before adding more behavior.

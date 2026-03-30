@@ -18,6 +18,7 @@ description: Implement and evolve the Fruit Salad gameplay flow. Use when adding
 2. Centralize transition logic in `src/core/stateMachine.js` or adjacent session modules.
 3. Treat setup as deterministic from session config plus card data.
 4. Log important transitions for the debug overlay.
+5. If the change also affects in-scene launch/continue/demo flow, check `src/scenes/gameScene/sessionFlowMethods.js`; if it affects control availability or turn feedback, check `src/scenes/gameScene/boardLayoutMethods.js` or `src/scenes/gameScene/mobileLayoutMethods.js`.
 
 ## Guardrails
 - A player may take either 2 market cards or 1 deck card.

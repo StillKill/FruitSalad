@@ -1,6 +1,7 @@
 # Changes Log
 
 ## 2026-03-29
+- Split `GameScene` into routed helper modules under `src/scenes/gameScene/` and documented the new scene-routing map in `project.md`, repo skills, and a local `README` so future work can target narrower files instead of the old monolith.
 - Refined the mobile gameplay header and market stack again: removed the extra active-player dot from the left rail, added an in-session rules `?` button beside the language toggle, widened the turn hint line across the top bar, and clipped the top fruit card in each mobile overlap stack so the hidden lower border no longer shows through.
 - Polished the mobile market/navigation details: removed the stray debug footer from the left rail, replaced the active-player rail marker with a clean dot, hid the redundant timer label, moved the deck flip control plus remaining-card count to the right of each salad stack, and removed fruit-card frames in the overlapped mobile market stack.
 - Restored the mobile market card proportions by stacking the two fruit cards with overlap under each salad deck card, collapsing the deck labels into a slimmer single header row, and adding an active-player highlight on the left mobile navigation rail.

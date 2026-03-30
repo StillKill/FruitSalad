@@ -11,6 +11,7 @@ description: Design and maintain the Phaser board composition for Fruit Salad. U
 3. Keep the left side focused on decks and market, and the right side focused on the active player, controls, tabs, and debug information.
 4. Store reusable numbers in `src/config/layoutConfig.js`.
 5. Prefer layout helpers in `src/ui/boardLayout.js` instead of hardcoding geometry inside scenes.
+6. For `GameScene` changes, route desktop composition work to `src/scenes/gameScene/boardLayoutMethods.js`, mobile composition work to `src/scenes/gameScene/mobileLayoutMethods.js`, and viewport/shell switching to `src/scenes/gameScene/viewportMethods.js`.
 
 ## Guardrails
 - Preserve a readable split between market space and player space.

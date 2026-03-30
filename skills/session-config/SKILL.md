@@ -10,6 +10,7 @@ description: Manage setup configuration for Fruit Salad sessions. Use when chang
 2. Keep default runtime options in `src/config/sessionDefaults.js`.
 3. Build sessions through `src/core/sessionSetup.js`.
 4. Prefer data-driven player-count behavior over scattered conditionals.
+5. For menu/setup behavior inside the scene, route to `src/scenes/gameScene/sessionFlowMethods.js` instead of editing `GameScene.js` directly.
 
 ## Current assumptions
 - Prototype deck size is `18 * playerCount`.
